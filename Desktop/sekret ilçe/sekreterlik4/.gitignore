@@ -1,0 +1,66 @@
+# Dependencies
+node_modules/
+sekreterlik-app/client/node_modules/
+sekreterlik-app/server/node_modules/
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+sekreterlik-app/server/database.sqlite
+sekreterlik-app/server/backups/*.sqlite
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+/tmp/server.log
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build outputs
+dist/
+build/
+*.map
+
+# Uploads (optional - buradaki dosyaları da commit etmek isteyebilirsiniz)
+# sekreterlik-app/server/uploads/*
+
+# Test files
+test-*.js
+test-*.txt
+test-*.xlsx
+debug-*.js
+direct-import-test.js
+
+# Cache
+.cache/
+.npm/
+.yarn/
+
+# Temporary files
+*.tmp
+*.temp
+
