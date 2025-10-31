@@ -4,6 +4,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // Base path - production için root path kullan
+  base: '/',
+  
   plugins: [
     react(),
     VitePWA({
@@ -56,6 +59,25 @@ export default defineConfig({
       }
     })
   ],
+  
+  // Build ayarları - Production için optimize
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false, // Production'da sourcemap kapalı
+    minify: 'esbuild', // Hızlı minification
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'firebase-vendor': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
+          'ui-vendor': ['bootstrap', 'bootstrap-icons']
+        }
+      }
+    }
+  },
+  
   server: {
     port: 5180,
     proxy: {
@@ -66,7 +88,14 @@ export default defineConfig({
       }
     }
   },
+  
   optimizeDeps: {
     include: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage', 'crypto-js']
+  },
+  
+  // Preview ayarları (build test için)
+  preview: {
+    port: 4173,
+    strictPort: true
   }
 })
