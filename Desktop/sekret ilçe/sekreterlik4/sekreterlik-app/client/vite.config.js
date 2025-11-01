@@ -39,6 +39,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         skipWaiting: true,
         clientsClaim: true,
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB - large bundle support
         runtimeCaching: [
           {
             // API isteklerini cache'le (/api path'li tüm istekler)
@@ -66,13 +67,13 @@ export default defineConfig({
     assetsDir: 'assets',
     sourcemap: false, // Production'da sourcemap kapalı
     minify: 'esbuild', // Hızlı minification
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2000, // Increase limit to 2MB
     rollupOptions: {
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'firebase-vendor': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
-          'ui-vendor': ['bootstrap', 'bootstrap-icons']
+          'ui-vendor': ['bootstrap']
         }
       }
     }
@@ -90,7 +91,13 @@ export default defineConfig({
   },
   
   optimizeDeps: {
-    include: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage', 'crypto-js']
+    include: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage', 'crypto-js', 'bootstrap-icons']
+  },
+  
+  resolve: {
+    alias: {
+      'bootstrap-icons': 'bootstrap-icons/font/bootstrap-icons.css'
+    }
   },
   
   // Preview ayarları (build test için)
