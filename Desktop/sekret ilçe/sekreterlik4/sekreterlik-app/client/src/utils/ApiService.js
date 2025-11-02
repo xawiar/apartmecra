@@ -637,10 +637,15 @@ class ApiService {
   }
 
   static async deleteArchivedMember(id) {
+    // Debug: Firebase kontrolü
+    console.log('deleteArchivedMember called:', { id, USE_FIREBASE, VITE_USE_FIREBASE: import.meta.env.VITE_USE_FIREBASE });
+    
     if (USE_FIREBASE) {
+      console.log('Using FirebaseApiService.deleteArchivedMember');
       return FirebaseApiService.deleteArchivedMember(id);
     }
 
+    console.log('Using backend API:', `${API_BASE_URL}/archive/members/${id}`);
     const response = await fetch(`${API_BASE_URL}/archive/members/${id}`, {
       method: 'DELETE',
       headers: this.getAuthHeaders(false),

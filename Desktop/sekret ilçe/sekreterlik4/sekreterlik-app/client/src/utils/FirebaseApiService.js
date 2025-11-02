@@ -645,19 +645,64 @@ class FirebaseApiService {
   // Delete archived member permanently
   static async deleteArchivedMember(id) {
     try {
-      const member = await FirebaseService.getById(this.COLLECTIONS.MEMBERS, id);
+      console.log('FirebaseApiService.deleteArchivedMember called with id:', id);
+      
+      // ID formatını normalize et (eğer string ise)
+      const memberId = String(id).trim();
+      console.log('Normalized member ID:', memberId);
+      
+      const member = await FirebaseService.getById(this.COLLECTIONS.MEMBERS, memberId);
+      console.log('Member found:', member ? 'yes' : 'no', member ? { id: member.id, name: member.name, archived: member.archived } : null);
+      
       if (!member) {
+        // Belki ID formatı farklı - tüm üyeleri kontrol et
+        console.log('Member not found by ID, trying to find by scanning all members...');
+        const allMembers = await FirebaseService.getAll(this.COLLECTIONS.MEMBERS);
+        const foundMember = allMembers.find(m => String(m.id) === memberId || String(m.id) === String(id));
+        
+        if (foundMember) {
+          console.log('Member found by scanning:', foundMember.id);
+          const isArchived = foundMember.archived === true || foundMember.archived === 'true' || foundMember.archived === 1 || foundMember.archived === '1';
+          if (isArchived) {
+            await FirebaseService.delete(this.COLLECTIONS.MEMBERS, foundMember.id);
+            
+            // Eğer member_user varsa onu da sil
+            try {
+              const memberUsers = await FirebaseService.findByField(
+                this.COLLECTIONS.MEMBER_USERS,
+                'memberId',
+                foundMember.id
+              );
+              
+              if (memberUsers && memberUsers.length > 0) {
+                for (const memberUser of memberUsers) {
+                  await FirebaseService.delete(this.COLLECTIONS.MEMBER_USERS, memberUser.id);
+                }
+              }
+            } catch (userError) {
+              console.warn('Error deleting member user:', userError);
+            }
+            
+            return { success: true, message: 'Arşivlenmiş üye kalıcı olarak silindi' };
+          } else {
+            throw new Error('Bu üye arşivlenmemiş');
+          }
+        }
+        
         throw new Error('Arşivlenmiş üye bulunamadı');
       }
       
       // Arşivlenmiş olup olmadığını kontrol et (truthy check - boolean, string "true", 1 gibi değerleri kabul et)
       const isArchived = member.archived === true || member.archived === 'true' || member.archived === 1 || member.archived === '1';
+      console.log('Member archived status:', { archived: member.archived, isArchived });
+      
       if (!isArchived) {
         throw new Error('Bu üye arşivlenmemiş');
       }
       
       // Üyeyi kalıcı olarak sil
-      await FirebaseService.delete(this.COLLECTIONS.MEMBERS, id);
+      console.log('Deleting member with ID:', member.id || memberId);
+      await FirebaseService.delete(this.COLLECTIONS.MEMBERS, member.id || memberId);
       
       // Eğer member_user varsa onu da sil
       try {
