@@ -3,7 +3,19 @@ import FirebaseApiService from './FirebaseApiService';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 // Firebase kullanımı kontrolü - Environment variable ile kontrol edilir
-const USE_FIREBASE = import.meta.env.VITE_USE_FIREBASE === 'true';
+// Render.com'da bu değer 'true' (string) olarak set edilmeli
+const USE_FIREBASE = import.meta.env.VITE_USE_FIREBASE === 'true' || 
+                     import.meta.env.VITE_USE_FIREBASE === true ||
+                     String(import.meta.env.VITE_USE_FIREBASE).toLowerCase() === 'true';
+
+// Debug log (production'da kaldırılabilir)
+if (typeof window !== 'undefined') {
+  console.log('[ApiService] Firebase check:', {
+    VITE_USE_FIREBASE: import.meta.env.VITE_USE_FIREBASE,
+    USE_FIREBASE,
+    MODE: import.meta.env.MODE
+  });
+}
 
 class ApiService {
   // Firebase kullanılıyorsa FirebaseApiService'i kullan
@@ -638,14 +650,27 @@ class ApiService {
 
   static async deleteArchivedMember(id) {
     // Debug: Firebase kontrolü
-    console.log('deleteArchivedMember called:', { id, USE_FIREBASE, VITE_USE_FIREBASE: import.meta.env.VITE_USE_FIREBASE });
+    console.log('[ApiService.deleteArchivedMember] Called:', { 
+      id, 
+      USE_FIREBASE, 
+      VITE_USE_FIREBASE: import.meta.env.VITE_USE_FIREBASE,
+      API_BASE_URL,
+      MODE: import.meta.env.MODE
+    });
     
+    // Firebase kullanılıyorsa KESİNLİKLE FirebaseApiService'i kullan
     if (USE_FIREBASE) {
-      console.log('Using FirebaseApiService.deleteArchivedMember');
-      return FirebaseApiService.deleteArchivedMember(id);
+      console.log('[ApiService.deleteArchivedMember] Using FirebaseApiService');
+      try {
+        return await FirebaseApiService.deleteArchivedMember(id);
+      } catch (error) {
+        console.error('[ApiService.deleteArchivedMember] Firebase error:', error);
+        throw error;
+      }
     }
 
-    console.log('Using backend API:', `${API_BASE_URL}/archive/members/${id}`);
+    // Sadece Firebase kullanılmıyorsa backend API'ye istek at
+    console.log('[ApiService.deleteArchivedMember] Using backend API:', `${API_BASE_URL}/archive/members/${id}`);
     const response = await fetch(`${API_BASE_URL}/archive/members/${id}`, {
       method: 'DELETE',
       headers: this.getAuthHeaders(false),
