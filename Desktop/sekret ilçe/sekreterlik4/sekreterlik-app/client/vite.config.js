@@ -66,7 +66,8 @@ export default defineConfig({
   
   // Build ayarları - Production için optimize
   build: {
-    outDir: 'dist',
+    // Render.com için dist'i root'a build et (RENDER environment variable varsa)
+    outDir: process.env.RENDER ? '../../dist' : 'dist',
     assetsDir: 'assets',
     sourcemap: false, // Production'da sourcemap kapalı
     minify: 'esbuild', // Hızlı minification
