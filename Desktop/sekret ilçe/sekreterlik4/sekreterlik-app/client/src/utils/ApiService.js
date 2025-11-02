@@ -637,6 +637,10 @@ class ApiService {
   }
 
   static async deleteArchivedMember(id) {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.deleteArchivedMember(id);
+    }
+
     const response = await fetch(`${API_BASE_URL}/archive/members/${id}`, {
       method: 'DELETE',
       headers: this.getAuthHeaders(false),
@@ -651,6 +655,10 @@ class ApiService {
   }
 
   static async deleteArchivedMeeting(id) {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.deleteArchivedMeeting(id);
+    }
+
     const response = await fetch(`${API_BASE_URL}/archive/meetings/${id}`, {
       method: 'DELETE',
       headers: this.getAuthHeaders(false),

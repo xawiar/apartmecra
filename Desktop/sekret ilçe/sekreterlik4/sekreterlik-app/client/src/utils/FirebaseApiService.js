@@ -591,6 +591,70 @@ class FirebaseApiService {
     }
   }
 
+  // Delete archived member permanently
+  static async deleteArchivedMember(id) {
+    try {
+      const member = await FirebaseService.getById(this.COLLECTIONS.MEMBERS, id);
+      if (!member) {
+        throw new Error('Arşivlenmiş üye bulunamadı');
+      }
+      
+      // Arşivlenmiş olup olmadığını kontrol et
+      if (!member.archived) {
+        throw new Error('Bu üye arşivlenmemiş');
+      }
+      
+      // Üyeyi kalıcı olarak sil
+      await FirebaseService.delete(this.COLLECTIONS.MEMBERS, id);
+      
+      // Eğer member_user varsa onu da sil
+      try {
+        const memberUsers = await FirebaseService.findByField(
+          this.COLLECTIONS.MEMBER_USERS,
+          'memberId',
+          id
+        );
+        
+        if (memberUsers && memberUsers.length > 0) {
+          for (const memberUser of memberUsers) {
+            await FirebaseService.delete(this.COLLECTIONS.MEMBER_USERS, memberUser.id);
+          }
+        }
+      } catch (userError) {
+        console.warn('Error deleting member user:', userError);
+        // Devam et, member user silme hatası kritik değil
+      }
+      
+      return { success: true, message: 'Arşivlenmiş üye kalıcı olarak silindi' };
+    } catch (error) {
+      console.error('Delete archived member error:', error);
+      throw new Error('Arşivlenmiş üye silinirken hata oluştu: ' + error.message);
+    }
+  }
+
+  // Delete archived meeting permanently
+  static async deleteArchivedMeeting(id) {
+    try {
+      const meeting = await FirebaseService.getById(this.COLLECTIONS.MEETINGS, id);
+      if (!meeting) {
+        throw new Error('Arşivlenmiş toplantı bulunamadı');
+      }
+      
+      // Arşivlenmiş olup olmadığını kontrol et
+      if (!meeting.archived) {
+        throw new Error('Bu toplantı arşivlenmemiş');
+      }
+      
+      // Toplantıyı kalıcı olarak sil
+      await FirebaseService.delete(this.COLLECTIONS.MEETINGS, id);
+      
+      return { success: true, message: 'Arşivlenmiş toplantı kalıcı olarak silindi' };
+    } catch (error) {
+      console.error('Delete archived meeting error:', error);
+      throw new Error('Arşivlenmiş toplantı silinirken hata oluştu: ' + error.message);
+    }
+  }
+
   static async archiveMeeting(id) {
     try {
       await FirebaseService.update(this.COLLECTIONS.MEETINGS, id, { archived: true });
