@@ -214,16 +214,32 @@ const MosquesSettings = () => {
 
   // Filter data based on selections
   const filteredTowns = towns.filter(town => 
-    formData.district_id ? town.district_id === parseInt(formData.district_id) : true
+    formData.district_id ? String(town.district_id) === String(formData.district_id) : true
   );
 
-  const filteredNeighborhoods = neighborhoods.filter(neighborhood => 
-    formData.district_id ? neighborhood.district_id === parseInt(formData.district_id) : true
-  );
+  const filteredNeighborhoods = neighborhoods.filter(neighborhood => {
+    // İlçe filtresi
+    if (formData.district_id && String(neighborhood.district_id) !== String(formData.district_id)) {
+      return false;
+    }
+    // Belde filtresi (isteğe bağlı)
+    if (formData.town_id && String(neighborhood.town_id) !== String(formData.town_id)) {
+      return false;
+    }
+    return true;
+  });
 
-  const filteredVillages = villages.filter(village => 
-    formData.district_id ? village.district_id === parseInt(formData.district_id) : true
-  );
+  const filteredVillages = villages.filter(village => {
+    // İlçe filtresi
+    if (formData.district_id && String(village.district_id) !== String(formData.district_id)) {
+      return false;
+    }
+    // Belde filtresi (isteğe bağlı)
+    if (formData.town_id && String(village.town_id) !== String(formData.town_id)) {
+      return false;
+    }
+    return true;
+  });
 
   if (loading) {
     return (

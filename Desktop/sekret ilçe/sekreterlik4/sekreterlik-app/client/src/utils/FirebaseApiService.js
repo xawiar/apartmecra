@@ -560,14 +560,24 @@ class FirebaseApiService {
   static async archiveMember(id) {
     try {
       const member = await FirebaseService.getById(this.COLLECTIONS.MEMBERS, id);
-      if (member) {
-        await FirebaseService.update(this.COLLECTIONS.MEMBERS, id, { archived: true });
-        return { success: true, message: 'Üye arşivlendi' };
+      if (!member) {
+        throw new Error('Üye bulunamadı');
       }
-      throw new Error('Üye bulunamadı');
+      
+      // archived alanını güncelle (şifreleme yapma)
+      await FirebaseService.update(this.COLLECTIONS.MEMBERS, id, { archived: true }, false);
+      
+      // Güncellenmiş üyeyi tekrar getir ve döndür
+      const updatedMember = await FirebaseService.getById(this.COLLECTIONS.MEMBERS, id);
+      
+      return { 
+        success: true, 
+        message: 'Üye arşivlendi',
+        member: updatedMember
+      };
     } catch (error) {
       console.error('Archive member error:', error);
-      throw new Error('Üye arşivlenirken hata oluştu');
+      throw new Error('Üye arşivlenirken hata oluştu: ' + error.message);
     }
   }
 
