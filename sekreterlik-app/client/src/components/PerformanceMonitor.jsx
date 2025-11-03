@@ -13,12 +13,19 @@ const PerformanceMonitor = () => {
   useEffect(() => {
     // Firebase kullanımı kontrolü - Runtime'da kontrol et
     const checkFirebase = () => {
+      // Production'da Render.com kullanılıyorsa Firebase kullanılıyor demektir
+      if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        if (hostname.includes('render.com') || hostname.includes('onrender.com')) {
+          return true; // Render.com'da Firebase kullanılıyor
+        }
+      }
+      
       const VITE_USE_FIREBASE_ENV = import.meta.env.VITE_USE_FIREBASE;
       return (
         VITE_USE_FIREBASE_ENV === 'true' || 
         VITE_USE_FIREBASE_ENV === true ||
-        String(VITE_USE_FIREBASE_ENV).toLowerCase() === 'true' ||
-        (typeof window !== 'undefined' && window.location.hostname.includes('render.com') && VITE_USE_FIREBASE_ENV !== undefined)
+        String(VITE_USE_FIREBASE_ENV).toLowerCase() === 'true'
       );
     };
 
@@ -39,6 +46,7 @@ const PerformanceMonitor = () => {
       // Network latency - Firebase kullanılıyorsa skip et (backend API yok)
       const useFirebase = checkFirebase();
       if (useFirebase) {
+        // Firebase kullanılıyorsa health check yapma - backend API yok
         setMetrics(prev => ({ ...prev, networkLatency: -1 }));
         return;
       }
