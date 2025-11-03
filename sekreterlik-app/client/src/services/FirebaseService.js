@@ -467,56 +467,13 @@ class FirebaseService {
           throw new Error(`FIREBASE CALL FAILED: collection length=${firebaseCollectionName.length}, id length=${firebaseDocId.length}`);
         }
         
-        console.error('[FIREBASE DELETE] Using SAME pattern as create():', JSON.stringify({
-          collection: firebaseCollectionName,
-          collectionType: typeof firebaseCollectionName,
-          id: firebaseDocId,
-          idType: typeof firebaseDocId
-        }));
+        // EXACT COPY of create() pattern - NO CHANGES
+        // Collection referansı oluştur (collection yoksa otomatik oluşturulur)
+        // This is EXACTLY how create() does it - line 76
+        const collectionRef = collection(db, firebaseCollectionName);
         
-        // Use EXACTLY the same pattern as create() function:
-        // Step 1: collection(db, collectionName) - This works in create()
-        // CRITICAL: Ensure collectionName is string before calling collection()
-        const collectionNameFinal = String(firebaseCollectionName).trim();
-        if (typeof collectionNameFinal !== 'string' || collectionNameFinal.length === 0) {
-          throw new Error(`Invalid collection name before collection() call: ${collectionNameFinal}`);
-        }
-        
-        let collectionRef;
-        try {
-          console.error('[FIREBASE DELETE] Step 1: Calling collection() with:', {
-            collectionName: collectionNameFinal,
-            collectionNameType: typeof collectionNameFinal,
-            dbType: typeof db
-          });
-          collectionRef = collection(db, collectionNameFinal);
-          console.error('[FIREBASE DELETE] Step 1: ✅ collection() succeeded');
-        } catch (collectionError) {
-          console.error('[FIREBASE DELETE] Step 1: ❌ collection() failed:', collectionError);
-          throw new Error(`collection() failed: ${collectionError.message}`);
-        }
-        
-        // Step 2: doc(collectionRef, docId) - This works in create()
-        // CRITICAL: Ensure docId is string before calling doc()
-        const docIdFinal = String(firebaseDocId).trim();
-        if (typeof docIdFinal !== 'string' || docIdFinal.length === 0) {
-          throw new Error(`Invalid doc ID before doc() call: ${docIdFinal}`);
-        }
-        
-        try {
-          console.error('[FIREBASE DELETE] Step 2: Calling doc() with:', {
-            docId: docIdFinal,
-            docIdType: typeof docIdFinal,
-            collectionRefType: typeof collectionRef
-          });
-          docRef = doc(collectionRef, docIdFinal);
-          console.error('[FIREBASE DELETE] Step 2: ✅ doc() succeeded');
-        } catch (docCallError) {
-          console.error('[FIREBASE DELETE] Step 2: ❌ doc() failed:', docCallError);
-          throw new Error(`doc() failed: ${docCallError.message}`);
-        }
-        
-        console.error('[FIREBASE DELETE] ✅ doc() call succeeded using create() pattern');
+        // This is EXACTLY how create() does it - line 80
+        docRef = doc(collectionRef, firebaseDocId);
         
         if (!docRef) {
           throw new Error('DocumentReference oluşturulamadı - docRef null/undefined');
