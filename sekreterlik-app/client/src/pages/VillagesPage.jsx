@@ -1,0 +1,170 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import ApiService from '../utils/ApiService';
+
+const VillagesPage = () => {
+  const [villages, setVillages] = useState([]);
+  const [villageRepresentatives, setVillageRepresentatives] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [villagesData, representativesData] = await Promise.all([
+        ApiService.getVillages(),
+        ApiService.getVillageRepresentatives()
+      ]);
+      setVillages(villagesData);
+      setVillageRepresentatives(representativesData);
+    } catch (error) {
+      console.error('Error fetching villages:', error);
+      setError('Köyler yüklenirken hata oluştu');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate villages without representatives
+  const villagesWithReps = new Set(
+    villageRepresentatives.map(rep => rep.village_id).filter(Boolean)
+  );
+  const villagesWithoutReps = villages.filter(
+    v => !villagesWithReps.has(v.id)
+  ).length;
+
+  const filteredVillages = villages.filter(village =>
+    village.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    village.district_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    village.town_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <Link
+            to="/election-preparation"
+            className="text-indigo-600 hover:text-indigo-800 mb-2 inline-flex items-center"
+          >
+            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Seçime Hazırlık
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900">Köyler</h1>
+        </div>
+      </div>
+
+      {/* Info Card */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-blue-800">
+            <span className="font-semibold">Toplam Köy:</span> {villages.length} | 
+            <span className="font-semibold ml-2">Temsilci Atanmamış:</span> {villagesWithoutReps}
+          </p>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <input
+          type="text"
+          placeholder="Köy adı, ilçe veya belde ile ara..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        />
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {filteredVillages.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">
+              {searchTerm ? 'Arama sonucu bulunamadı' : 'Henüz köy eklenmemiş'}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Köy Adı
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    İlçe
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Belde
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Temsilci Durumu
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredVillages.map((village) => {
+                  const hasRepresentative = villagesWithReps.has(village.id);
+                  return (
+                    <tr key={village.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {village.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {village.district_name || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {village.town_name || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {hasRepresentative ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Temsilci Atanmış
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Temsilci Atanmamış
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default VillagesPage;
+

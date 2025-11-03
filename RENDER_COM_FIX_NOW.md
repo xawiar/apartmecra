@@ -24,7 +24,7 @@ GitHub'da dosyalar `Desktop/sekret ilçe/sekreterlik4/...` path'inde olduğu iç
 
 **Input alanına yazın:**
 ```
-Desktop/sekret ilçe/sekreterlik4/sekreterlik-app/client
+Desktop/sekret-ilce/sekreterlik4/sekreterlik-app/client
 ```
 
 ⚠️ **ÖNEMLİ:** Türkçe karakter (`ç`) var, ama Render.com bunu kabul ediyor.

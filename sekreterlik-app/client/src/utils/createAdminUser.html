@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Admin User Creator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      display: none;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .credentials {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 15px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔥 Firebase Admin Kullanıcısı Oluştur</h1>
+    <p>Bu sayfa Firebase Authentication ve Firestore bağlantısını test eder ve ilk admin kullanıcısını oluşturur.</p>
+    
+    <button id="createBtn" onclick="createAdmin()">Admin Kullanıcısı Oluştur</button>
+    
+    <div id="result" class="result"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+    import { 
+      getAuth, 
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      setDoc, 
+      getDoc 
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAAkFCVr_IrA9qR8gAgDAZMGGk-xGsY2nA",
+      authDomain: "ilsekreterliki.firebaseapp.com",
+      projectId: "ilsekreterliki",
+      storageBucket: "ilsekreterliki.firebasestorage.app",
+      messagingSenderId: "112937724027",
+      appId: "1:112937724027:web:03e419ca720eea178c1ade",
+      measurementId: "G-YMN4TEP8Z1"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    window.createAdmin = async function() {
+      const btn = document.getElementById('createBtn');
+      const resultDiv = document.getElementById('result');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span>Oluşturuluyor...';
+      resultDiv.style.display = 'none';
+      
+      try {
+        const adminUsername = 'admin';
+        const adminPassword = 'admin123';
+        const adminEmail = `${adminUsername}@ilsekreterlik.local`;
+
+        let userCredential;
+        
+        try {
+          // Firebase Auth'da kullanıcı oluştur
+          userCredential = await createUserWithEmailAndPassword(
+            auth, 
+            adminEmail, 
+            adminPassword
+          );
+          showResult('success', '✅ Firebase Authentication kullanıcısı oluşturuldu!');
+        } catch (error) {
+          if (error.code === 'auth/email-already-in-use') {
+            // Kullanıcı zaten varsa giriş yap
+            userCredential = await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+            showResult('info', 'ℹ️ Kullanıcı zaten mevcut, giriş yapıldı.');
+          } else {
+            throw error;
+          }
+        }
+        
+        // Firestore'da admin bilgilerini kaydet
+        const adminDocRef = doc(db, 'admin', 'main');
+        
+        await setDoc(adminDocRef, {
+          username: adminUsername,
+          email: adminEmail,
+          uid: userCredential.user.uid,
+          role: 'admin',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        
+        showResult('success', '✅ Admin bilgileri Firestore\'a kaydedildi!');
+        
+        // Bağlantıyı test et
+        const testDoc = await getDoc(adminDocRef);
+        if (testDoc.exists()) {
+          showResult('success', `
+            <h3>🎉 Admin kullanıcısı başarıyla oluşturuldu!</h3>
+            <div class="credentials">
+              <strong>Kullanıcı Bilgileri:</strong><br>
+              Username: <strong>admin</strong><br>
+              Email: <strong>admin@ilsekreterlik.local</strong><br>
+              Password: <strong>admin123</strong><br><br>
+              <small>⚠️ Production'da mutlaka şifreyi değiştirin!</small>
+            </div>
+          `);
+        }
+        
+      } catch (error) {
+        console.error('Error:', error);
+        showResult('error', `❌ Hata: ${error.message}<br><small>Error Code: ${error.code}</small>`);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Admin Kullanıcısı Oluştur';
+      }
+    };
+
+    function showResult(type, message) {
+      const resultDiv = document.getElementById('result');
+      resultDiv.className = `result ${type}`;
+      resultDiv.innerHTML = message;
+      resultDiv.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
+

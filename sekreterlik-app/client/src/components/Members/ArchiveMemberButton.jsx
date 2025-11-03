@@ -1,0 +1,17 @@
+import React from 'react';
+
+const ArchiveMemberButton = ({ onClick }) => {
+  return (
+    <button
+      onClick={onClick}
+      className="text-amber-600 hover:text-amber-900 transition-colors p-1 rounded-full hover:bg-amber-50"
+      title="Arşivle"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+      </svg>
+    </button>
+  );
+};
+
+export default ArchiveMemberButton;

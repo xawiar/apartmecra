@@ -1,0 +1,55 @@
+type Artist @table {
+  displayName: String!
+  email: String!
+  studioName: String!
+  createdAt: Timestamp!
+  phoneNumber: String
+  bio: String
+  photoUrl: String
+}
+
+type Client @table {
+  firstName: String!
+  lastName: String!
+  createdAt: Timestamp!
+  artist: Artist!
+  phoneNumber: String
+  email: String
+  birthDate: Date
+  notes: String
+}
+
+type Appointment @table {
+  appointmentDate: Date!
+  startTime: Timestamp!
+  endTime: Timestamp!
+  status: String!
+  createdAt: Timestamp!
+  artist: Artist!
+  client: Client!
+  description: String
+  depositAmount: Float
+}
+
+type Tattoo @table {
+  tattooDate: Date!
+  description: String!
+  placement: String!
+  createdAt: Timestamp!
+  artist: Artist!
+  client: Client!
+  size: String
+  colorsUsed: String
+  aftercareInstructions: String
+  price: Float
+}
+
+type DesignIdea @table {
+  title: String!
+  imageUrl: String!
+  createdAt: Timestamp!
+  artist: Artist!
+  client: Client
+  description: String
+  associatedTattoo: Tattoo
+}
