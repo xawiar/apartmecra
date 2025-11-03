@@ -104,6 +104,9 @@ class ApiService {
 
   // Admin API
   static async getAdminInfo() {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.getAdminInfo();
+    }
     const response = await fetch(`${API_BASE_URL}/auth/admin`);
     return response.json();
   }
@@ -380,6 +383,9 @@ class ApiService {
 
   // Regions API
   static async getRegions() {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.getRegions();
+    }
     // Add cache-busting parameter to ensure fresh data
     const timestamp = Date.now();
     return this.fetchJsonWithRetry(`${API_BASE_URL}/regions?_t=${timestamp}`);
@@ -437,6 +443,9 @@ class ApiService {
 
   // Positions API
   static async getPositions() {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.getPositions();
+    }
     return this.fetchJsonWithRetry(`${API_BASE_URL}/positions`);
   }
 

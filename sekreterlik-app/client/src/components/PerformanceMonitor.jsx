@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
+// Firebase kullanımı kontrolü
+const USE_FIREBASE = 
+  import.meta.env.VITE_USE_FIREBASE === 'true' || 
+  import.meta.env.VITE_USE_FIREBASE === true ||
+  String(import.meta.env.VITE_USE_FIREBASE).toLowerCase() === 'true' ||
+  (typeof window !== 'undefined' && window.location.hostname.includes('render.com') && import.meta.env.VITE_USE_FIREBASE !== undefined);
+
 const PerformanceMonitor = () => {
   const [metrics, setMetrics] = useState({
     loadTime: 0,
@@ -25,7 +32,13 @@ const PerformanceMonitor = () => {
         setMetrics(prev => ({ ...prev, memoryUsage }));
       }
 
-      // Network latency (simplified)
+      // Network latency - Firebase kullanılıyorsa skip et (backend API yok)
+      if (USE_FIREBASE) {
+        setMetrics(prev => ({ ...prev, networkLatency: -1 }));
+        return;
+      }
+
+      // Sadece backend API kullanılıyorsa health check yap
       const startTime = performance.now();
       fetch('http://localhost:5000/api/health')
         .then(response => {

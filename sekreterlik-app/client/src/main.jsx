@@ -4,24 +4,40 @@ import App from './App'
 import './index.css'
 import * as Sentry from '@sentry/react'
 
+// Firebase kullanımı kontrolü
+const USE_FIREBASE = 
+  import.meta.env.VITE_USE_FIREBASE === 'true' || 
+  import.meta.env.VITE_USE_FIREBASE === true ||
+  String(import.meta.env.VITE_USE_FIREBASE).toLowerCase() === 'true' ||
+  (typeof window !== 'undefined' && window.location.hostname.includes('render.com') && import.meta.env.VITE_USE_FIREBASE !== undefined);
+
 // Filter out connection refused errors from console and window errors
 const originalConsoleError = console.error;
 console.error = (...args) => {
   const message = args.join(' ');
-  // Don't log connection refused errors to localhost:5182
+  // Don't log connection refused errors to localhost:5182 (dev server)
   if (message.includes('ERR_CONNECTION_REFUSED') && message.includes('localhost:5182')) {
+    return; // Silently ignore
+  }
+  // Don't log connection refused errors to localhost:5000 if Firebase is enabled
+  if (USE_FIREBASE && message.includes('ERR_CONNECTION_REFUSED') && message.includes('localhost:5000')) {
     return; // Silently ignore
   }
   originalConsoleError.apply(console, args);
 };
 
-// Filter window error events for localhost:5182 connection errors
+// Filter window error events for localhost connection errors
 const originalErrorHandler = window.onerror;
 window.onerror = function(message, source, lineno, colno, error) {
-  if (message && typeof message === 'string' && 
-      message.includes('ERR_CONNECTION_REFUSED') && 
-      message.includes('localhost:5182')) {
-    return true; // Prevent default error handling
+  if (message && typeof message === 'string') {
+    // Ignore localhost:5182 errors (dev server)
+    if (message.includes('ERR_CONNECTION_REFUSED') && message.includes('localhost:5182')) {
+      return true; // Prevent default error handling
+    }
+    // Ignore localhost:5000 errors if Firebase is enabled
+    if (USE_FIREBASE && message.includes('ERR_CONNECTION_REFUSED') && message.includes('localhost:5000')) {
+      return true; // Prevent default error handling
+    }
   }
   if (originalErrorHandler) {
     return originalErrorHandler.call(this, message, source, lineno, colno, error);
@@ -42,10 +58,15 @@ if (sentryDsn) {
     replaysOnErrorSampleRate: 1.0,
     environment: import.meta.env.MODE || 'development',
     beforeSend(event, hint) {
-      // Ignore connection refused errors from localhost:5182
+      // Ignore connection refused errors from localhost:5182 (dev server)
       if (hint?.originalException?.message?.includes('ERR_CONNECTION_REFUSED') ||
           hint?.originalException?.message?.includes('localhost:5182') ||
           hint?.syntheticException?.message?.includes('ERR_CONNECTION_REFUSED')) {
+        return null; // Don't send to Sentry
+      }
+      // Ignore localhost:5000 errors if Firebase is enabled
+      if (USE_FIREBASE && (hint?.originalException?.message?.includes('localhost:5000') ||
+          hint?.syntheticException?.message?.includes('localhost:5000'))) {
         return null; // Don't send to Sentry
       }
       return event;
@@ -54,6 +75,7 @@ if (sentryDsn) {
       'ERR_CONNECTION_REFUSED',
       'Failed to fetch',
       /localhost:5182/,
+      /localhost:5000/,
       /ping.*localhost/,
     ],
   })
