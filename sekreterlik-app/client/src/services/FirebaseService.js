@@ -257,10 +257,24 @@ class FirebaseService {
    */
   static async delete(collectionName, docId) {
     try {
-      const docRef = doc(db, collectionName, docId);
+      // ID'yi mutlaka string'e çevir (Firebase string bekler)
+      const stringId = String(docId);
+      if (!stringId || stringId === 'undefined' || stringId === 'null') {
+        throw new Error(`Geçersiz doküman ID: ${docId}`);
+      }
+      const docRef = doc(db, collectionName, stringId);
       await deleteDoc(docRef);
+      console.log(`✅ Document deleted from collection "${collectionName}" with ID: ${stringId}`);
     } catch (error) {
       console.error(`Error deleting document from ${collectionName}:`, error);
+      console.error(`Delete error details:`, {
+        collectionName,
+        docId,
+        docIdType: typeof docId,
+        stringId: String(docId),
+        errorMessage: error.message,
+        errorCode: error.code
+      });
       throw error;
     }
   }

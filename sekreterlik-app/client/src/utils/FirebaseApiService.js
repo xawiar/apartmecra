@@ -534,7 +534,11 @@ class FirebaseApiService {
   static async getRegions() {
     try {
       const regions = await FirebaseService.getAll(this.COLLECTIONS.REGIONS);
-      return regions || [];
+      // Her region'ın ID'sini string'e çevir
+      return (regions || []).map(region => ({
+        ...region,
+        id: String(region.id || '')
+      })).filter(region => region.id && region.name);
     } catch (error) {
       console.error('Get regions error:', error);
       return [];
@@ -849,9 +853,27 @@ class FirebaseApiService {
   static async createRegion(regionData) {
     try {
       const docId = await FirebaseService.create(this.COLLECTIONS.REGIONS, null, regionData);
+      
+      // Kısa bir bekleme ekle (Firestore yazma işleminin tamamlanması için)
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Oluşturulan region'ı tam olarak al ve döndür
       const createdRegion = await FirebaseService.getById(this.COLLECTIONS.REGIONS, docId);
-      return createdRegion || { id: docId, ...regionData };
+      
+      if (createdRegion) {
+        // ID'yi string olarak garantile
+        return {
+          ...createdRegion,
+          id: String(createdRegion.id || docId)
+        };
+      }
+      
+      // Eğer getById başarısız olursa, manuel olarak oluştur
+      return {
+        id: String(docId),
+        name: regionData.name,
+        ...regionData
+      };
     } catch (error) {
       console.error('Create region error:', error);
       throw new Error('Bölge oluşturulurken hata oluştu: ' + (error.message || error));
@@ -874,20 +896,24 @@ class FirebaseApiService {
         throw new Error('Bölge ID bulunamadı');
       }
       
+      // ID'yi mutlaka string'e çevir (Firebase string bekler)
+      const stringId = String(id);
+      
       // Önce region'ın var olup olmadığını kontrol et
-      const region = await FirebaseService.getById(this.COLLECTIONS.REGIONS, id);
+      const region = await FirebaseService.getById(this.COLLECTIONS.REGIONS, stringId);
       if (!region) {
         throw new Error('Silinecek bölge bulunamadı');
       }
       
       // Region'ı sil
-      await FirebaseService.delete(this.COLLECTIONS.REGIONS, id);
+      await FirebaseService.delete(this.COLLECTIONS.REGIONS, stringId);
       return { success: true, message: 'Bölge silindi' };
     } catch (error) {
       console.error('Delete region error:', error);
       console.error('Delete region error details:', {
         id,
         idType: typeof id,
+        stringId: String(id),
         errorMessage: error.message,
         errorCode: error.code,
         errorStack: error.stack

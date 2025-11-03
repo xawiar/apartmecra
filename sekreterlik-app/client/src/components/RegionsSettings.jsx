@@ -31,17 +31,21 @@ const RegionsSettings = () => {
         const newRegionData = await ApiService.createRegion(regionData);
         
         // createRegion artık tam region objesi döndürüyor (id ve name ile)
-        // Eğer hala success objesi dönerse, regionData'dan oluştur
-        const regionToAdd = newRegionData.id && newRegionData.name 
-          ? newRegionData 
-          : { id: newRegionData.id || Date.now().toString(), name: newRegion.trim() };
+        // ID'yi string'e çevir ve formatı garantile
+        const regionToAdd = newRegionData && newRegionData.id && newRegionData.name
+          ? { ...newRegionData, id: String(newRegionData.id) }
+          : { id: String(newRegionData?.id || Date.now()), name: newRegion.trim() };
+        
+        console.log('Region created:', regionToAdd);
         
         // Optimistic update: add to UI immediately
         setRegions([...regions, regionToAdd]);
         setNewRegion('');
         
-        // Fetch fresh data to ensure consistency
-        await fetchRegions();
+        // Fetch fresh data to ensure consistency (biraz bekle)
+        setTimeout(async () => {
+          await fetchRegions();
+        }, 200);
       } catch (error) {
         console.error('Error adding region:', error);
         alert(error.message || 'Bölge eklenirken hata oluştu');
@@ -57,10 +61,14 @@ const RegionsSettings = () => {
       const originalRegions = [...regions];
       
       try {
-        // Optimistic update: remove from UI immediately
-        setRegions(regions.filter(r => r.id !== id));
+        // ID'yi string'e çevir (Firebase string bekler)
+        const stringId = String(id);
+        console.log('Deleting region with ID:', stringId, 'Type:', typeof stringId);
         
-        await ApiService.deleteRegion(id);
+        // Optimistic update: remove from UI immediately
+        setRegions(regions.filter(r => String(r.id) !== stringId));
+        
+        await ApiService.deleteRegion(stringId);
         
         // Fetch fresh data to ensure consistency
         await fetchRegions();
