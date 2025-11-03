@@ -309,9 +309,48 @@ class FirebaseService {
       // Trim yap ve kontrol et
       stringId = stringId.trim();
       
+      // Son kontrol: Her iki parametre de kesinlikle string olmalı
+      if (typeof stringCollectionName !== 'string') {
+        throw new Error(`Collection name string değil! Type: ${typeof stringCollectionName}, Value: ${stringCollectionName}`);
+      }
+      if (typeof stringId !== 'string') {
+        throw new Error(`Document ID string değil! Type: ${typeof stringId}, Value: ${stringId}`);
+      }
+      
       // Firebase DocumentReference oluştur - collection name ve docId mutlaka string olmalı
-      console.log(`🔍 Creating doc reference: collection="${stringCollectionName}", id="${stringId}" (types: collection=${typeof stringCollectionName}, id=${typeof stringId})`);
-      const docRef = doc(db, stringCollectionName, stringId);
+      console.log(`🔍 Creating doc reference:`, {
+        collection: stringCollectionName,
+        collectionType: typeof stringCollectionName,
+        id: stringId,
+        idType: typeof stringId,
+        idLength: stringId.length,
+        collectionIsString: typeof stringCollectionName === 'string',
+        idIsString: typeof stringId === 'string'
+      });
+      
+      // Firebase'in doc() fonksiyonunu çağırmadan önce son kontrol
+      // Eğer hala sorun varsa, alternatif yöntem kullan
+      let docRef;
+      try {
+        // Önce normal yöntemi dene
+        docRef = doc(db, stringCollectionName, stringId);
+        
+        // docRef'in geçerli olduğunu kontrol et
+        if (!docRef) {
+          throw new Error('DocumentReference oluşturulamadı');
+        }
+      } catch (docError) {
+        console.error('❌ doc() hatası:', docError);
+        console.error('❌ doc() hatası detayları:', {
+          db: typeof db,
+          collectionName: stringCollectionName,
+          collectionNameType: typeof stringCollectionName,
+          docId: stringId,
+          docIdType: typeof stringId,
+          error: docError.message
+        });
+        throw new Error(`Firebase doc() hatası: ${docError.message}. Collection: "${stringCollectionName}", ID: "${stringId}"`);
+      }
       
       // Dokümanı sil
       await deleteDoc(docRef);

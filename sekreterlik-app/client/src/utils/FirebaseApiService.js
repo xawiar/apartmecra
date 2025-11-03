@@ -892,31 +892,81 @@ class FirebaseApiService {
 
   static async deleteRegion(id) {
     try {
-      if (!id) {
-        throw new Error('Bölge ID bulunamadı');
+      console.log('🔴 FirebaseApiService.deleteRegion called with:', {
+        id: id,
+        idType: typeof id,
+        idValue: id,
+        collection: this.COLLECTIONS.REGIONS,
+        collectionType: typeof this.COLLECTIONS.REGIONS
+      });
+      
+      if (id === null || id === undefined) {
+        throw new Error('Bölge ID null veya undefined');
       }
       
       // ID'yi mutlaka string'e çevir (Firebase string bekler)
-      const stringId = String(id);
-      
-      // Önce region'ın var olup olmadığını kontrol et
-      const region = await FirebaseService.getById(this.COLLECTIONS.REGIONS, stringId);
-      if (!region) {
-        throw new Error('Silinecek bölge bulunamadı');
+      let stringId;
+      if (typeof id === 'object') {
+        if (Array.isArray(id)) {
+          throw new Error(`Region ID array olamaz: ${JSON.stringify(id)}`);
+        }
+        if (id.id) {
+          stringId = String(id.id);
+        } else if (id.toString && typeof id.toString === 'function') {
+          stringId = String(id.toString());
+        } else {
+          throw new Error(`Region ID geçersiz object format: ${JSON.stringify(id)}`);
+        }
+      } else if (typeof id === 'number') {
+        stringId = String(id);
+      } else {
+        stringId = String(id);
       }
       
-      // Region'ı sil
-      await FirebaseService.delete(this.COLLECTIONS.REGIONS, stringId);
+      // Boş string kontrolü
+      if (!stringId || stringId.trim() === '' || stringId === 'undefined' || stringId === 'null' || stringId === '[object Object]') {
+        throw new Error(`Region ID geçersiz: ${id} -> ${stringId}`);
+      }
+      
+      stringId = stringId.trim();
+      
+      console.log('🔴 FirebaseApiService.deleteRegion - converted ID:', {
+        originalId: id,
+        stringId: stringId,
+        stringIdType: typeof stringId,
+        stringIdLength: stringId.length,
+        collection: this.COLLECTIONS.REGIONS
+      });
+      
+      // Collection name kontrolü
+      const collectionName = String(this.COLLECTIONS.REGIONS || 'regions');
+      if (!collectionName || collectionName.trim() === '') {
+        throw new Error(`Collection name geçersiz: ${this.COLLECTIONS.REGIONS}`);
+      }
+      
+      console.log('🔴 Calling FirebaseService.delete:', {
+        collectionName: collectionName,
+        collectionNameType: typeof collectionName,
+        stringId: stringId,
+        stringIdType: typeof stringId
+      });
+      
+      // Region'ı sil - getById kontrolünü kaldırdık (gereksiz)
+      await FirebaseService.delete(collectionName, stringId);
+      
+      console.log('✅ FirebaseApiService.deleteRegion - success');
       return { success: true, message: 'Bölge silindi' };
     } catch (error) {
-      console.error('Delete region error:', error);
-      console.error('Delete region error details:', {
+      console.error('❌ FirebaseApiService.deleteRegion error:', error);
+      console.error('❌ Delete region error details:', {
         id,
         idType: typeof id,
+        idValue: id,
         stringId: String(id),
+        collection: this.COLLECTIONS.REGIONS,
         errorMessage: error.message,
         errorCode: error.code,
-        errorStack: error.stack
+        errorStack: error.stack?.substring(0, 500)
       });
       throw new Error('Bölge silinirken hata oluştu: ' + (error.message || error));
     }
