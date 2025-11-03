@@ -56,6 +56,15 @@ const RegionsSettings = () => {
   };
 
   const handleDeleteRegion = async (id) => {
+    console.log('🗑️ handleDeleteRegion CALLED with id:', {
+      id: id,
+      idType: typeof id,
+      idValue: id,
+      idString: String(id || ''),
+      idIsNull: id === null,
+      idIsUndefined: id === undefined
+    });
+    
     if (window.confirm('Bu bölgeyi silmek istediğinize emin misiniz?')) {
       // Store original state for rollback
       const originalRegions = [...regions];
@@ -65,16 +74,21 @@ const RegionsSettings = () => {
         let stringId;
         
         if (id === null || id === undefined) {
+          console.error('❌ Region ID null veya undefined!', id);
           throw new Error('Region ID bulunamadı (null veya undefined)');
         }
         
+        console.log('🔍 Converting ID to string, current type:', typeof id);
+        
         if (typeof id === 'object') {
+          console.log('⚠️ ID is object, extracting...', id);
           // Eğer ID bir object ise
           if (id.id) {
             stringId = String(id.id);
           } else if (id.toString && typeof id.toString === 'function') {
             stringId = String(id.toString());
           } else {
+            console.error('❌ ID object ama id property yok!', id);
             throw new Error(`Region ID geçersiz format: ${JSON.stringify(id)}`);
           }
         } else if (typeof id === 'number') {
@@ -83,19 +97,32 @@ const RegionsSettings = () => {
           stringId = String(id);
         }
         
+        console.log('🔍 ID converted to string:', {
+          originalId: id,
+          stringId: stringId,
+          stringIdType: typeof stringId,
+          stringIdLength: stringId?.length
+        });
+        
         // Boş string kontrolü
         if (!stringId || stringId.trim() === '' || stringId === 'undefined' || stringId === 'null' || stringId === '[object Object]') {
+          console.error('❌ String ID geçersiz!', {
+            stringId: stringId,
+            originalId: id,
+            originalType: typeof id
+          });
           throw new Error(`Region ID geçersiz: ${id} (stringId: ${stringId})`);
         }
         
         stringId = stringId.trim();
         
-        console.log('🗑️ Deleting region:', {
+        console.log('🗑️ FINAL - Deleting region:', {
           originalId: id,
+          originalIdType: typeof id,
           stringId: stringId,
-          idType: typeof id,
           stringIdType: typeof stringId,
-          stringIdLength: stringId.length
+          stringIdLength: stringId.length,
+          callingApiService: true
         });
         
         // Optimistic update: remove from UI immediately
@@ -104,7 +131,9 @@ const RegionsSettings = () => {
           return rId !== stringId;
         }));
         
+        console.log('📞 Calling ApiService.deleteRegion with:', stringId);
         await ApiService.deleteRegion(stringId);
+        console.log('✅ ApiService.deleteRegion completed successfully');
         
         // Fetch fresh data to ensure consistency
         await fetchRegions();
@@ -114,8 +143,10 @@ const RegionsSettings = () => {
           id: id,
           idType: typeof id,
           idValue: id,
+          idString: String(id || ''),
           errorMessage: error.message,
-          errorStack: error.stack
+          errorCode: error.code,
+          errorStack: error.stack?.substring(0, 500)
         });
         // Revert on error
         setRegions(originalRegions);
