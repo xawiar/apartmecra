@@ -892,12 +892,19 @@ class FirebaseApiService {
 
   static async deleteRegion(id) {
     try {
-      console.log('🔴 FirebaseApiService.deleteRegion called with:', {
+      // CRITICAL: Use console.error so it's visible in production
+      console.error('[FIREBASE API] deleteRegion CALLED with:', {
         id: id,
         idType: typeof id,
         idValue: id,
+        idString: String(id || ''),
+        idIsNull: id === null,
+        idIsUndefined: id === undefined,
+        idIsArray: Array.isArray(id),
+        idIsObject: typeof id === 'object' && id !== null,
         collection: this.COLLECTIONS.REGIONS,
-        collectionType: typeof this.COLLECTIONS.REGIONS
+        collectionType: typeof this.COLLECTIONS.REGIONS,
+        collectionValue: this.COLLECTIONS.REGIONS
       });
       
       if (id === null || id === undefined) {
@@ -930,11 +937,13 @@ class FirebaseApiService {
       
       stringId = stringId.trim();
       
-      console.log('🔴 FirebaseApiService.deleteRegion - converted ID:', {
+      console.error('[FIREBASE API] deleteRegion - converted ID:', {
         originalId: id,
+        originalIdType: typeof id,
         stringId: stringId,
         stringIdType: typeof stringId,
         stringIdLength: stringId.length,
+        stringIdValue: stringId,
         collection: this.COLLECTIONS.REGIONS
       });
       
@@ -944,11 +953,15 @@ class FirebaseApiService {
         throw new Error(`Collection name geçersiz: ${this.COLLECTIONS.REGIONS}`);
       }
       
-      console.log('🔴 Calling FirebaseService.delete:', {
+      console.error('[FIREBASE API] Calling FirebaseService.delete with:', {
         collectionName: collectionName,
         collectionNameType: typeof collectionName,
+        collectionNameValue: collectionName,
+        collectionNameLength: collectionName.length,
         stringId: stringId,
-        stringIdType: typeof stringId
+        stringIdType: typeof stringId,
+        stringIdValue: stringId,
+        stringIdLength: stringId.length
       });
       
       // Region'ı sil - getById kontrolünü kaldırdık (gereksiz)
