@@ -66,8 +66,8 @@ export default defineConfig({
   
   // Build ayarları - Production için optimize
   build: {
-    // Render.com için dist'i root'a build et (RENDER environment variable varsa)
-    outDir: process.env.RENDER ? '../../dist' : 'dist',
+    // Render.com için de dist klasörüne build et (Türkçe karakter sorunu için)
+    outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false, // Production'da sourcemap kapalı
     minify: 'esbuild', // Hızlı minification

@@ -1,8 +1,8 @@
 services:
   - type: static
     name: ilce-sekreterlik
-    buildCommand: cd "Desktop/sekret ilçe/sekreterlik4/sekreterlik-app/client" && npm install && RENDER=true npm run build && RENDER=true node scripts/fix-spa-routing.js
-    staticPublishPath: "Desktop/sekret ilçe/sekreterlik4/dist"
+    buildCommand: cd "Desktop/sekret ilçe/sekreterlik4/sekreterlik-app/client" && npm install && npm run build && node scripts/fix-spa-routing.js
+    staticPublishPath: "Desktop/sekret ilçe/sekreterlik4/sekreterlik-app/client/dist"
     envVars:
       - key: VITE_USE_FIREBASE
         value: true

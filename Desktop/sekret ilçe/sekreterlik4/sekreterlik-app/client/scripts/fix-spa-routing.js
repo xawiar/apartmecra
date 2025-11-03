@@ -3,22 +3,13 @@
 const fs = require('fs');
 const path = require('path');
 
-// Check if RENDER environment variable is set (dist is built to ../../dist)
-const isRender = process.env.RENDER === 'true' || process.env.RENDER === true || process.env.RENDER === '1';
-// Try ../../dist first (Render.com), then dist (local)
-// __dirname is: Desktop/sekret ilçe/sekreterlik4/sekreterlik-app/client/scripts
-// So ../../dist is: Desktop/sekret ilçe/sekreterlik4/dist
-let distDir = path.join(__dirname, '..', '..', '..', 'dist');
-let indexHtmlPath = path.join(distDir, 'index.html');
-
-if (!fs.existsSync(indexHtmlPath)) {
-  // Try dist directory (local build)
-  distDir = path.join(__dirname, '..', 'dist');
-  indexHtmlPath = path.join(distDir, 'index.html');
-}
+// Post-build script - dist directory is always in client/dist
+// __dirname is: sekreterlik-app/client/scripts
+// So ../dist is: sekreterlik-app/client/dist
+const distDir = path.join(__dirname, '..', 'dist');
+const indexHtmlPath = path.join(distDir, 'index.html');
 
 console.log('Looking for dist directory at:', distDir);
-console.log('RENDER env:', process.env.RENDER);
 console.log('Index.html exists:', fs.existsSync(indexHtmlPath));
 
 // Routes that need index.html copies
