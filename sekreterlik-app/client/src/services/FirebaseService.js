@@ -217,9 +217,14 @@ class FirebaseService {
       
       querySnapshot.forEach((docSnap) => {
         let data = { 
-          id: docSnap.id, 
+          id: String(docSnap.id), // ID'yi mutlaka string'e çevir
           ...docSnap.data() 
         };
+        
+        // Eğer data içinde id property'si varsa, onu da string'e çevir
+        if (data.id) {
+          data.id = String(data.id);
+        }
         
         // Timestamp'leri dönüştür
         if (data.createdAt?.toDate) {
@@ -230,10 +235,16 @@ class FirebaseService {
         }
         
         // Çözme yapılıyorsa hassas alanları çöz
-        docs.push(decrypt 
+        const decryptedData = decrypt 
           ? decryptObject(data, SENSITIVE_FIELDS)
-          : data
-        );
+          : data;
+        
+        // Decrypt sonrası da ID'yi string'e çevir (decryptObject ID'yi değiştirebilir)
+        if (decryptedData) {
+          decryptedData.id = String(decryptedData.id || docSnap.id);
+        }
+        
+        docs.push(decryptedData);
       });
       
       console.log(`📖 Retrieved ${docs.length} documents from collection "${collectionName}"`);
@@ -258,11 +269,29 @@ class FirebaseService {
   static async delete(collectionName, docId) {
     try {
       // ID'yi mutlaka string'e çevir (Firebase string bekler)
-      const stringId = String(docId);
-      if (!stringId || stringId === 'undefined' || stringId === 'null') {
-        throw new Error(`Geçersiz doküman ID: ${docId}`);
+      let stringId;
+      
+      if (docId === null || docId === undefined) {
+        throw new Error(`Doküman ID null veya undefined: ${docId}`);
       }
-      const docRef = doc(db, collectionName, stringId);
+      
+      // ID'nin tipine göre string'e çevir
+      if (typeof docId === 'object') {
+        // Eğer ID bir object ise (örneğin DocumentReference), toString() kullan
+        stringId = docId.toString ? docId.toString() : String(docId);
+      } else {
+        stringId = String(docId);
+      }
+      
+      // Boş string kontrolü
+      if (!stringId || stringId.trim() === '' || stringId === 'undefined' || stringId === 'null') {
+        throw new Error(`Geçersiz doküman ID: ${docId} (stringId: ${stringId})`);
+      }
+      
+      // Firebase DocumentReference oluştur
+      const docRef = doc(db, collectionName, stringId.trim());
+      
+      // Dokümanı sil
       await deleteDoc(docRef);
       console.log(`✅ Document deleted from collection "${collectionName}" with ID: ${stringId}`);
     } catch (error) {
@@ -271,9 +300,11 @@ class FirebaseService {
         collectionName,
         docId,
         docIdType: typeof docId,
+        docIdValue: docId,
         stringId: String(docId),
         errorMessage: error.message,
-        errorCode: error.code
+        errorCode: error.code,
+        errorStack: error.stack
       });
       throw error;
     }

@@ -84,7 +84,9 @@ const RegionsSettings = () => {
   };
 
   const handleEditRegion = (region) => {
-    setEditingRegion(region.id);
+    // ID'yi string'e çevir
+    const regionId = String(region.id || '');
+    setEditingRegion(regionId);
     setEditRegionName(region.name);
   };
 
@@ -197,7 +199,10 @@ const RegionsSettings = () => {
                       Düzenle
                     </button>
                     <button
-                      onClick={() => handleDeleteRegion(region.id)}
+                      onClick={() => {
+                        console.log('Delete button clicked, region:', region, 'region.id:', region.id, 'type:', typeof region.id);
+                        handleDeleteRegion(region.id);
+                      }}
                       className="text-red-600 hover:text-red-900 text-sm font-medium px-3 py-1 rounded-lg hover:bg-red-50 transition duration-200"
                     >
                       Sil
