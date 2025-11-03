@@ -399,15 +399,33 @@ class FirebaseService {
         console.log(`🔍 Final doc() call params:`, {
           db: !!db,
           dbType: typeof db,
+          dbIsNull: db === null,
+          dbIsUndefined: db === undefined,
+          dbHasApp: db?.app,
+          dbHasType: db?.type,
           collectionPath: safeCollectionName,
           collectionPathType: typeof safeCollectionName,
+          collectionPathValue: safeCollectionName,
           documentPath: safeDocId,
           documentPathType: typeof safeDocId,
-          allAreStrings: typeof safeCollectionName === 'string' && typeof safeDocId === 'string'
+          documentPathValue: safeDocId,
+          allAreStrings: typeof safeCollectionName === 'string' && typeof safeDocId === 'string',
+          pathSegmentsValid: [safeCollectionName, safeDocId].every(s => typeof s === 'string' && s.length > 0)
         });
         
-        // Firebase doc() fonksiyonunu çağır - doc(db, collectionPath, documentPath)
-        docRef = doc(db, safeCollectionName, safeDocId);
+        // Eğer db null/undefined ise, import'u yeniden yükle
+        if (!db || db === null || db === undefined) {
+          console.error('❌ db instance null/undefined! Re-importing...');
+          const { db: newDb } = await import('../config/firebase');
+          if (!newDb || newDb === null || newDb === undefined) {
+            throw new Error('Firestore db instance bulunamadı! Firebase config kontrol edilmeli.');
+          }
+          console.log('✅ New db instance loaded:', typeof newDb);
+          docRef = doc(newDb, safeCollectionName, safeDocId);
+        } else {
+          // Firebase doc() fonksiyonunu çağır - doc(db, collectionPath, documentPath)
+          docRef = doc(db, safeCollectionName, safeDocId);
+        }
         
         // docRef'in geçerli olduğunu kontrol et
         if (!docRef) {
