@@ -428,23 +428,51 @@ class FirebaseService {
         }
         
         // Method 1: Try collection() + doc() pattern (recommended)
+        // BUT: collection() might also fail if params are not strings
         try {
+          // Validate BEFORE collection() call
+          if (typeof validatedCollectionName !== 'string') {
+            throw new Error(`Collection name not string before collection() call: type=${typeof validatedCollectionName}, value=${validatedCollectionName}`);
+          }
+          if (typeof validatedDocId !== 'string') {
+            throw new Error(`Doc ID not string before collection() call: type=${typeof validatedDocId}, value=${validatedDocId}`);
+          }
+          
+          console.error('[FIREBASE DELETE] Calling collection() with:', {
+            collectionName: validatedCollectionName,
+            collectionNameType: typeof validatedCollectionName,
+            collectionNameValue: validatedCollectionName
+          });
+          
           const collectionRef = collection(db, validatedCollectionName);
+          
+          console.error('[FIREBASE DELETE] collection() succeeded, calling doc() with:', {
+            docId: validatedDocId,
+            docIdType: typeof validatedDocId,
+            docIdValue: validatedDocId
+          });
+          
           docRef = doc(collectionRef, validatedDocId);
           console.error('[FIREBASE DELETE] ✅ doc() created using collection() + doc() pattern');
         } catch (method1Error) {
           console.error('[FIREBASE DELETE] ⚠️ Method 1 failed:', method1Error.message, method1Error);
+          console.error('[FIREBASE DELETE] Method 1 error stack:', method1Error.stack);
+          
           // Method 2: Direct doc() call (fallback)
           // One more validation before direct call
           if (typeof validatedCollectionName !== 'string' || typeof validatedDocId !== 'string') {
             throw new Error(`Method 2 validation failed: collection type=${typeof validatedCollectionName}, id type=${typeof validatedDocId}`);
           }
+          
           console.error('[FIREBASE DELETE] Trying direct doc() call with:', {
             collection: validatedCollectionName,
             collectionType: typeof validatedCollectionName,
+            collectionValue: validatedCollectionName,
             id: validatedDocId,
-            idType: typeof validatedDocId
+            idType: typeof validatedDocId,
+            idValue: validatedDocId
           });
+          
           docRef = doc(db, validatedCollectionName, validatedDocId);
           console.error('[FIREBASE DELETE] ✅ doc() created using direct doc() call');
         }
