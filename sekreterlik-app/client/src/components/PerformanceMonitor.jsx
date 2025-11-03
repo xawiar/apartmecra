@@ -12,22 +12,17 @@ const PerformanceMonitor = () => {
 
   useEffect(() => {
     // Firebase kullanımı kontrolü - Runtime'da kontrol et
-    const checkFirebase = () => {
-      // Production'da Render.com kullanılıyorsa Firebase kullanılıyor demektir
-      if (typeof window !== 'undefined') {
-        const hostname = window.location.hostname;
-        if (hostname.includes('render.com') || hostname.includes('onrender.com')) {
-          return true; // Render.com'da Firebase kullanılıyor
-        }
-      }
-      
-      const VITE_USE_FIREBASE_ENV = import.meta.env.VITE_USE_FIREBASE;
-      return (
-        VITE_USE_FIREBASE_ENV === 'true' || 
-        VITE_USE_FIREBASE_ENV === true ||
-        String(VITE_USE_FIREBASE_ENV).toLowerCase() === 'true'
-      );
-    };
+    // Production'da Render.com kullanılıyorsa Firebase kullanılıyor demektir
+    const isProduction = typeof window !== 'undefined' && (
+      window.location.hostname.includes('render.com') || 
+      window.location.hostname.includes('onrender.com')
+    );
+    
+    const VITE_USE_FIREBASE_ENV = import.meta.env.VITE_USE_FIREBASE;
+    const useFirebase = isProduction || 
+      VITE_USE_FIREBASE_ENV === 'true' || 
+      VITE_USE_FIREBASE_ENV === true ||
+      String(VITE_USE_FIREBASE_ENV).toLowerCase() === 'true';
 
     // Monitor performance metrics
     const monitorPerformance = () => {
@@ -43,15 +38,15 @@ const PerformanceMonitor = () => {
         setMetrics(prev => ({ ...prev, memoryUsage }));
       }
 
-      // Network latency - Firebase kullanılıyorsa skip et (backend API yok)
-      const useFirebase = checkFirebase();
+      // Network latency - Firebase kullanılıyorsa SKIP ET (backend API yok)
+      // Production'da (Render.com) backend API yok, sadece Firebase var
       if (useFirebase) {
         // Firebase kullanılıyorsa health check yapma - backend API yok
         setMetrics(prev => ({ ...prev, networkLatency: -1 }));
-        return;
+        return; // ERKEN RETURN - fetch çağrısı yapma
       }
 
-      // Sadece backend API kullanılıyorsa health check yap
+      // Sadece backend API kullanılıyorsa (development) health check yap
       const startTime = performance.now();
       fetch('http://localhost:5000/api/health')
         .then(response => {
