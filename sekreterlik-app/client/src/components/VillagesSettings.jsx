@@ -18,6 +18,7 @@ const VillagesSettings = () => {
     district_id: '', 
     town_id: '',
     group_no: '',
+    group_leader_id: '',
     representative_name: '',
     representative_tc: '',
     representative_phone: '',
@@ -159,7 +160,8 @@ const VillagesSettings = () => {
         name: formData.name,
         district_id: formData.district_id,
         town_id: formData.town_id || null,
-        group_no: formData.group_no || null
+        group_no: formData.group_no || null,
+        group_leader_id: formData.group_leader_id || null
       };
 
       let villageId;
@@ -215,6 +217,7 @@ const VillagesSettings = () => {
         district_id: '', 
         town_id: '',
         group_no: '',
+        group_leader_id: '',
         representative_name: '',
         representative_tc: '',
         representative_phone: '',
@@ -244,6 +247,7 @@ const VillagesSettings = () => {
       district_id: village.district_id, 
       town_id: village.town_id || '',
       group_no: village.group_no || '',
+      group_leader_id: village.group_leader_id || '',
       representative_name: '',
       representative_tc: '',
       representative_phone: '',
@@ -463,6 +467,47 @@ const VillagesSettings = () => {
     XLSX.writeFile(wb, 'koy_ekleme_sablonu.xlsx');
   };
 
+  const exportRepresentativesToExcel = async () => {
+    try {
+      const representatives = await ApiService.getVillageRepresentatives();
+      const villages = await ApiService.getVillages();
+      const districts = await ApiService.getDistricts();
+      
+      // Prepare data for Excel
+      const excelData = [
+        ['Köy Adı', 'İlçe Adı', 'Temsilci Adı', 'Temsilci TC', 'Temsilci Telefon', 'Grup No']
+      ];
+      
+      representatives.forEach(rep => {
+        const village = villages.find(v => String(v.id) === String(rep.village_id));
+        const district = village ? districts.find(d => String(d.id) === String(village.district_id)) : null;
+        
+        excelData.push([
+          village?.name || '',
+          district?.name || '',
+          rep.name || '',
+          rep.tc || '',
+          rep.phone || '',
+          village?.group_no || ''
+        ]);
+      });
+      
+      const ws = XLSX.utils.aoa_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Köy Temsilcileri');
+      
+      const fileName = `koy_temsilcileri_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      
+      setMessage('Köy temsilcileri Excel dosyası olarak indirildi');
+      setMessageType('success');
+    } catch (error) {
+      console.error('Error exporting representatives:', error);
+      setMessage('Excel dosyası oluşturulurken hata oluştu: ' + error.message);
+      setMessageType('error');
+    }
+  };
+
   // Filter towns by selected district
   const filteredTowns = towns.filter(town => 
     formData.district_id ? town.district_id === parseInt(formData.district_id) : true
@@ -490,6 +535,15 @@ const VillagesSettings = () => {
           <p className="text-sm text-gray-600">Köy ekleyin, düzenleyin veya silin</p>
         </div>
         <div className="flex space-x-3">
+          <button
+            onClick={exportRepresentativesToExcel}
+            className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors duration-200"
+          >
+            <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Temsilcileri Excel'e Aktar
+          </button>
           <button
             onClick={downloadExcelTemplate}
             className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-200"
@@ -614,6 +668,25 @@ const VillagesSettings = () => {
                     placeholder="Grup numarası (örn: 1, 2, 3)"
                     min="1"
                   />
+                </div>
+                <div>
+                  <label htmlFor="group_leader_id" className="block text-sm font-medium text-gray-700 mb-2">
+                    Grup Lideri (İsteğe Bağlı)
+                  </label>
+                  <select
+                    id="group_leader_id"
+                    name="group_leader_id"
+                    value={formData.group_leader_id}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="">Grup lideri seçin</option>
+                    {members.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
