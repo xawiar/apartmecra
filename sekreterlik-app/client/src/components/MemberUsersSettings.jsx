@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ApiService from '../utils/ApiService';
+import { decryptData } from '../utils/crypto';
 
 const MemberUsersSettings = () => {
   const [memberUsers, setMemberUsers] = useState([]);
@@ -386,6 +387,9 @@ const MemberUsersSettings = () => {
                   Kullanıcı Adı
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Şifre (Telefon)
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Durum
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -396,7 +400,7 @@ const MemberUsersSettings = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {memberUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
                     Henüz üye kullanıcısı bulunmuyor
                   </td>
                 </tr>
@@ -427,6 +431,35 @@ const MemberUsersSettings = () => {
                       ) : (
                         <div className="text-sm text-gray-900">{user.username}</div>
                       )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {(() => {
+                        // Şifreyi decrypt et
+                        let decryptedPassword = user.password;
+                        if (decryptedPassword && typeof decryptedPassword === 'string' && decryptedPassword.startsWith('U2FsdGVkX1')) {
+                          try {
+                            decryptedPassword = decryptData(decryptedPassword);
+                          } catch (e) {
+                            // Decrypt hatası - olduğu gibi göster
+                          }
+                        }
+                        const expectedPassword = member?.phone || 'Telefon bulunamadı';
+                        const isCorrect = decryptedPassword === expectedPassword;
+                        
+                        return (
+                          <div>
+                            <div className={`text-sm font-mono ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                              {decryptedPassword || '-'}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">
+                              (Beklenen: {expectedPassword})
+                              {!isCorrect && decryptedPassword && (
+                                <span className="text-red-500 ml-1">⚠️ Yanlış!</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
