@@ -162,17 +162,20 @@ const VillagesSettings = () => {
         group_no: formData.group_no || null
       };
 
+      let villageId;
       if (editingVillage) {
-        village = await ApiService.updateVillage(editingVillage.id, submitData);
+        await ApiService.updateVillage(editingVillage.id, submitData);
+        villageId = editingVillage.id; // Use the existing ID
         setMessage('Köy başarıyla güncellendi');
       } else {
         village = await ApiService.createVillage(submitData);
+        villageId = village.id; // Use the newly created ID
         setMessage('Köy başarıyla eklendi');
       }
 
       // Önce mevcut temsilci ve sorumlu verilerini sil
-      const existingRepresentatives = villageRepresentatives.filter(rep => rep.village_id === village.id);
-      const existingSupervisors = villageSupervisors.filter(sup => sup.village_id === village.id);
+      const existingRepresentatives = villageRepresentatives.filter(rep => rep.village_id === villageId);
+      const existingSupervisors = villageSupervisors.filter(sup => sup.village_id === villageId);
       
       for (const rep of existingRepresentatives) {
         await ApiService.deleteVillageRepresentative(rep.id);
@@ -188,7 +191,7 @@ const VillagesSettings = () => {
           name: formData.representative_name,
           tc: formData.representative_tc,
           phone: formData.representative_phone,
-          village_id: village.id,
+          village_id: villageId,
           member_id: formData.representative_member_id || null
         };
         await ApiService.createVillageRepresentative(representativeData);
@@ -200,7 +203,7 @@ const VillagesSettings = () => {
           name: formData.supervisor_name,
           tc: formData.supervisor_tc,
           phone: formData.supervisor_phone,
-          village_id: village.id,
+          village_id: villageId,
           member_id: formData.supervisor_member_id || null
         };
         await ApiService.createVillageSupervisor(supervisorData);

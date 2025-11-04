@@ -162,17 +162,20 @@ const NeighborhoodsSettings = () => {
         group_no: formData.group_no || null
       };
 
+      let neighborhoodId;
       if (editingNeighborhood) {
-        neighborhood = await ApiService.updateNeighborhood(editingNeighborhood.id, submitData);
+        await ApiService.updateNeighborhood(editingNeighborhood.id, submitData);
+        neighborhoodId = editingNeighborhood.id; // Use the existing ID
         setMessage('Mahalle başarıyla güncellendi');
       } else {
         neighborhood = await ApiService.createNeighborhood(submitData);
+        neighborhoodId = neighborhood.id; // Use the newly created ID
         setMessage('Mahalle başarıyla eklendi');
       }
 
       // Önce mevcut temsilci ve sorumlu verilerini sil
-      const existingRepresentatives = neighborhoodRepresentatives.filter(rep => rep.neighborhood_id === neighborhood.id);
-      const existingSupervisors = neighborhoodSupervisors.filter(sup => sup.neighborhood_id === neighborhood.id);
+      const existingRepresentatives = neighborhoodRepresentatives.filter(rep => rep.neighborhood_id === neighborhoodId);
+      const existingSupervisors = neighborhoodSupervisors.filter(sup => sup.neighborhood_id === neighborhoodId);
       
       for (const rep of existingRepresentatives) {
         await ApiService.deleteNeighborhoodRepresentative(rep.id);
@@ -188,7 +191,7 @@ const NeighborhoodsSettings = () => {
           name: formData.representative_name,
           tc: formData.representative_tc,
           phone: formData.representative_phone,
-          neighborhood_id: neighborhood.id,
+          neighborhood_id: neighborhoodId,
           member_id: formData.representative_member_id || null
         };
         await ApiService.createNeighborhoodRepresentative(representativeData);
@@ -200,7 +203,7 @@ const NeighborhoodsSettings = () => {
           name: formData.supervisor_name,
           tc: formData.supervisor_tc,
           phone: formData.supervisor_phone,
-          neighborhood_id: neighborhood.id,
+          neighborhood_id: neighborhoodId,
           member_id: formData.supervisor_member_id || null
         };
         await ApiService.createNeighborhoodSupervisor(supervisorData);
