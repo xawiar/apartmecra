@@ -58,7 +58,6 @@ console.warn = (...args) => {
 };
 
 // Also filter console.log for network errors (some libraries log errors via console.log)
-const originalConsoleLog = console.log;
 console.log = (...args) => {
   const message = args.join(' ');
   if (USE_FIREBASE && (
