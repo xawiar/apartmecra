@@ -5,9 +5,13 @@ import ApiService from '../utils/ApiService';
 const VillagesPage = () => {
   const [villages, setVillages] = useState([]);
   const [villageRepresentatives, setVillageRepresentatives] = useState([]);
+  const [villageSupervisors, setVillageSupervisors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterGroupNo, setFilterGroupNo] = useState('');
+  const [editingGroup, setEditingGroup] = useState(null);
+  const [groupNoInput, setGroupNoInput] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -16,17 +20,31 @@ const VillagesPage = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [villagesData, representativesData] = await Promise.all([
+      const [villagesData, representativesData, supervisorsData] = await Promise.all([
         ApiService.getVillages(),
-        ApiService.getVillageRepresentatives()
+        ApiService.getVillageRepresentatives(),
+        ApiService.getVillageSupervisors()
       ]);
       setVillages(villagesData);
       setVillageRepresentatives(representativesData);
+      setVillageSupervisors(supervisorsData);
     } catch (error) {
       console.error('Error fetching villages:', error);
       setError('Köyler yüklenirken hata oluştu');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGroupNoChange = async (villageId, groupNo) => {
+    try {
+      await ApiService.updateVillage(villageId, { group_no: groupNo || null });
+      await fetchData();
+      setEditingGroup(null);
+      setGroupNoInput('');
+    } catch (error) {
+      console.error('Error updating group no:', error);
+      alert('Grup numarası güncellenirken hata oluştu');
     }
   };
 
@@ -38,11 +56,18 @@ const VillagesPage = () => {
     v => !villagesWithReps.has(v.id)
   ).length;
 
-  const filteredVillages = villages.filter(village =>
-    village.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    village.district_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    village.town_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredVillages = villages.filter(village => {
+    const matchesSearch = 
+      village.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      village.district_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      village.town_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesGroup = filterGroupNo 
+      ? String(village.group_no || '') === String(filterGroupNo)
+      : true;
+    
+    return matchesSearch && matchesGroup;
+  });
 
   if (loading) {
     return (
@@ -91,8 +116,8 @@ const VillagesPage = () => {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      {/* Search and Filter */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-3">
         <input
           type="text"
           placeholder="Köy adı, ilçe veya belde ile ara..."
@@ -100,6 +125,26 @@ const VillagesPage = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         />
+        <div className="flex items-center space-x-2">
+          <label htmlFor="filterGroupNo" className="text-sm text-gray-700 whitespace-nowrap">Grup No Filtrele:</label>
+          <input
+            type="number"
+            id="filterGroupNo"
+            value={filterGroupNo}
+            onChange={(e) => setFilterGroupNo(e.target.value)}
+            className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Tümü"
+            min="1"
+          />
+          {filterGroupNo && (
+            <button
+              onClick={() => setFilterGroupNo('')}
+              className="text-sm text-indigo-600 hover:text-indigo-800"
+            >
+              Temizle
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table */}
@@ -125,6 +170,15 @@ const VillagesPage = () => {
                     Belde
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Grup
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Temsilci
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Müfettiş
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Temsilci Durumu
                   </th>
                 </tr>
@@ -132,6 +186,10 @@ const VillagesPage = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredVillages.map((village) => {
                   const hasRepresentative = villagesWithReps.has(village.id);
+                  const representative = villageRepresentatives.find(rep => rep.village_id === village.id);
+                  const supervisor = villageSupervisors.find(sup => sup.village_id === village.id);
+                  const isEditing = editingGroup === village.id;
+                  
                   return (
                     <tr key={village.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -142,6 +200,61 @@ const VillagesPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {village.town_name || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {isEditing ? (
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="number"
+                              value={groupNoInput}
+                              onChange={(e) => setGroupNoInput(e.target.value)}
+                              className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                              placeholder="Grup"
+                              min="1"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => handleGroupNoChange(village.id, groupNoInput)}
+                              className="text-green-600 hover:text-green-800 text-sm"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingGroup(null);
+                                setGroupNoInput('');
+                              }}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            {village.group_no ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                Grup {village.group_no}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">-</span>
+                            )}
+                            <button
+                              onClick={() => {
+                                setEditingGroup(village.id);
+                                setGroupNoInput(village.group_no || '');
+                              }}
+                              className="text-indigo-600 hover:text-indigo-800 text-xs"
+                            >
+                              ✏️
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {representative?.name || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {supervisor?.name || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {hasRepresentative ? (

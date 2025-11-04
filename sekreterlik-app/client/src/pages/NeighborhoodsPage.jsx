@@ -5,9 +5,13 @@ import ApiService from '../utils/ApiService';
 const NeighborhoodsPage = () => {
   const [neighborhoods, setNeighborhoods] = useState([]);
   const [neighborhoodRepresentatives, setNeighborhoodRepresentatives] = useState([]);
+  const [neighborhoodSupervisors, setNeighborhoodSupervisors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterGroupNo, setFilterGroupNo] = useState('');
+  const [editingGroup, setEditingGroup] = useState(null);
+  const [groupNoInput, setGroupNoInput] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -16,17 +20,31 @@ const NeighborhoodsPage = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [neighborhoodsData, representativesData] = await Promise.all([
+      const [neighborhoodsData, representativesData, supervisorsData] = await Promise.all([
         ApiService.getNeighborhoods(),
-        ApiService.getNeighborhoodRepresentatives()
+        ApiService.getNeighborhoodRepresentatives(),
+        ApiService.getNeighborhoodSupervisors()
       ]);
       setNeighborhoods(neighborhoodsData);
       setNeighborhoodRepresentatives(representativesData);
+      setNeighborhoodSupervisors(supervisorsData);
     } catch (error) {
       console.error('Error fetching neighborhoods:', error);
       setError('Mahalleler yüklenirken hata oluştu');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGroupNoChange = async (neighborhoodId, groupNo) => {
+    try {
+      await ApiService.updateNeighborhood(neighborhoodId, { group_no: groupNo || null });
+      await fetchData();
+      setEditingGroup(null);
+      setGroupNoInput('');
+    } catch (error) {
+      console.error('Error updating group no:', error);
+      alert('Grup numarası güncellenirken hata oluştu');
     }
   };
 
@@ -38,11 +56,18 @@ const NeighborhoodsPage = () => {
     n => !neighborhoodsWithReps.has(n.id)
   ).length;
 
-  const filteredNeighborhoods = neighborhoods.filter(neighborhood =>
-    neighborhood.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    neighborhood.district_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    neighborhood.town_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredNeighborhoods = neighborhoods.filter(neighborhood => {
+    const matchesSearch = 
+      neighborhood.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      neighborhood.district_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      neighborhood.town_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesGroup = filterGroupNo 
+      ? String(neighborhood.group_no || '') === String(filterGroupNo)
+      : true;
+    
+    return matchesSearch && matchesGroup;
+  });
 
   if (loading) {
     return (
@@ -91,8 +116,8 @@ const NeighborhoodsPage = () => {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      {/* Search and Filter */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-3">
         <input
           type="text"
           placeholder="Mahalle adı, ilçe veya belde ile ara..."
@@ -100,6 +125,26 @@ const NeighborhoodsPage = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         />
+        <div className="flex items-center space-x-2">
+          <label htmlFor="filterGroupNo" className="text-sm text-gray-700 whitespace-nowrap">Grup No Filtrele:</label>
+          <input
+            type="number"
+            id="filterGroupNo"
+            value={filterGroupNo}
+            onChange={(e) => setFilterGroupNo(e.target.value)}
+            className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Tümü"
+            min="1"
+          />
+          {filterGroupNo && (
+            <button
+              onClick={() => setFilterGroupNo('')}
+              className="text-sm text-indigo-600 hover:text-indigo-800"
+            >
+              Temizle
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table */}
@@ -125,6 +170,15 @@ const NeighborhoodsPage = () => {
                     Belde
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Grup
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Temsilci
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Müfettiş
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Temsilci Durumu
                   </th>
                 </tr>
@@ -132,6 +186,10 @@ const NeighborhoodsPage = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredNeighborhoods.map((neighborhood) => {
                   const hasRepresentative = neighborhoodsWithReps.has(neighborhood.id);
+                  const representative = neighborhoodRepresentatives.find(rep => rep.neighborhood_id === neighborhood.id);
+                  const supervisor = neighborhoodSupervisors.find(sup => sup.neighborhood_id === neighborhood.id);
+                  const isEditing = editingGroup === neighborhood.id;
+                  
                   return (
                     <tr key={neighborhood.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -142,6 +200,61 @@ const NeighborhoodsPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {neighborhood.town_name || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {isEditing ? (
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="number"
+                              value={groupNoInput}
+                              onChange={(e) => setGroupNoInput(e.target.value)}
+                              className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                              placeholder="Grup"
+                              min="1"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => handleGroupNoChange(neighborhood.id, groupNoInput)}
+                              className="text-green-600 hover:text-green-800 text-sm"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingGroup(null);
+                                setGroupNoInput('');
+                              }}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            {neighborhood.group_no ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                Grup {neighborhood.group_no}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">-</span>
+                            )}
+                            <button
+                              onClick={() => {
+                                setEditingGroup(neighborhood.id);
+                                setGroupNoInput(neighborhood.group_no || '');
+                              }}
+                              className="text-indigo-600 hover:text-indigo-800 text-xs"
+                            >
+                              ✏️
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {representative?.name || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {supervisor?.name || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {hasRepresentative ? (

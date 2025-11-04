@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ApiService from '../utils/ApiService';
+import { decryptData } from '../utils/crypto';
 
 const RepresentativesPage = () => {
   const [neighborhoodRepresentatives, setNeighborhoodRepresentatives] = useState([]);
@@ -21,8 +22,20 @@ const RepresentativesPage = () => {
         ApiService.getNeighborhoodRepresentatives(),
         ApiService.getVillageRepresentatives()
       ]);
-      setNeighborhoodRepresentatives(neighborhoodData);
-      setVillageRepresentatives(villageData);
+      
+      // Decrypt TC fields
+      const decryptedNeighborhoodData = neighborhoodData.map(rep => ({
+        ...rep,
+        tc: rep.tc ? (typeof rep.tc === 'string' ? decryptData(rep.tc) : rep.tc) : rep.tc
+      }));
+      
+      const decryptedVillageData = villageData.map(rep => ({
+        ...rep,
+        tc: rep.tc ? (typeof rep.tc === 'string' ? decryptData(rep.tc) : rep.tc) : rep.tc
+      }));
+      
+      setNeighborhoodRepresentatives(decryptedNeighborhoodData);
+      setVillageRepresentatives(decryptedVillageData);
     } catch (error) {
       console.error('Error fetching representatives:', error);
       setError('Temsilciler yüklenirken hata oluştu');
