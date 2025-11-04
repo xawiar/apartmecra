@@ -889,6 +889,27 @@ class FirebaseApiService {
       // archived alanını güncelle (şifreleme yapma)
       await FirebaseService.update(this.COLLECTIONS.MEMBERS, id, { archived: true }, false);
       
+      // Üye kullanıcısını pasif yap (eğer varsa)
+      try {
+        const memberUsers = await FirebaseService.findByField(
+          this.COLLECTIONS.MEMBER_USERS,
+          'memberId',
+          id
+        );
+        
+        if (memberUsers && memberUsers.length > 0) {
+          for (const memberUser of memberUsers) {
+            await FirebaseService.update(this.COLLECTIONS.MEMBER_USERS, memberUser.id, {
+              isActive: false
+            });
+            console.log('✅ Member user deactivated:', memberUser.id);
+          }
+        }
+      } catch (userError) {
+        console.warn('⚠️ Error deactivating member user (non-critical):', userError);
+        // Devam et, member user pasif yapma hatası kritik değil
+      }
+      
       // Güncellenmiş üyeyi tekrar getir ve döndür
       const updatedMember = await FirebaseService.getById(this.COLLECTIONS.MEMBERS, id);
       
