@@ -10,6 +10,8 @@ const MemberForm = ({ member, regions, positions, onClose, onMemberSaved }) => {
     region: ''
   });
   const [error, setError] = useState(''); // Add state for error messages
+  const [successMessage, setSuccessMessage] = useState(''); // Add state for success messages with credentials
+  const [showCredentials, setShowCredentials] = useState(false); // Add state to show credentials
 
   useEffect(() => {
     if (member) {
@@ -59,6 +61,26 @@ const MemberForm = ({ member, regions, positions, onClose, onMemberSaved }) => {
         console.log('Creating new member'); // Debug log
         response = await ApiService.createMember(formData);
         console.log('Create response:', response); // Debug log
+        
+        // Eğer kullanıcı bilgileri varsa göster
+        if (response.userCredentials) {
+          const { username, password } = response.userCredentials;
+          setSuccessMessage(
+            `Üye başarıyla oluşturuldu!\n\nKullanıcı Bilgileri:\nKullanıcı Adı: ${username}\nŞifre: ${password}\n\nLütfen bu bilgileri not edin.`
+          );
+          setShowCredentials(true);
+          // 5 saniye sonra modal'ı kapat
+          setTimeout(() => {
+            setShowCredentials(false);
+            setSuccessMessage('');
+            if (onMemberSaved) {
+              onMemberSaved();
+            } else if (onClose) {
+              onClose();
+            }
+          }, 5000);
+          return; // Modal'ı hemen kapatma, kullanıcı bilgilerini göster
+        }
       }
       
       console.log('Member saved successfully'); // Debug log
@@ -99,6 +121,60 @@ const MemberForm = ({ member, regions, positions, onClose, onMemberSaved }) => {
 
   return (
     <div className="space-y-4">
+      {successMessage && showCredentials && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3 flex-1">
+              <h3 className="text-sm font-medium text-green-800 mb-2">
+                Üye Başarıyla Oluşturuldu
+              </h3>
+              <div className="text-sm text-green-700 space-y-2">
+                {successMessage.split('\n').map((line, idx) => {
+                  if (line.includes('Kullanıcı Adı:')) {
+                    const parts = line.split(':');
+                    return (
+                      <div key={idx} className="font-semibold">
+                        {parts[0]}: <span className="font-mono bg-green-100 px-2 py-1 rounded">{parts[1].trim()}</span>
+                      </div>
+                    );
+                  } else if (line.includes('Şifre:')) {
+                    const parts = line.split(':');
+                    return (
+                      <div key={idx} className="font-semibold">
+                        {parts[0]}: <span className="font-mono bg-green-100 px-2 py-1 rounded">{parts[1].trim()}</span>
+                      </div>
+                    );
+                  } else if (line.trim() === '') {
+                    return <br key={idx} />;
+                  } else {
+                    return <div key={idx}>{line}</div>;
+                  }
+                })}
+              </div>
+              <button
+                onClick={() => {
+                  setShowCredentials(false);
+                  setSuccessMessage('');
+                  if (onMemberSaved) {
+                    onMemberSaved();
+                  } else if (onClose) {
+                    onClose();
+                  }
+                }}
+                className="mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Tamam
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex">

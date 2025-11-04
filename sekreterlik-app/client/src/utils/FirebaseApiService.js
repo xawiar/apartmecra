@@ -519,12 +519,20 @@ class FirebaseApiService {
           docId
         );
         
+        let userCredentials = null;
+        
         if (!existingUsers || existingUsers.length === 0) {
           // Kullanıcı yoksa otomatik oluştur (sadece Firestore'a kaydet)
           // Username: TC numarası veya telefon numarası
           const username = memberData.tc || memberData.phone || `member_${docId}`;
           // Şifre: TC numarası (eğer varsa) veya varsayılan şifre
           const password = memberData.tc || '123456'; // Varsayılan şifre
+          
+          // Kullanıcı bilgilerini kaydet (response'a eklenecek)
+          userCredentials = {
+            username: username,
+            password: password
+          };
           
           console.log('🔄 Creating automatic user for member (Firestore only):', docId, 'username:', username);
           
@@ -545,6 +553,19 @@ class FirebaseApiService {
           
           console.log('✅ Automatic user created successfully (Firestore only):', userDocId);
         } else {
+          // Mevcut kullanıcı varsa, bilgilerini al
+          const existingUser = existingUsers[0];
+          // Şifreyi decrypt et (gösterim için)
+          let decryptedPassword = existingUser.password;
+          if (decryptedPassword && typeof decryptedPassword === 'string' && decryptedPassword.startsWith('U2FsdGVkX1')) {
+            decryptedPassword = decryptData(decryptedPassword);
+          }
+          
+          userCredentials = {
+            username: existingUser.username,
+            password: decryptedPassword || existingUser.password || '123456'
+          };
+          
           console.log('ℹ️ User already exists for member:', docId);
         }
       } catch (userError) {
@@ -553,17 +574,19 @@ class FirebaseApiService {
       }
       
       // Üye objesini döndür (id ile birlikte)
-      if (createdMember) {
-        return createdMember;
-      } else {
-        // Eğer henüz okunamıyorsa, temel bilgilerle döndür
-        return { 
-          id: docId, 
-          ...memberData,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
+      const returnData = createdMember || { 
+        id: docId, 
+        ...memberData,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Kullanıcı bilgilerini ekle (eğer oluşturulduysa)
+      if (userCredentials) {
+        returnData.userCredentials = userCredentials;
       }
+      
+      return returnData;
     } catch (error) {
       console.error('❌ Create member error:', error);
       console.error('Error details:', {
