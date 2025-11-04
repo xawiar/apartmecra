@@ -50,7 +50,8 @@ class FirebaseApiService {
     MESSAGES: 'messages',
     MESSAGE_GROUPS: 'message_groups',
     PERSONAL_DOCUMENTS: 'personal_documents',
-    ARCHIVE: 'archive'
+    ARCHIVE: 'archive',
+    GROUPS: 'groups'
   };
 
   // Auth API
@@ -1896,6 +1897,65 @@ class FirebaseApiService {
     } catch (error) {
       console.error('Delete member user error:', error);
       throw new Error('Kullanıcı silinirken hata oluştu');
+    }
+  }
+
+  // Groups CRUD
+  static async getGroups() {
+    try {
+      return await FirebaseService.getAll(this.COLLECTIONS.GROUPS);
+    } catch (error) {
+      console.error('Get groups error:', error);
+      return [];
+    }
+  }
+
+  static async getGroupByGroupNo(groupNo) {
+    try {
+      const groups = await FirebaseService.getAll(this.COLLECTIONS.GROUPS);
+      return groups.find(g => String(g.group_no) === String(groupNo));
+    } catch (error) {
+      console.error('Get group by group_no error:', error);
+      return null;
+    }
+  }
+
+  static async createOrUpdateGroup(groupNo, groupLeaderId) {
+    try {
+      const existingGroup = await this.getGroupByGroupNo(groupNo);
+      
+      if (existingGroup) {
+        // Update existing group
+        await FirebaseService.update(this.COLLECTIONS.GROUPS, existingGroup.id, {
+          group_no: groupNo,
+          group_leader_id: groupLeaderId || null
+        });
+        return { success: true, id: existingGroup.id, message: 'Grup güncellendi' };
+      } else {
+        // Create new group
+        const docId = await FirebaseService.create(this.COLLECTIONS.GROUPS, null, {
+          group_no: groupNo,
+          group_leader_id: groupLeaderId || null
+        });
+        return { success: true, id: docId, message: 'Grup oluşturuldu' };
+      }
+    } catch (error) {
+      console.error('Create or update group error:', error);
+      throw new Error('Grup oluşturulurken veya güncellenirken hata oluştu');
+    }
+  }
+
+  static async deleteGroup(groupNo) {
+    try {
+      const group = await this.getGroupByGroupNo(groupNo);
+      if (group) {
+        await FirebaseService.delete(this.COLLECTIONS.GROUPS, group.id);
+        return { success: true, message: 'Grup silindi' };
+      }
+      return { success: false, message: 'Grup bulunamadı' };
+    } catch (error) {
+      console.error('Delete group error:', error);
+      throw new Error('Grup silinirken hata oluştu');
     }
   }
 }

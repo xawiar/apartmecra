@@ -22,6 +22,7 @@ import ObserversPage from './pages/ObserversPage';
 import RepresentativesPage from './pages/RepresentativesPage';
 import NeighborhoodsPage from './pages/NeighborhoodsPage';
 import VillagesPage from './pages/VillagesPage';
+import GroupsPage from './pages/GroupsPage';
 import DistrictPresidentDashboardPage from './pages/DistrictPresidentDashboardPage';
 import TownPresidentDashboardPage from './pages/TownPresidentDashboardPage';
 import CalendarPage from './pages/CalendarPage';
@@ -237,6 +238,7 @@ function AppContent() {
             <Route path="/election-preparation/representatives" element={<RepresentativesPage />} />
             <Route path="/election-preparation/neighborhoods" element={<NeighborhoodsPage />} />
             <Route path="/election-preparation/villages" element={<VillagesPage />} />
+            <Route path="/election-preparation/groups" element={<GroupsPage />} />
                           <Route path="/meetings" element={<MeetingsPage />} />
                           <Route path="/events" element={<EventsPage />} />
                           <Route path="/archive" element={<ArchivePage />} />

@@ -19,7 +19,6 @@ const NeighborhoodsSettings = () => {
     district_id: '', 
     town_id: '',
     group_no: '',
-    group_leader_id: '',
     representative_name: '',
     representative_tc: '',
     representative_phone: '',
@@ -160,8 +159,7 @@ const NeighborhoodsSettings = () => {
         name: formData.name,
         district_id: formData.district_id,
         town_id: formData.town_id || null,
-        group_no: formData.group_no || null,
-        group_leader_id: formData.group_leader_id || null
+        group_no: formData.group_no || null
       };
 
       let neighborhoodId;
@@ -217,7 +215,6 @@ const NeighborhoodsSettings = () => {
         district_id: '', 
         town_id: '',
         group_no: '',
-        group_leader_id: '',
         representative_name: '',
         representative_tc: '',
         representative_phone: '',
@@ -247,7 +244,6 @@ const NeighborhoodsSettings = () => {
       district_id: neighborhood.district_id, 
       town_id: neighborhood.town_id || '',
       group_no: neighborhood.group_no || '',
-      group_leader_id: neighborhood.group_leader_id || '',
       representative_name: '',
       representative_tc: '',
       representative_phone: '',
@@ -668,25 +664,6 @@ const NeighborhoodsSettings = () => {
                     placeholder="Grup numarası (örn: 1, 2, 3)"
                     min="1"
                   />
-                </div>
-                <div>
-                  <label htmlFor="group_leader_id" className="block text-sm font-medium text-gray-700 mb-2">
-                    Grup Lideri (İsteğe Bağlı)
-                  </label>
-                  <select
-                    id="group_leader_id"
-                    name="group_leader_id"
-                    value={formData.group_leader_id}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  >
-                    <option value="">Grup lideri seçin</option>
-                    {members.map((member) => (
-                      <option key={member.id} value={member.id}>
-                        {member.name}
-                      </option>
-                    ))}
-                  </select>
                 </div>
               </div>
             </div>

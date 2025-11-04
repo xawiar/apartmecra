@@ -2411,6 +2411,59 @@ class ApiService {
     return response.json();
   }
 
+  // Groups API
+  static async getGroups() {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.getGroups();
+    }
+
+    const response = await fetch(`${API_BASE_URL}/groups`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    return response.json();
+  }
+
+  static async getGroupByGroupNo(groupNo) {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.getGroupByGroupNo(groupNo);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/groups/${groupNo}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    return response.json();
+  }
+
+  static async createOrUpdateGroup(groupNo, groupLeaderId) {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.createOrUpdateGroup(groupNo, groupLeaderId);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/groups`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({
+        group_no: groupNo,
+        group_leader_id: groupLeaderId || null
+      }),
+    });
+    return response.json();
+  }
+
+  static async deleteGroup(groupNo) {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.deleteGroup(groupNo);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/groups/${groupNo}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    return response.json();
+  }
+
 }
 
 export default ApiService;
