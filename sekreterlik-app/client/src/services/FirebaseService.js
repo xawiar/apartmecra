@@ -478,6 +478,13 @@ class FirebaseService {
         if (!docRef) {
           throw new Error('DocumentReference oluşturulamadı - docRef null/undefined');
         }
+        
+        console.error('[FIREBASE DELETE] docRef created successfully:', {
+          docRefType: typeof docRef,
+          docRefId: docRef?.id,
+          docRefPath: docRef?.path,
+          collectionRefPath: collectionRef?.path
+        });
       } catch (docError) {
         console.error('❌ Firebase doc() CALL FAILED:', docError);
         console.error('❌ doc() error details:', {
@@ -500,8 +507,31 @@ class FirebaseService {
       }
       
       // Dokümanı sil
-      await deleteDoc(docRef);
-      console.log(`✅ Document deleted from collection "${finalCollectionName}" with ID: ${finalDocId}`);
+      try {
+        console.error('[FIREBASE DELETE] Calling deleteDoc() with:', {
+          docRefType: typeof docRef,
+          docRefId: docRef?.id,
+          docRefPath: docRef?.path,
+          collection: finalCollectionName,
+          id: finalDocId
+        });
+        
+        await deleteDoc(docRef);
+        console.log(`✅ Document deleted from collection "${finalCollectionName}" with ID: ${finalDocId}`);
+      } catch (deleteError) {
+        console.error('❌ deleteDoc() CALL FAILED:', deleteError);
+        console.error('❌ deleteDoc() error details:', {
+          errorMessage: deleteError.message,
+          errorCode: deleteError.code,
+          errorStack: deleteError.stack?.substring(0, 500),
+          docRefType: typeof docRef,
+          docRefId: docRef?.id,
+          docRefPath: docRef?.path,
+          collection: finalCollectionName,
+          id: finalDocId
+        });
+        throw new Error(`Firebase deleteDoc() hatası: ${deleteError.message}. Collection: "${finalCollectionName}", ID: "${finalDocId}"`);
+      }
     } catch (error) {
       console.error(`❌ Error deleting document from ${collectionName}:`, error);
       console.error(`❌ Delete error details:`, {
