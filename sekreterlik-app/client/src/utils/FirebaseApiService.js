@@ -93,10 +93,34 @@ class FirebaseApiService {
             // Eğer hala encrypted görünüyorsa, manuel decrypt et
             let decryptedPassword = memberUser.password;
             
+            console.log('🔍 Login - Member user found:', {
+              username: memberUser.username,
+              passwordFromDB: memberUser.password,
+              passwordType: typeof memberUser.password,
+              passwordLength: memberUser.password?.length,
+              passwordInput: password,
+              passwordInputType: typeof password,
+              passwordInputLength: password?.length
+            });
+            
             // Eğer password şifrelenmiş görünüyorsa (U2FsdGVkX1 ile başlıyorsa), decrypt et
             if (decryptedPassword && typeof decryptedPassword === 'string' && decryptedPassword.startsWith('U2FsdGVkX1')) {
+              console.log('🔓 Decrypting password...');
               decryptedPassword = decryptData(decryptedPassword);
+              console.log('🔓 Decrypted password:', {
+                decrypted: decryptedPassword,
+                decryptedLength: decryptedPassword?.length,
+                matchesInput: decryptedPassword === password
+              });
             }
+            
+            console.log('🔍 Password comparison:', {
+              decryptedPassword,
+              memberUserPassword: memberUser.password,
+              inputPassword: password,
+              decryptedMatches: decryptedPassword === password,
+              originalMatches: memberUser.password === password
+            });
             
             // Şifre doğru mu kontrol et (decrypt edilmiş password veya orijinal password ile karşılaştır)
             if (decryptedPassword === password || memberUser.password === password) {
@@ -133,6 +157,13 @@ class FirebaseApiService {
               }
             } else {
               // Şifre hatalı
+              console.error('❌ Password mismatch!', {
+                decryptedPassword,
+                memberUserPassword: memberUser.password,
+                inputPassword: password,
+                username: memberUser.username,
+                memberId: memberUser.memberId
+              });
               throw new Error('Şifre hatalı');
             }
           } else {
