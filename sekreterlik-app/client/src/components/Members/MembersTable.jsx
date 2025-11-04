@@ -35,7 +35,7 @@ const MembersTable = ({
     const registrations = calculateMemberRegistrations(member.id, memberRegistrations);
     
     return (
-      <div key={member.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200">
+      <div key={member.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow duration-200">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center">
             {member.photo ? (
@@ -50,16 +50,16 @@ const MembersTable = ({
                 }}
               />
             ) : null}
-            <div className={`flex-shrink-0 h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center ${member.photo ? 'hidden' : ''}`}>
-              <span className="text-indigo-800 text-sm font-medium">
+            <div className={`flex-shrink-0 h-12 w-12 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center ${member.photo ? 'hidden' : ''}`}>
+              <span className="text-indigo-800 dark:text-indigo-300 text-sm font-medium">
                 {member.name.charAt(0)}
               </span>
             </div>
             <div className="ml-3">
-              <div className="text-sm font-medium text-gray-900">
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {member.name}
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 {member.tc}
               </div>
             </div>
@@ -73,31 +73,31 @@ const MembersTable = ({
         
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Bölge:</span>
+            <span className="text-gray-500 dark:text-gray-400">Bölge:</span>
             <RegionBadge region={member.region} />
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Görev:</span>
-            <span className="text-gray-900">{member.position || 'Belirtilmemiş'}</span>
+            <span className="text-gray-500 dark:text-gray-400">Görev:</span>
+            <span className="text-gray-900 dark:text-gray-100">{member.position || 'Belirtilmemiş'}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Telefon:</span>
-            <span className="text-gray-900">{member.phone || 'Belirtilmemiş'}</span>
+            <span className="text-gray-500 dark:text-gray-400">Telefon:</span>
+            <span className="text-gray-900 dark:text-gray-100">{member.phone || 'Belirtilmemiş'}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Toplantı:</span>
-            <span className="text-gray-900">{stats.totalMeetings}</span>
+            <span className="text-gray-500 dark:text-gray-400">Toplantı:</span>
+            <span className="text-gray-900 dark:text-gray-100">{stats.totalMeetings}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Katıldığı:</span>
-            <span className="text-gray-900">{stats.attendedMeetings}</span>
+            <span className="text-gray-500 dark:text-gray-400">Katıldığı:</span>
+            <span className="text-gray-900 dark:text-gray-100">{stats.attendedMeetings}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Mazeretli:</span>
-            <span className="text-gray-900">{stats.excusedMeetings}</span>
+            <span className="text-gray-500 dark:text-gray-400">Mazeretli:</span>
+            <span className="text-gray-900 dark:text-gray-100">{stats.excusedMeetings}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Katılım:</span>
+            <span className="text-gray-500 dark:text-gray-400">Katılım:</span>
             <AttendanceProgressBar 
               attended={stats.attendedMeetings} 
               total={stats.totalMeetings} 
@@ -105,9 +105,9 @@ const MembersTable = ({
             />
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Kaydettiği:</span>
+            <span className="text-gray-500 dark:text-gray-400">Kaydettiği:</span>
             <button
-              className="text-indigo-600 hover:text-indigo-800 underline"
+              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 underline"
               onClick={() => onShowRegistrations && onShowRegistrations(member.id)}
               title="Kayıt geçmişini görüntüle"
             >
@@ -133,7 +133,7 @@ const MembersTable = ({
   // Grid görünümü
   if (viewMode === 'grid') {
     return (
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 p-4 md:p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700 p-4 md:p-6">
         {members.length === 0 ? (
           <EmptyMembersState variant="card" />
         ) : (
@@ -147,17 +147,17 @@ const MembersTable = ({
 
   // Tablo görünümü (varsayılan)
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
       <div className="overflow-x-auto table-responsive">
-        <table className="min-w-full divide-y divide-gray-100">
-          <thead className="bg-gray-50 hidden md:table-header-group sticky top-0 z-10">
+        <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700 hidden md:table-header-group sticky top-0 z-10">
             <tr>
               <SortableHeader 
                 onSort={onSort} 
                 sortKey="name" 
                 sortConfig={sortConfig} 
                 getSortIndicator={getSortIndicator}
-                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
                 Üye
               </SortableHeader>
@@ -166,7 +166,7 @@ const MembersTable = ({
                 sortKey="region" 
                 sortConfig={sortConfig} 
                 getSortIndicator={getSortIndicator}
-                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
                 Bölge
               </SortableHeader>
@@ -175,11 +175,11 @@ const MembersTable = ({
                 sortKey="position" 
                 sortConfig={sortConfig} 
                 getSortIndicator={getSortIndicator}
-                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
                 Görev
               </SortableHeader>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Telefon
               </th>
               <SortableHeader 
@@ -187,7 +187,7 @@ const MembersTable = ({
                 sortKey="totalMeetings" 
                 sortConfig={sortConfig} 
                 getSortIndicator={getSortIndicator}
-                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
                 Toplantı
               </SortableHeader>
@@ -196,7 +196,7 @@ const MembersTable = ({
                 sortKey="attendedMeetings" 
                 sortConfig={sortConfig} 
                 getSortIndicator={getSortIndicator}
-                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
                 Katıldığı
               </SortableHeader>
@@ -205,7 +205,7 @@ const MembersTable = ({
                 sortKey="excusedMeetings" 
                 sortConfig={sortConfig} 
                 getSortIndicator={getSortIndicator}
-                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
                 Mazeretli
               </SortableHeader>
@@ -214,7 +214,7 @@ const MembersTable = ({
                 sortKey="attendancePercentage" 
                 sortConfig={sortConfig} 
                 getSortIndicator={getSortIndicator}
-                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
                 Katılım %
               </SortableHeader>
@@ -223,22 +223,22 @@ const MembersTable = ({
                 sortKey="registrations" 
                 sortConfig={sortConfig} 
                 getSortIndicator={getSortIndicator}
-                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
                 Kaydettiği
               </SortableHeader>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 İşlemler
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-100 hidden md:table-row-group">
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700 hidden md:table-row-group">
             {members
               .map((member) => {
                 const stats = calculateMeetingStats(member, meetings);
                 const registrations = calculateMemberRegistrations(member.id, memberRegistrations);
                 return (
-                  <tr key={member.id} className="hover:bg-gray-50 transition-colors duration-150">
+                  <tr key={member.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
                     <td className="px-3 py-3">
                       <div className="flex items-center">
                         {member.photo ? (
@@ -253,55 +253,55 @@ const MembersTable = ({
                             }}
                           />
                         ) : null}
-                        <div className={`flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center ${member.photo ? 'hidden' : ''}`}>
-                          <span className="text-indigo-800 text-xs font-medium">
+                        <div className={`flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center ${member.photo ? 'hidden' : ''}`}>
+                          <span className="text-indigo-800 dark:text-indigo-300 text-xs font-medium">
                             {member.name.charAt(0)}
                           </span>
                         </div>
                         <div className="ml-2">
-                          <div className="text-sm font-medium text-gray-900 truncate max-w-[120px]">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-[120px]">
                             {member.name}
                           </div>
-                          <div className="text-xs text-gray-500 truncate max-w-[120px]">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]">
                             {member.tc}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300">
                         {member.region}
                       </span>
                     </td>
-                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500 truncate max-w-[100px]">
+                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 truncate max-w-[100px]">
                       {member.position}
                     </td>
-                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {member.phone}
                     </td>
-                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {stats.totalMeetings}
                     </td>
-                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {stats.attendedMeetings}
                     </td>
-                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {stats.excusedMeetings}
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center">
-                        <div className="w-16 bg-gray-200 rounded-full h-1.5 mr-2">
+                        <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mr-2">
                           <div 
                             className={`h-1.5 rounded-full ${stats.attendancePercentage > 70 ? 'bg-green-500' : stats.attendancePercentage > 40 ? 'bg-yellow-500' : 'bg-red-500'}`} 
                             style={{ width: `${stats.attendancePercentage}%` }}
                           ></div>
                         </div>
-                        <span className="text-xs text-gray-500">{stats.attendancePercentage}%</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{stats.attendancePercentage}%</span>
                       </div>
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-sm">
                       <button
-                        className="text-indigo-600 hover:text-indigo-800 underline"
+                        className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 underline"
                         onClick={() => onShowRegistrations && onShowRegistrations(member.id)}
                         title="Kayıt geçmişini görüntüle"
                       >
@@ -340,7 +340,7 @@ const MembersTable = ({
           const stats = calculateMeetingStats(member, meetings);
           const registrations = calculateMemberRegistrations(member.id, memberRegistrations);
           return (
-            <div key={member.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div key={member.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center">
                   {member.photo ? (
@@ -355,16 +355,16 @@ const MembersTable = ({
                       }}
                     />
                   ) : null}
-                  <div className={`flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center ${member.photo ? 'hidden' : ''}`}>
-                    <span className="text-indigo-800 text-sm font-medium">
+                  <div className={`flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center ${member.photo ? 'hidden' : ''}`}>
+                    <span className="text-indigo-800 dark:text-indigo-300 text-sm font-medium">
                       {member.name.charAt(0)}
                     </span>
                   </div>
                   <div className="ml-3">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {member.name}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                       {member.tc}
                     </div>
                   </div>
@@ -378,19 +378,19 @@ const MembersTable = ({
               
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Bölge:</span>
+                  <span className="text-gray-500 dark:text-gray-400">Bölge:</span>
                   <RegionBadge region={member.region} />
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Görev:</span>
-                  <span className="text-gray-900">{member.position || 'Belirtilmemiş'}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Görev:</span>
+                  <span className="text-gray-900 dark:text-gray-100">{member.position || 'Belirtilmemiş'}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Telefon:</span>
-                  <span className="text-gray-900">{member.phone || 'Belirtilmemiş'}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Telefon:</span>
+                  <span className="text-gray-900 dark:text-gray-100">{member.phone || 'Belirtilmemiş'}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Katılım:</span>
+                  <span className="text-gray-500 dark:text-gray-400">Katılım:</span>
                   <AttendanceProgressBar 
                     attended={stats.attendedMeetings} 
                     total={stats.totalMeetings} 
