@@ -29,8 +29,13 @@ console.error = (...args) => {
   if (USE_FIREBASE) {
     if (
       message.includes('ERR_CONNECTION_REFUSED') ||
+      message.includes('ERR_FAILED') ||
       message.includes('Failed to fetch') ||
       message.includes('localhost:5000') ||
+      message.includes('/api/') ||
+      message.includes('district-officials') ||
+      message.includes('visits/counts') ||
+      message.includes('deputy-inspectors') ||
       message.includes('/api/health') ||
       message.includes('/api/regions') ||
       message.includes('/api/auth/admin') ||
