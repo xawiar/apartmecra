@@ -760,31 +760,62 @@ class FirebaseApiService {
               passwordIsTc: password === memberData.tc
             });
             
-            // Eğer şifre TC ile aynıysa, bu bir hata!
-            if (password === memberData.tc) {
-              console.error('❌ HATA: Şifre TC ile aynı! Bu yanlış!', {
+            // Eğer şifre TC ile aynıysa, bu bir hata! (Yukarıda kontrol edildi ama tekrar kontrol)
+            if (password === memberData.tc || password === username) {
+              console.error('❌ KRİTİK HATA: Şifre TC ile aynı! Bu yanlış!', {
                 password,
+                username,
                 tc: memberData.tc,
-                phone: memberData.phone
+                phone: memberData.phone,
+                passwordIsTc: password === memberData.tc,
+                passwordIsUsername: password === username
               });
+              throw new Error('Şifre telefon numarası olmalı, TC ile aynı olamaz!');
             }
+            
+            // Son kontrol: Şifre telefon numarası olmalı
+            if (password !== memberData.phone) {
+              console.warn('⚠️ Şifre telefon numarası ile eşleşmiyor!', {
+                password,
+                memberDataPhone: memberData.phone,
+                passwordsMatch: password === memberData.phone
+              });
+              // Şifreyi telefon numarası olarak ayarla
+              password = String(memberData.phone || '').trim();
+              console.log('🔧 Şifre telefon numarası olarak düzeltildi:', password);
+            }
+            
+            console.log('✅ Final check before saving to Firestore:', {
+              username,
+              password,
+              usernameIsTc: username === memberData.tc,
+              passwordIsPhone: password === memberData.phone,
+              passwordIsNotTc: password !== memberData.tc && password !== username
+            });
             
             // Sadece Firestore'a kaydet, Firebase Auth'a kaydetme
             // (Firebase Auth'a kaydetme mevcut kullanıcıyı logout eder)
+            // Login sırasında Firebase Auth kullanıcısı oluşturulacak
             const userDocId = await FirebaseService.create(
               this.COLLECTIONS.MEMBER_USERS,
               null,
               {
                 memberId: docId,
                 username,
-                password: password, // Şifreleme FirebaseService içinde yapılacak
+                password: password, // Telefon numarası - Şifreleme FirebaseService içinde yapılacak
                 userType: 'member',
                 isActive: true,
-                authUid: null // Firebase Auth'a kaydetmedik
+                authUid: null // Firebase Auth'a kaydetmedik - Login sırasında oluşturulacak
               }
             );
             
             console.log('✅ Automatic user created successfully (Firestore only):', userDocId);
+            console.log('📝 User credentials saved:', {
+              username,
+              password,
+              passwordIsPhone: password === memberData.phone,
+              passwordIsNotTc: password !== memberData.tc
+            });
           }
         } else {
           // Mevcut kullanıcı varsa, bilgilerini al
