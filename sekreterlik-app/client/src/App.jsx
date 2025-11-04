@@ -31,6 +31,7 @@ import CreateAdminPage from './pages/CreateAdminPage';
 import CheckAdminPage from './pages/CheckAdminPage';
 import DebugFirebasePage from './pages/DebugFirebasePage';
 import ClearAllDataPage from './pages/ClearAllDataPage';
+import FirebaseAuthUsersPage from './pages/FirebaseAuthUsersPage';
 import Sidebar from './components/Sidebar';
 import PWANotification from './components/PWANotification';
 import AppInstallBanner from './components/AppInstallBanner';
@@ -122,7 +123,7 @@ function AppContent() {
         v7_relativeSplatPath: true
       }}
     >
-      <div className="min-h-screen bg-neutral-50">
+      <div className="min-h-screen bg-neutral-50 dark:bg-gray-900">
         <Routes>
           <Route 
             path="/login" 
@@ -149,6 +150,14 @@ function AppContent() {
             element={
               <AdminRoute>
                 <ClearAllDataPage />
+              </AdminRoute>
+            } 
+          />
+          <Route 
+            path="/firebase-auth-users" 
+            element={
+              <AdminRoute>
+                <FirebaseAuthUsersPage />
               </AdminRoute>
             } 
           />
@@ -197,31 +206,31 @@ function AppContent() {
                   {/* Main Content Area */}
                   <div className="flex-1 flex flex-col">
                     {/* Mobile Header with Hamburger */}
-                    <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+                    <div className="lg:hidden bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-4 py-3">
                       <div className="flex items-center justify-between">
                         <button
                           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                          className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                          className="p-2 rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
                           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                           </svg>
                         </button>
-                        <h1 className="text-lg font-bold text-indigo-700">Parti Sekreterliği</h1>
+                        <h1 className="text-lg font-bold text-indigo-700 dark:text-indigo-400">Parti Sekreterliği</h1>
                         <div className="w-10"></div> {/* Spacer for centering */}
                       </div>
                     </div>
                     
                     {/* Mobile Menu Overlay */}
                     {isMobileMenuOpen && (
-                      <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)}>
-                        <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg" onClick={(e) => e.stopPropagation()}>
+                      <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50 dark:bg-opacity-70" onClick={() => setIsMobileMenuOpen(false)}>
+                        <div className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-lg" onClick={(e) => e.stopPropagation()}>
                           <Sidebar onMobileMenuClose={() => setIsMobileMenuOpen(false)} />
                         </div>
                       </div>
                     )}
                     
-                    <main className="flex-1 p-3 sm:p-6 overflow-auto bg-gray-50">
+                    <main className="flex-1 p-3 sm:p-6 overflow-auto bg-gray-50 dark:bg-gray-900">
                       <div className="max-w-7xl mx-auto w-full">
                         <Routes>
                           <Route path="/" element={<DashboardPage />} />
