@@ -1398,7 +1398,24 @@ class FirebaseApiService {
   // Neighborhood Representatives CRUD
   static async getNeighborhoodRepresentatives() {
     try {
-      return await FirebaseService.getAll(this.COLLECTIONS.NEIGHBORHOOD_REPRESENTATIVES);
+      const representatives = await FirebaseService.getAll(this.COLLECTIONS.NEIGHBORHOOD_REPRESENTATIVES);
+      const neighborhoods = await FirebaseService.getAll(this.COLLECTIONS.NEIGHBORHOODS);
+      const districts = await FirebaseService.getAll(this.COLLECTIONS.DISTRICTS);
+      const towns = await FirebaseService.getAll(this.COLLECTIONS.TOWNS);
+      
+      // Populate neighborhood_name, district_name, town_name
+      return representatives.map(rep => {
+        const neighborhood = neighborhoods.find(n => String(n.id) === String(rep.neighborhood_id));
+        const district = neighborhood ? districts.find(d => String(d.id) === String(neighborhood.district_id)) : null;
+        const town = neighborhood && neighborhood.town_id ? towns.find(t => String(t.id) === String(neighborhood.town_id)) : null;
+        
+        return {
+          ...rep,
+          neighborhood_name: neighborhood?.name || '',
+          district_name: district?.name || '',
+          town_name: town?.name || ''
+        };
+      });
     } catch (error) {
       console.error('Get neighborhood representatives error:', error);
       return [];
@@ -1438,7 +1455,24 @@ class FirebaseApiService {
   // Village Representatives CRUD
   static async getVillageRepresentatives() {
     try {
-      return await FirebaseService.getAll(this.COLLECTIONS.VILLAGE_REPRESENTATIVES);
+      const representatives = await FirebaseService.getAll(this.COLLECTIONS.VILLAGE_REPRESENTATIVES);
+      const villages = await FirebaseService.getAll(this.COLLECTIONS.VILLAGES);
+      const districts = await FirebaseService.getAll(this.COLLECTIONS.DISTRICTS);
+      const towns = await FirebaseService.getAll(this.COLLECTIONS.TOWNS);
+      
+      // Populate village_name, district_name, town_name
+      return representatives.map(rep => {
+        const village = villages.find(v => String(v.id) === String(rep.village_id));
+        const district = village ? districts.find(d => String(d.id) === String(village.district_id)) : null;
+        const town = village && village.town_id ? towns.find(t => String(t.id) === String(village.town_id)) : null;
+        
+        return {
+          ...rep,
+          village_name: village?.name || '',
+          district_name: district?.name || '',
+          town_name: town?.name || ''
+        };
+      });
     } catch (error) {
       console.error('Get village representatives error:', error);
       return [];

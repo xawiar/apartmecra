@@ -23,16 +23,48 @@ const RepresentativesPage = () => {
         ApiService.getVillageRepresentatives()
       ]);
       
-      // Decrypt TC fields
-      const decryptedNeighborhoodData = neighborhoodData.map(rep => ({
-        ...rep,
-        tc: rep.tc ? (typeof rep.tc === 'string' ? decryptData(rep.tc) : rep.tc) : rep.tc
-      }));
+      // Decrypt TC and phone fields
+      const decryptedNeighborhoodData = neighborhoodData.map(rep => {
+        let decryptedTc = rep.tc;
+        let decryptedPhone = rep.phone;
+        
+        if (rep.tc && typeof rep.tc === 'string') {
+          const tcResult = decryptData(rep.tc);
+          decryptedTc = typeof tcResult === 'string' ? tcResult : (tcResult ? String(tcResult) : rep.tc);
+        }
+        
+        if (rep.phone && typeof rep.phone === 'string') {
+          const phoneResult = decryptData(rep.phone);
+          decryptedPhone = typeof phoneResult === 'string' ? phoneResult : (phoneResult ? String(phoneResult) : rep.phone);
+        }
+        
+        return {
+          ...rep,
+          tc: decryptedTc,
+          phone: decryptedPhone
+        };
+      });
       
-      const decryptedVillageData = villageData.map(rep => ({
-        ...rep,
-        tc: rep.tc ? (typeof rep.tc === 'string' ? decryptData(rep.tc) : rep.tc) : rep.tc
-      }));
+      const decryptedVillageData = villageData.map(rep => {
+        let decryptedTc = rep.tc;
+        let decryptedPhone = rep.phone;
+        
+        if (rep.tc && typeof rep.tc === 'string') {
+          const tcResult = decryptData(rep.tc);
+          decryptedTc = typeof tcResult === 'string' ? tcResult : (tcResult ? String(tcResult) : rep.tc);
+        }
+        
+        if (rep.phone && typeof rep.phone === 'string') {
+          const phoneResult = decryptData(rep.phone);
+          decryptedPhone = typeof phoneResult === 'string' ? phoneResult : (phoneResult ? String(phoneResult) : rep.phone);
+        }
+        
+        return {
+          ...rep,
+          tc: decryptedTc,
+          phone: decryptedPhone
+        };
+      });
       
       setNeighborhoodRepresentatives(decryptedNeighborhoodData);
       setVillageRepresentatives(decryptedVillageData);
