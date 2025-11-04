@@ -33,7 +33,7 @@ import Sidebar from './components/Sidebar';
 import PWANotification from './components/PWANotification';
 import AppInstallBanner from './components/AppInstallBanner';
 import OfflineStatus from './components/OfflineStatus';
-import PerformanceMonitor from './components/PerformanceMonitor';
+// import PerformanceMonitor from './components/PerformanceMonitor'; // Disabled - causes localhost:5000 errors
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
