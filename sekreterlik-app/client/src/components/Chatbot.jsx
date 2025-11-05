@@ -337,7 +337,7 @@ const Chatbot = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 rounded-t-2xl flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -383,7 +383,7 @@ const Chatbot = ({ isOpen, onClose }) => {
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   message.role === 'user'
                     ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    : 'bg-gray-100 text-gray-900'
                 }`}
               >
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -393,7 +393,7 @@ const Chatbot = ({ isOpen, onClose }) => {
           
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl px-4 py-3">
+              <div className="bg-gray-100 rounded-2xl px-4 py-3">
                 <div className="flex space-x-2">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -408,20 +408,20 @@ const Chatbot = ({ isOpen, onClose }) => {
 
         {/* Error message */}
         {error && (
-          <div className="px-4 py-2 bg-red-50 dark:bg-red-900 border-l-4 border-red-500">
-            <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
+          <div className="px-4 py-2 bg-red-50 border-l-4 border-red-500">
+            <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
 
         {/* Input */}
-        <form onSubmit={handleSend} className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <form onSubmit={handleSend} className="p-4 border-t border-gray-200">
           <div className="flex space-x-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Mesajınızı yazın..."
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               disabled={loading}
             />
             <button
