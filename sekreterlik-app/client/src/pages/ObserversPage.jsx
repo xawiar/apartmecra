@@ -137,11 +137,13 @@ const ObserversPage = () => {
         tc: String(formData.tc || '').trim(),
         name: String(formData.name || '').trim(),
         phone: String(formData.phone || '').trim(),
-        ballot_box_id: formData.ballot_box_id ? parseInt(formData.ballot_box_id) : null,
-        district_id: formData.district_id ? parseInt(formData.district_id) : null,
-        town_id: formData.town_id ? parseInt(formData.town_id) : null,
-        neighborhood_id: formData.neighborhood_id ? parseInt(formData.neighborhood_id) : null,
-        village_id: formData.village_id ? parseInt(formData.village_id) : null
+        // Firebase'de ID'ler string olarak saklanıyor, bu yüzden string'e çeviriyoruz
+        ballot_box_id: formData.ballot_box_id ? String(formData.ballot_box_id) : null,
+        district_id: formData.district_id ? String(formData.district_id) : null,
+        town_id: formData.town_id ? String(formData.town_id) : null,
+        neighborhood_id: formData.neighborhood_id ? String(formData.neighborhood_id) : null,
+        village_id: formData.village_id ? String(formData.village_id) : null,
+        is_chief_observer: formData.is_chief_observer || false
       };
 
       if (editingObserver) {
