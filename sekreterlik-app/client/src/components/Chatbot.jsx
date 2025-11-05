@@ -16,11 +16,16 @@ const Chatbot = ({ isOpen, onClose }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load site data on mount
+  // Load site data on mount (lazy load - only when chatbot is opened)
   useEffect(() => {
-    if (isOpen) {
-      loadSiteData();
-      loadBylaws();
+    if (isOpen && !siteData) {
+      // Load data asynchronously without blocking UI
+      Promise.all([
+        loadSiteData(),
+        loadBylaws()
+      ]).catch(error => {
+        console.error('Error loading chatbot data:', error);
+      });
       
       // Welcome message
       setMessages([{
@@ -29,10 +34,12 @@ const Chatbot = ({ isOpen, onClose }) => {
         content: 'Merhaba! Ben Yeniden Refah Partisi Elazığ Merkez İlçe Sekreteri. Size nasıl yardımcı olabilirim? Site içi bilgiler (üyeler, toplantılar, etkinlikler) ve tüzük hakkında sorular sorabilirsiniz.'
       }]);
     }
-  }, [isOpen]);
+  }, [isOpen, siteData]);
 
   const loadSiteData = async () => {
     try {
+      // Optimize: Load critical data first, then less critical data
+      // This prevents blocking the UI for too long
       const [
         members, 
         events, 
@@ -40,19 +47,7 @@ const Chatbot = ({ isOpen, onClose }) => {
         districts, 
         towns, 
         neighborhoods, 
-        villages,
-        ballotBoxes,
-        observers,
-        districtOfficials,
-        townOfficials,
-        neighborhoodRepresentatives,
-        villageRepresentatives,
-        neighborhoodSupervisors,
-        villageSupervisors,
-        districtDeputyInspectors,
-        townDeputyInspectors,
-        neighborhoodVisitCounts,
-        villageVisitCounts
+        villages
       ] = await Promise.all([
         ApiService.getMembers().catch(() => []),
         ApiService.getEvents().catch(() => []),
@@ -60,7 +55,23 @@ const Chatbot = ({ isOpen, onClose }) => {
         ApiService.getDistricts().catch(() => []),
         ApiService.getTowns().catch(() => []),
         ApiService.getNeighborhoods().catch(() => []),
-        ApiService.getVillages().catch(() => []),
+        ApiService.getVillages().catch(() => [])
+      ]);
+
+      // Set initial data to allow chatbot to work with basic info
+      setSiteData(prev => ({
+        ...prev,
+        members,
+        events,
+        meetings,
+        districts,
+        towns,
+        neighborhoods,
+        villages
+      }));
+
+      // Load additional data in background (non-blocking)
+      Promise.all([
         ApiService.getBallotBoxes().catch(() => []),
         ApiService.getBallotBoxObservers().catch(() => []),
         ApiService.getDistrictOfficials().catch(() => []),
@@ -73,16 +84,7 @@ const Chatbot = ({ isOpen, onClose }) => {
         ApiService.getAllTownDeputyInspectors().catch(() => []),
         ApiService.getAllVisitCounts('neighborhood').catch(() => []),
         ApiService.getAllVisitCounts('village').catch(() => [])
-      ]);
-
-      setSiteData({
-        members,
-        events,
-        meetings,
-        districts,
-        towns,
-        neighborhoods,
-        villages,
+      ]).then(([
         ballotBoxes,
         observers,
         districtOfficials,
@@ -95,6 +97,26 @@ const Chatbot = ({ isOpen, onClose }) => {
         townDeputyInspectors,
         neighborhoodVisitCounts,
         villageVisitCounts
+      ]) => {
+
+        // Update with additional data
+        setSiteData(prev => ({
+          ...prev,
+          ballotBoxes,
+          observers,
+          districtOfficials,
+          townOfficials,
+          neighborhoodRepresentatives,
+          villageRepresentatives,
+          neighborhoodSupervisors,
+          villageSupervisors,
+          districtDeputyInspectors,
+          townDeputyInspectors,
+          neighborhoodVisitCounts,
+          villageVisitCounts
+        }));
+      }).catch(error => {
+        console.error('Error loading additional site data:', error);
       });
     } catch (error) {
       console.error('Error loading site data:', error);
