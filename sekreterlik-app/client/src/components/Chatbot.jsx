@@ -33,14 +33,42 @@ const Chatbot = ({ isOpen, onClose }) => {
 
   const loadSiteData = async () => {
     try {
-      const [members, events, meetings, districts, towns, neighborhoods, villages] = await Promise.all([
+      const [
+        members, 
+        events, 
+        meetings, 
+        districts, 
+        towns, 
+        neighborhoods, 
+        villages,
+        ballotBoxes,
+        observers,
+        districtOfficials,
+        townOfficials,
+        neighborhoodRepresentatives,
+        villageRepresentatives,
+        neighborhoodSupervisors,
+        villageSupervisors,
+        districtDeputyInspectors,
+        townDeputyInspectors
+      ] = await Promise.all([
         ApiService.getMembers().catch(() => []),
         ApiService.getEvents().catch(() => []),
         ApiService.getMeetings().catch(() => []),
         ApiService.getDistricts().catch(() => []),
         ApiService.getTowns().catch(() => []),
         ApiService.getNeighborhoods().catch(() => []),
-        ApiService.getVillages().catch(() => [])
+        ApiService.getVillages().catch(() => []),
+        ApiService.getBallotBoxes().catch(() => []),
+        ApiService.getBallotBoxObservers().catch(() => []),
+        ApiService.getDistrictOfficials().catch(() => []),
+        ApiService.getTownOfficials().catch(() => []),
+        ApiService.getNeighborhoodRepresentatives().catch(() => []),
+        ApiService.getVillageRepresentatives().catch(() => []),
+        ApiService.getNeighborhoodSupervisors().catch(() => []),
+        ApiService.getVillageSupervisors().catch(() => []),
+        ApiService.getAllDistrictDeputyInspectors().catch(() => []),
+        ApiService.getAllTownDeputyInspectors().catch(() => [])
       ]);
 
       setSiteData({
@@ -50,7 +78,17 @@ const Chatbot = ({ isOpen, onClose }) => {
         districts,
         towns,
         neighborhoods,
-        villages
+        villages,
+        ballotBoxes,
+        observers,
+        districtOfficials,
+        townOfficials,
+        neighborhoodRepresentatives,
+        villageRepresentatives,
+        neighborhoodSupervisors,
+        villageSupervisors,
+        districtDeputyInspectors,
+        townDeputyInspectors
       });
     } catch (error) {
       console.error('Error loading site data:', error);
