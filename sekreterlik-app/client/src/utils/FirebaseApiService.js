@@ -925,13 +925,13 @@ class FirebaseApiService {
       // archived parametresine göre filtrele
       if (archived) {
         // Arşivlenmiş toplantıları döndür (truthy check)
-        return meetings.filter(m => {
+        return processedMeetings.filter(m => {
           const isArchived = m.archived === true || m.archived === 'true' || m.archived === 1 || m.archived === '1';
           return isArchived;
         });
       } else {
         // Arşivlenmemiş toplantıları döndür
-        return meetings.filter(m => {
+        return processedMeetings.filter(m => {
           const isArchived = m.archived === true || m.archived === 'true' || m.archived === 1 || m.archived === '1';
           return !isArchived;
         });
@@ -1035,13 +1035,13 @@ class FirebaseApiService {
       // archived parametresine göre filtrele
       if (archived) {
         // Arşivlenmiş etkinlikleri döndür (truthy check)
-        return events.filter(e => {
+        return processedEvents.filter(e => {
           const isArchived = e.archived === true || e.archived === 'true' || e.archived === 1 || e.archived === '1';
           return isArchived;
         });
       } else {
         // Arşivlenmemiş etkinlikleri döndür
-        return events.filter(e => {
+        return processedEvents.filter(e => {
           const isArchived = e.archived === true || e.archived === 'true' || e.archived === 1 || e.archived === '1';
           return !isArchived;
         });
