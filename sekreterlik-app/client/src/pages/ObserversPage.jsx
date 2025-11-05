@@ -135,19 +135,33 @@ const ObserversPage = () => {
       // USE_FIREBASE kontrolü - Firebase'de ID'ler string, backend'de integer
       const USE_FIREBASE = import.meta.env.VITE_USE_FIREBASE === 'true';
       
+      // ballot_box_id değerini doğru formata çevir
+      const ballotBoxId = formData.ballot_box_id 
+        ? (USE_FIREBASE ? String(formData.ballot_box_id) : parseInt(formData.ballot_box_id))
+        : null;
+      
       const observerData = {
         ...formData,
         tc: String(formData.tc || '').trim(),
         name: String(formData.name || '').trim(),
         phone: String(formData.phone || '').trim(),
         // Firebase'de ID'ler string, backend'de integer olarak saklanıyor
-        ballot_box_id: formData.ballot_box_id ? (USE_FIREBASE ? String(formData.ballot_box_id) : parseInt(formData.ballot_box_id)) : null,
+        ballot_box_id: ballotBoxId,
         district_id: formData.district_id ? (USE_FIREBASE ? String(formData.district_id) : parseInt(formData.district_id)) : null,
         town_id: formData.town_id ? (USE_FIREBASE ? String(formData.town_id) : parseInt(formData.town_id)) : null,
         neighborhood_id: formData.neighborhood_id ? (USE_FIREBASE ? String(formData.neighborhood_id) : parseInt(formData.neighborhood_id)) : null,
         village_id: formData.village_id ? (USE_FIREBASE ? String(formData.village_id) : parseInt(formData.village_id)) : null,
         is_chief_observer: formData.is_chief_observer || false
       };
+      
+      // Debug log - ballot_box_id değerini kontrol et
+      console.log('🔍 Observer Data:', {
+        ballot_box_id: observerData.ballot_box_id,
+        ballot_box_id_type: typeof observerData.ballot_box_id,
+        formData_ballot_box_id: formData.ballot_box_id,
+        USE_FIREBASE,
+        editingObserver: editingObserver ? editingObserver.id : null
+      });
 
       if (editingObserver) {
         await ApiService.updateBallotBoxObserver(editingObserver.id, observerData);
