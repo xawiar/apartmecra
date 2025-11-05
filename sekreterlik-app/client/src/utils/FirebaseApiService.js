@@ -908,7 +908,6 @@ class FirebaseApiService {
         if (meeting.description && typeof meeting.description === 'string' && meeting.description.startsWith('U2FsdGVkX1')) {
           // Şifrelenmiş görünüyor, decrypt etmeye çalış
           try {
-            const { decryptData } = require('../utils/crypto');
             const decrypted = decryptData(meeting.description);
             if (decrypted && decrypted !== meeting.description) {
               meeting.description = decrypted;
@@ -1023,7 +1022,6 @@ class FirebaseApiService {
         if (event.description && typeof event.description === 'string' && event.description.startsWith('U2FsdGVkX1')) {
           // Şifrelenmiş görünüyor, decrypt etmeye çalış
           try {
-            const { decryptData } = require('../utils/crypto');
             const decrypted = decryptData(event.description);
             if (decrypted && decrypted !== event.description) {
               event.description = decrypted;

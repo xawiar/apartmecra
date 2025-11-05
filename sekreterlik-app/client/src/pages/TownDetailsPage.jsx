@@ -8,6 +8,7 @@ const TownDetailsPage = () => {
   const [district, setDistrict] = useState(null);
   const [officials, setOfficials] = useState([]);
   const [deputyInspectors, setDeputyInspectors] = useState([]);
+  const [managementMembers, setManagementMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -41,6 +42,15 @@ const TownDetailsPage = () => {
         const deputyInspectorsData = await ApiService.getAllTownDeputyInspectors();
         const townDeputyInspectors = deputyInspectorsData.filter(deputy => String(deputy.town_id) === String(id));
         setDeputyInspectors(townDeputyInspectors);
+
+        // Fetch management members - ID'leri string'e çevirerek karşılaştır
+        try {
+          const managementMembersData = await ApiService.getTownManagementMembers(id);
+          setManagementMembers(managementMembersData || []);
+        } catch (error) {
+          console.error('Error fetching management members:', error);
+          setManagementMembers([]);
+        }
       }
 
     } catch (error) {
