@@ -52,19 +52,19 @@ const MemberDetails = ({ member, meetings, events, memberRegistrations, calculat
       // Check district positions
       const districtOfficials = await ApiService.getDistrictOfficials();
       const districtPositions = districtOfficials.filter(official => 
-        official.chairman_member_id === member.id || 
-        official.inspector_member_id === member.id
+        String(official.chairman_member_id) === String(member.id) || 
+        String(official.inspector_member_id) === String(member.id)
       );
       
       districtPositions.forEach(official => {
-        if (official.chairman_member_id === member.id) {
+        if (String(official.chairman_member_id) === String(member.id)) {
           positions.push({
             type: 'İlçe Başkanı',
             location: official.district_name,
             locationType: 'İlçe'
           });
         }
-        if (official.inspector_member_id === member.id) {
+        if (String(official.inspector_member_id) === String(member.id)) {
           positions.push({
             type: 'İlçe Müfettişi',
             location: official.district_name,
@@ -76,7 +76,7 @@ const MemberDetails = ({ member, meetings, events, memberRegistrations, calculat
       // Check district deputy inspectors
       const districtDeputyInspectors = await ApiService.getAllDistrictDeputyInspectors();
       const districtDeputyPositions = districtDeputyInspectors.filter(deputy => 
-        deputy.member_id === member.id
+        String(deputy.member_id) === String(member.id)
       );
       
       districtDeputyPositions.forEach(deputy => {
@@ -90,19 +90,19 @@ const MemberDetails = ({ member, meetings, events, memberRegistrations, calculat
       // Check town positions
       const townOfficials = await ApiService.getTownOfficials();
       const townPositions = townOfficials.filter(official => 
-        official.chairman_member_id === member.id || 
-        official.inspector_member_id === member.id
+        String(official.chairman_member_id) === String(member.id) || 
+        String(official.inspector_member_id) === String(member.id)
       );
       
       townPositions.forEach(official => {
-        if (official.chairman_member_id === member.id) {
+        if (String(official.chairman_member_id) === String(member.id)) {
           positions.push({
             type: 'Belde Başkanı',
             location: official.town_name,
             locationType: 'Belde'
           });
         }
-        if (official.inspector_member_id === member.id) {
+        if (String(official.inspector_member_id) === String(member.id)) {
           positions.push({
             type: 'Belde Müfettişi',
             location: official.town_name,
@@ -114,7 +114,7 @@ const MemberDetails = ({ member, meetings, events, memberRegistrations, calculat
       // Check town deputy inspectors
       const townDeputyInspectors = await ApiService.getAllTownDeputyInspectors();
       const townDeputyPositions = townDeputyInspectors.filter(deputy => 
-        deputy.member_id === member.id
+        String(deputy.member_id) === String(member.id)
       );
       
       townDeputyPositions.forEach(deputy => {
@@ -128,7 +128,7 @@ const MemberDetails = ({ member, meetings, events, memberRegistrations, calculat
       // Check neighborhood representatives
       const neighborhoodRepresentatives = await ApiService.getNeighborhoodRepresentatives();
       const neighborhoodRepPositions = neighborhoodRepresentatives.filter(rep => 
-        rep.member_id === member.id
+        String(rep.member_id) === String(member.id)
       );
       
       neighborhoodRepPositions.forEach(rep => {
@@ -142,7 +142,7 @@ const MemberDetails = ({ member, meetings, events, memberRegistrations, calculat
       // Check neighborhood supervisors
       const neighborhoodSupervisors = await ApiService.getNeighborhoodSupervisors();
       const neighborhoodSupPositions = neighborhoodSupervisors.filter(sup => 
-        sup.member_id === member.id
+        String(sup.member_id) === String(member.id)
       );
       
       neighborhoodSupPositions.forEach(sup => {
@@ -156,7 +156,7 @@ const MemberDetails = ({ member, meetings, events, memberRegistrations, calculat
       // Check village representatives
       const villageRepresentatives = await ApiService.getVillageRepresentatives();
       const villageRepPositions = villageRepresentatives.filter(rep => 
-        rep.member_id === member.id
+        String(rep.member_id) === String(member.id)
       );
       
       villageRepPositions.forEach(rep => {
@@ -170,7 +170,7 @@ const MemberDetails = ({ member, meetings, events, memberRegistrations, calculat
       // Check village supervisors
       const villageSupervisors = await ApiService.getVillageSupervisors();
       const villageSupPositions = villageSupervisors.filter(sup => 
-        sup.member_id === member.id
+        String(sup.member_id) === String(member.id)
       );
       
       villageSupPositions.forEach(sup => {
@@ -180,6 +180,40 @@ const MemberDetails = ({ member, meetings, events, memberRegistrations, calculat
           locationType: 'Köy'
         });
       });
+      
+      // Check group leaders (grup başkanı)
+      try {
+        const groups = await ApiService.getGroups();
+        const neighborhoods = await ApiService.getNeighborhoods();
+        const villages = await ApiService.getVillages();
+        
+        groups.forEach(group => {
+          // ID'leri string'e çevirerek karşılaştır
+          if (group.group_leader_id && String(group.group_leader_id) === String(member.id)) {
+            // Bu gruptaki mahalleleri ve köyleri bul
+            const groupNeighborhoods = neighborhoods.filter(n => 
+              n.group_no && String(n.group_no) === String(group.group_no)
+            );
+            const groupVillages = villages.filter(v => 
+              v.group_no && String(v.group_no) === String(group.group_no)
+            );
+            
+            const locationNames = [
+              ...groupNeighborhoods.map(n => n.name),
+              ...groupVillages.map(v => v.name)
+            ].join(', ');
+            
+            positions.push({
+              type: 'Grup Başkanı',
+              location: `Grup ${group.group_no} (${locationNames || 'Mahalle/Köy bulunamadı'})`,
+              locationType: 'Grup'
+            });
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching group leader information:', error);
+        // Grup bilgileri alınamazsa sessizce devam et
+      }
       
       setMemberPositions(positions);
     } catch (error) {
