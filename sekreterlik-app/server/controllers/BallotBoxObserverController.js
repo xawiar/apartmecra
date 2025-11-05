@@ -143,7 +143,7 @@ class BallotBoxObserverController {
   static async update(req, res) {
     try {
       const { id } = req.params;
-      const { tc, name, phone, is_chief_observer, district_id, town_id, neighborhood_id, village_id } = req.body;
+      const { ballot_box_id, tc, name, phone, is_chief_observer, district_id, town_id, neighborhood_id, village_id } = req.body;
 
       // Validation
       const errors = [];

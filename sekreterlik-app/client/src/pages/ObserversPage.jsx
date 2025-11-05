@@ -134,9 +134,9 @@ const ObserversPage = () => {
 
       const observerData = {
         ...formData,
-        tc: formData.tc.trim(),
-        name: formData.name.trim(),
-        phone: formData.phone.trim(),
+        tc: String(formData.tc || '').trim(),
+        name: String(formData.name || '').trim(),
+        phone: String(formData.phone || '').trim(),
         ballot_box_id: formData.ballot_box_id ? parseInt(formData.ballot_box_id) : null,
         district_id: formData.district_id ? parseInt(formData.district_id) : null,
         town_id: formData.town_id ? parseInt(formData.town_id) : null,
