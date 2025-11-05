@@ -113,6 +113,10 @@ class ApiService {
   }
 
   static async updateAdminCredentials(username, password, currentPassword) {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.updateAdminCredentials(username, password, currentPassword);
+    }
+
     const response = await fetch(`${API_BASE_URL}/auth/admin`, {
       method: 'PUT',
       headers: this.getAuthHeaders(),
