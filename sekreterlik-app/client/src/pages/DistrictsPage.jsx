@@ -91,16 +91,10 @@ const DistrictsPage = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 flex space-x-3">
-                  <Link
-                    to={`/towns/${town.id}/members`}
-                    className="flex-1 bg-indigo-600 text-white text-center px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
-                  >
-                    Yönetim Kurulu
-                  </Link>
+                <div className="mt-6">
                   <Link
                     to={`/towns/${town.id}/details`}
-                    className="flex-1 bg-gray-100 text-gray-700 text-center px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                    className="w-full bg-gray-100 text-gray-700 text-center px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium block"
                   >
                     Detaylar
                   </Link>

@@ -26,10 +26,49 @@ const TownPresidentDashboardPage = () => {
   const fetchTownData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await ApiService.getTownById(user.townId);
-      if (response.success) {
-        setTown(response.town);
+      // Firebase ve backend farklı format döndürüyor, her ikisini de destekle
+      const USE_FIREBASE = import.meta.env.VITE_USE_FIREBASE === 'true';
+      let response;
+      
+      if (USE_FIREBASE) {
+        // Firebase'de getTownById direkt town objesi döndürür veya null
+        const townData = await ApiService.getTownById(user.townId);
+        if (townData && townData.success) {
+          response = townData;
+        } else if (townData && !townData.success) {
+          // Firebase'de town bulunamadı, towns listesinden bul
+          const towns = await ApiService.getTowns();
+          const town = towns.find(t => String(t.id) === String(user.townId));
+          if (town) {
+            // Districts bilgisini de ekle
+            const districts = await ApiService.getDistricts();
+            const district = districts.find(d => String(d.id) === String(town.district_id));
+            response = {
+              success: true,
+              town: {
+                ...town,
+                districtName: district?.name || ''
+              }
+            };
+          } else {
+            setError('Belde bilgileri alınamadı');
+            return;
+          }
+        } else {
+          // townData direkt town objesi olabilir
+          response = {
+            success: true,
+            town: townData
+          };
+        }
       } else {
+        // Backend formatı
+        response = await ApiService.getTownById(user.townId);
+      }
+      
+      if (response && response.success) {
+        setTown(response.town);
+      } else if (response && !response.success) {
         setError('Belde bilgileri alınamadı');
       }
     } catch (error) {
