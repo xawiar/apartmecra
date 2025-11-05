@@ -902,6 +902,26 @@ class FirebaseApiService {
         return [];
       }
       
+      // description alanını decrypt etmeye çalışma (artık şifrelenmeden saklanıyor)
+      // Eğer şifrelenmişse (eski kayıtlar için), decrypt etmeye çalış
+      const processedMeetings = meetings.map(meeting => {
+        if (meeting.description && typeof meeting.description === 'string' && meeting.description.startsWith('U2FsdGVkX1')) {
+          // Şifrelenmiş görünüyor, decrypt etmeye çalış
+          try {
+            const { decryptData } = require('../utils/crypto');
+            const decrypted = decryptData(meeting.description);
+            if (decrypted && decrypted !== meeting.description) {
+              meeting.description = decrypted;
+            }
+          } catch (error) {
+            // Decrypt başarısız olursa, description'ı temizle (muhtemelen bozuk veri)
+            console.warn('⚠️ Failed to decrypt meeting description, keeping as is:', error);
+          }
+        }
+        // description zaten şifrelenmemişse (yeni kayıtlar), olduğu gibi bırak
+        return meeting;
+      });
+      
       // archived parametresine göre filtrele
       if (archived) {
         // Arşivlenmiş toplantıları döndür (truthy check)
@@ -991,6 +1011,26 @@ class FirebaseApiService {
       if (!events || events.length === 0) {
         return [];
       }
+      
+      // description alanını decrypt etmeye çalışma (artık şifrelenmeden saklanıyor)
+      // Eğer şifrelenmişse (eski kayıtlar için), decrypt etmeye çalış
+      const processedEvents = events.map(event => {
+        if (event.description && typeof event.description === 'string' && event.description.startsWith('U2FsdGVkX1')) {
+          // Şifrelenmiş görünüyor, decrypt etmeye çalış
+          try {
+            const { decryptData } = require('../utils/crypto');
+            const decrypted = decryptData(event.description);
+            if (decrypted && decrypted !== event.description) {
+              event.description = decrypted;
+            }
+          } catch (error) {
+            // Decrypt başarısız olursa, description'ı temizle (muhtemelen bozuk veri)
+            console.warn('⚠️ Failed to decrypt event description, keeping as is:', error);
+          }
+        }
+        // description zaten şifrelenmemişse (yeni kayıtlar), olduğu gibi bırak
+        return event;
+      });
       
       // archived parametresine göre filtrele
       if (archived) {
