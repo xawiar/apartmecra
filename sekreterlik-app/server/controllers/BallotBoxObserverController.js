@@ -165,15 +165,18 @@ class BallotBoxObserverController {
         return res.status(404).json({ message: 'Müşahit bulunamadı' });
       }
 
+      // ballot_box_id değiştiyse yeni değeri kullan, değilse mevcut değeri koru
+      const finalBallotBoxId = ballot_box_id !== undefined ? ballot_box_id : currentObserver.ballot_box_id;
+
       // Check if TC already exists for another observer in the same ballot box
-      const existingObserver = await db.get('SELECT * FROM ballot_box_observers WHERE ballot_box_id = ? AND tc = ? AND id != ?', [currentObserver.ballot_box_id, tc, id]);
+      const existingObserver = await db.get('SELECT * FROM ballot_box_observers WHERE ballot_box_id = ? AND tc = ? AND id != ?', [finalBallotBoxId, tc, id]);
       if (existingObserver) {
         return res.status(400).json({ message: 'Bu TC kimlik numarası bu sandıkta başka bir müşahitte kayıtlı' });
       }
 
       // Check if there's already a chief observer for this ballot box (if changing to chief observer)
       if (is_chief_observer && !currentObserver.is_chief_observer) {
-        const existingChiefObserver = await db.get('SELECT * FROM ballot_box_observers WHERE ballot_box_id = ? AND is_chief_observer = 1 AND id != ?', [currentObserver.ballot_box_id, id]);
+        const existingChiefObserver = await db.get('SELECT * FROM ballot_box_observers WHERE ballot_box_id = ? AND is_chief_observer = 1 AND id != ?', [finalBallotBoxId, id]);
         if (existingChiefObserver) {
           return res.status(400).json({ message: 'Bu sandıkta zaten bir başmüşahit bulunmaktadır' });
         }
@@ -182,9 +185,6 @@ class BallotBoxObserverController {
       const sql = `UPDATE ballot_box_observers 
                    SET ballot_box_id = ?, tc = ?, name = ?, phone = ?, is_chief_observer = ?, district_id = ?, town_id = ?, neighborhood_id = ?, village_id = ?, updated_at = CURRENT_TIMESTAMP
                    WHERE id = ?`;
-      
-      // ballot_box_id değiştiyse yeni değeri kullan, değilse mevcut değeri koru
-      const finalBallotBoxId = ballot_box_id !== undefined ? ballot_box_id : currentObserver.ballot_box_id;
       
       await db.run(sql, [finalBallotBoxId, tc, name, phone, is_chief_observer ? 1 : 0, district_id, town_id, neighborhood_id, village_id, id]);
       
