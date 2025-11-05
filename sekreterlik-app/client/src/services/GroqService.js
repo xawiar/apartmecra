@@ -26,13 +26,15 @@ class GroqService {
 
 KURALLAR:
 1. SADECE verilen bilgileri (context) kullanarak cevap ver
-2. Site içi bilgiler (üyeler, etkinlikler, toplantılar, bölgeler vb.) ve tüzük bilgileri dışında bilgi verme
-3. Eğer sorulan bilgi context'te yoksa, "Bu bilgiyi bulamadım. Lütfen site içi bilgiler veya tüzük ile ilgili sorular sorun." de
+2. Site içi bilgiler (üyeler, etkinlikler, toplantılar, bölgeler vb.), site işlevleri ve tüzük bilgileri dışında bilgi verme
+3. Eğer sorulan bilgi context'te yoksa, "Bu bilgiyi bulamadım. Lütfen site içi bilgiler, site işlevleri veya tüzük ile ilgili sorular sorun." de
 4. Eğer tüzük için web linki verilmişse, kullanıcıya tüzük hakkında sorular sorduğunda bu linki paylaşabilirsin: "Parti tüzüğü hakkında detaylı bilgi için şu linki ziyaret edebilirsiniz: [link]"
 5. Hassas bilgileri (TC, telefon, adres vb.) sadece yetkili kullanıcılar sorduğunda paylaş
 6. Türkçe yanıt ver, samimi ve yardımcı ol
 7. Yanıtlarını kısa ve öz tut, gereksiz detay verme
 8. Sayısal sorular için (kaç üye var, kaç etkinlik yapıldı vb.) context'teki verileri kullanarak hesapla
+9. Site işlevleri hakkında sorular sorulduğunda (örnek: "sandık nasıl eklenir", "toplantı nasıl oluşturulur"), context'teki "SİTE İŞLEVLERİ VE KULLANIM KILAVUZU" bölümündeki bilgileri kullanarak adım adım açıkla
+10. Kullanıcılar site işlevlerini nasıl kullanacaklarını sorduğunda, hangi sayfaya gitmeleri gerektiğini, hangi butona tıklamaları gerektiğini ve hangi bilgileri girmeleri gerektiğini detaylıca anlat
 
 CONTEXT BİLGİLERİ:
 ${context.length > 0 ? context.map((item, index) => `${index + 1}. ${item}`).join('\n') : 'Henüz context bilgisi yok.'}`;
@@ -183,10 +185,113 @@ ${context.length > 0 ? context.map((item, index) => `${index + 1}. ${item}`).joi
       context.push(`${siteData.villages.length} köy kayıtlı.`);
     }
     
-    // ÜYE KAYIT BİLGİSİ
-    context.push(`\n=== ÜYE KAYIT İŞLEMİ ===`);
-    context.push(`Üye kaydı için: Ayarlar > Üye Ekle veya Üyeler sayfasından yeni üye eklenebilir.`);
+    // SİTE İŞLEVLERİ VE KULLANIM KILAVUZU
+    context.push(`\n=== SİTE İŞLEVLERİ VE KULLANIM KILAVUZU ===`);
+    
+    // ÜYE İŞLEMLERİ
+    context.push(`\n--- ÜYE İŞLEMLERİ ---`);
+    context.push(`Üye eklemek için: Ayarlar > Üye Ekle veya Üyeler sayfasından "Yeni Üye Ekle" butonuna tıklayın.`);
     context.push(`Üye kaydı için gerekli bilgiler: Ad Soyad, TC Kimlik No, Telefon, Adres, Bölge, Görev.`);
+    context.push(`Üye düzenlemek için: Üyeler sayfasından üyeye tıklayın, detay sayfasında "Düzenle" butonuna tıklayın.`);
+    context.push(`Üye silmek için: Üyeler sayfasından üyeyi arşive alabilir veya arşivden kalıcı olarak silebilirsiniz.`);
+    
+    // TOPLANTI İŞLEMLERİ
+    context.push(`\n--- TOPLANTI İŞLEMLERİ ---`);
+    context.push(`Toplantı oluşturmak için: Toplantılar sayfasından "Yeni Toplantı Oluştur" butonuna tıklayın.`);
+    context.push(`Toplantı için gerekli bilgiler: Toplantı Adı, Bölge Seçimi (en az bir bölge), Tarih, Notlar (opsiyonel).`);
+    context.push(`Toplantı oluştururken bölgeler seçildiğinde, o bölgelerdeki tüm üyeler otomatik olarak toplantıya eklenir.`);
+    context.push(`Toplantı oluştururken her üye için katılım durumu (katıldı/katılmadı) ve mazeret bilgisi girilebilir.`);
+    context.push(`Toplantı düzenlemek için: Toplantılar sayfasından toplantıya tıklayın, "Düzenle" butonuna tıklayın.`);
+    context.push(`Toplantı yoklaması için: Toplantı detay sayfasında üyelerin katılım durumunu güncelleyebilirsiniz.`);
+    
+    // ETKİNLİK İŞLEMLERİ
+    context.push(`\n--- ETKİNLİK İŞLEMLERİ ---`);
+    context.push(`Etkinlik oluşturmak için: Etkinlikler sayfasından "Yeni Etkinlik Oluştur" butonuna tıklayın.`);
+    context.push(`Etkinlik için gerekli bilgiler: Etkinlik Kategorisi (önceden tanımlanmış kategorilerden seçim), Tarih ve Saat, Konum (İlçe, Belde, Mahalle, Köy vb. seçimi), Açıklama (opsiyonel).`);
+    context.push(`Etkinlik kategorisi seçildiğinde, etkinlik adı otomatik olarak kategori adı olarak ayarlanır.`);
+    context.push(`Etkinlik oluştururken birden fazla konum türü seçilebilir (İlçe, Belde, Mahalle, Köy, Cami, STK vb.).`);
+    context.push(`Etkinlik oluştururken seçilen konumlardaki sorumlu üyeler otomatik olarak etkinliğe eklenir.`);
+    context.push(`Etkinlik düzenlemek için: Etkinlikler sayfasından etkinliğe tıklayın, "Düzenle" butonuna tıklayın.`);
+    
+    // SANDIK İŞLEMLERİ
+    context.push(`\n--- SANDIK İŞLEMLERİ ---`);
+    context.push(`Sandık eklemek için: Seçime Hazırlık > Sandıklar sayfasından "Yeni Sandık Ekle" butonuna tıklayın.`);
+    context.push(`Sandık için gerekli bilgiler: Sandık Numarası, Kurum Adı.`);
+    context.push(`Sandık için opsiyonel bilgiler: İlçe, Belde, Mahalle, Köy (konum bilgileri).`);
+    context.push(`Sandık düzenlemek için: Sandıklar sayfasından sandığa tıklayın, "Düzenle" butonuna tıklayın.`);
+    context.push(`Sandığa müşahit atamak için: Sandıklar sayfasından sandığa tıklayın, "Müşahit Ata" butonuna tıklayın veya Müşahitler sayfasından yeni müşahit eklerken sandık seçin.`);
+    
+    // MÜŞAHİT İŞLEMLERİ
+    context.push(`\n--- MÜŞAHİT İŞLEMLERİ ---`);
+    context.push(`Müşahit eklemek için: Seçime Hazırlık > Müşahitler sayfasından "Yeni Müşahit Ekle" butonuna tıklayın.`);
+    context.push(`Müşahit için gerekli bilgiler: TC Kimlik No, Ad Soyad, Telefon.`);
+    context.push(`Müşahit için opsiyonel bilgiler: Sandık Seçimi, İlçe, Belde, Mahalle, Köy, Baş Müşahit (evet/hayır).`);
+    context.push(`Müşahit eklerken sandık seçilirse, ilgili sandığa otomatik olarak atanır.`);
+    context.push(`Baş müşahit atamak için: Müşahit eklerken veya düzenlerken "Baş Müşahit" seçeneğini işaretleyin. Bir sandıkta sadece bir baş müşahit olabilir.`);
+    context.push(`Müşahit düzenlemek için: Müşahitler sayfasından müşahite tıklayın, "Düzenle" butonuna tıklayın.`);
+    
+    // İLÇE İŞLEMLERİ
+    context.push(`\n--- İLÇE İŞLEMLERİ ---`);
+    context.push(`İlçe eklemek için: Ayarlar > İlçeler sayfasından "Yeni İlçe Ekle" butonuna tıklayın.`);
+    context.push(`İlçe için gerekli bilgiler: İlçe Adı.`);
+    context.push(`İlçe için opsiyonel bilgiler: İlçe Başkanı (Ad Soyad, Telefon, Üye Seçimi), İlçe Müfettişi (Ad Soyad, Telefon, Üye Seçimi), Müfettiş Yardımcıları.`);
+    context.push(`İlçe düzenlemek için: İlçeler sayfasından ilçeye tıklayın, "Düzenle" butonuna tıklayın.`);
+    
+    // BELDE İŞLEMLERİ
+    context.push(`\n--- BELDE İŞLEMLERİ ---`);
+    context.push(`Belde eklemek için: Ayarlar > Beldeler sayfasından "Yeni Belde Ekle" butonuna tıklayın.`);
+    context.push(`Belde için gerekli bilgiler: Belde Adı, İlçe Seçimi.`);
+    context.push(`Belde için opsiyonel bilgiler: Belde Başkanı (Ad Soyad, Telefon, Üye Seçimi), Belde Müfettişi (Ad Soyad, Telefon, Üye Seçimi), Müfettiş Yardımcıları.`);
+    context.push(`Belde düzenlemek için: Beldeler sayfasından beldeye tıklayın, "Düzenle" butonuna tıklayın.`);
+    
+    // MAHALLE İŞLEMLERİ
+    context.push(`\n--- MAHALLE İŞLEMLERİ ---`);
+    context.push(`Mahalle eklemek için: Seçime Hazırlık > Mahalleler sayfasından "Yeni Mahalle Ekle" butonuna tıklayın.`);
+    context.push(`Mahalle için gerekli bilgiler: Mahalle Adı, İlçe Seçimi.`);
+    context.push(`Mahalle için opsiyonel bilgiler: Belde Seçimi, Grup Numarası, Mahalle Temsilcisi (Ad Soyad, TC, Telefon, Üye Seçimi), Mahalle Sorumlusu/Müfettişi (Ad Soyad, TC, Telefon, Üye Seçimi).`);
+    context.push(`Mahalle düzenlemek için: Mahalleler sayfasından mahalleye tıklayın, "Düzenle" butonuna tıklayın.`);
+    context.push(`Mahalleler Excel'den toplu olarak yüklenebilir: Mahalleler sayfasından "Excel'den Yükle" butonuna tıklayın.`);
+    
+    // KÖY İŞLEMLERİ
+    context.push(`\n--- KÖY İŞLEMLERİ ---`);
+    context.push(`Köy eklemek için: Seçime Hazırlık > Köyler sayfasından "Yeni Köy Ekle" butonuna tıklayın.`);
+    context.push(`Köy için gerekli bilgiler: Köy Adı, İlçe Seçimi.`);
+    context.push(`Köy için opsiyonel bilgiler: Belde Seçimi, Grup Numarası, Köy Temsilcisi (Ad Soyad, TC, Telefon, Üye Seçimi), Köy Sorumlusu/Müfettişi (Ad Soyad, TC, Telefon, Üye Seçimi).`);
+    context.push(`Köy düzenlemek için: Köyler sayfasından köye tıklayın, "Düzenle" butonuna tıklayın.`);
+    context.push(`Köyler Excel'den toplu olarak yüklenebilir: Köyler sayfasından "Excel'den Yükle" butonuna tıklayın.`);
+    
+    // CAMİ İŞLEMLERİ
+    context.push(`\n--- CAMİ İŞLEMLERİ ---`);
+    context.push(`Cami eklemek için: Ayarlar > Camiler sayfasından "Yeni Cami Ekle" butonuna tıklayın.`);
+    context.push(`Cami için gerekli bilgiler: Cami Adı, İlçe Seçimi, Konum Türü (Mahalle veya Köy), Seçilen Konum (Mahalle veya Köy).`);
+    context.push(`Cami için opsiyonel bilgiler: Belde Seçimi.`);
+    context.push(`Cami düzenlemek için: Camiler sayfasından camiye tıklayın, "Düzenle" butonuna tıklayın.`);
+    
+    // GRUP İŞLEMLERİ
+    context.push(`\n--- GRUP İŞLEMLERİ ---`);
+    context.push(`Grup oluşturmak için: Mahalleler veya Köyler sayfasından mahalle/köy eklerken veya düzenlerken "Grup Numarası" alanına grup numarasını girin.`);
+    context.push(`Aynı grup numarasına sahip mahalle ve köyler otomatik olarak aynı grupta listelenir.`);
+    context.push(`Grup lideri atamak için: Seçime Hazırlık > Gruplar sayfasından gruba tıklayın, "Grup Lideri Ata" butonuna tıklayın, üye listesinden grup liderini seçin.`);
+    context.push(`Gruplar sayfasında tüm grup bilgileri (mahalleler, köyler, temsilciler, sorumlular, grup lideri) görüntülenir.`);
+    
+    // TEMSİLCİ VE SORUMLU İŞLEMLERİ
+    context.push(`\n--- TEMSİLCİ VE SORUMLU İŞLEMLERİ ---`);
+    context.push(`Mahalle/Köy Temsilcisi atamak için: Mahalleler veya Köyler sayfasından mahalle/köy eklerken veya düzenlerken "Temsilci" bölümünden temsilci bilgilerini girin.`);
+    context.push(`Temsilci atarken üye listesinden seçim yapabilir veya yeni kişi bilgileri girebilirsiniz.`);
+    context.push(`Mahalle/Köy Sorumlusu (Müfettiş) atamak için: Mahalleler veya Köyler sayfasından mahalle/köy eklerken veya düzenlerken "Sorumlu" bölümünden sorumlu bilgilerini girin.`);
+    context.push(`Sorumlu atarken üye listesinden seçim yapabilir veya yeni kişi bilgileri girebilirsiniz.`);
+    
+    // EXCEL İŞLEMLERİ
+    context.push(`\n--- EXCEL İŞLEMLERİ ---`);
+    context.push(`Excel'den veri yüklemek için: İlgili sayfada (Mahalleler, Köyler, Üyeler vb.) "Excel'den Yükle" veya "Excel'e Aktar" butonları kullanılabilir.`);
+    context.push(`Excel formatı: Her sayfa için uygun sütun başlıkları olmalıdır (örnek: Mahalle Adı, İlçe, Grup No vb.).`);
+    
+    // RAPORLAMA VE İSTATİSTİKLER
+    context.push(`\n--- RAPORLAMA VE İSTATİSTİKLER ---`);
+    context.push(`Toplantı istatistikleri: Toplantılar sayfasında toplantı bazında katılım oranları görüntülenir.`);
+    context.push(`Etkinlik istatistikleri: Etkinlikler sayfasında etkinlik bazında katılım bilgileri görüntülenir.`);
+    context.push(`Üye istatistikleri: Üyeler sayfasında üye bazında toplantı katılım oranları ve istatistikleri görüntülenir.`);
+    context.push(`Sandık istatistikleri: Sandıklar sayfasında sandık tamamlanma durumları (ilçe, mahalle/köy, baş müşahit, müşahit atanmış mı) görüntülenir.`);
     
     // TOPLANTI İSTATİSTİKLERİ (TARİH BAZLI)
     if (siteData.meetings && siteData.meetings.length > 0) {
