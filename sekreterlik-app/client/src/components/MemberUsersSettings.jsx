@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import ApiService from '../utils/ApiService';
+import { useToast } from '../contexts/ToastContext';
 
 const MemberUsersSettings = () => {
+  const { success, error, confirm } = useToast();
   const [memberUsers, setMemberUsers] = useState([]);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('success');
   // Şifre düzenleme özelliği kaldırıldı
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -28,13 +28,11 @@ const MemberUsersSettings = () => {
       if (response.success) {
         setMemberUsers(response.users);
       } else {
-        setMessage('Üye kullanıcıları alınamadı');
-        setMessageType('error');
+        error('Üye kullanıcıları alınamadı');
       }
-    } catch (error) {
-      console.error('Error fetching member users:', error);
-      setMessage('Üye kullanıcıları alınırken hata oluştu');
-      setMessageType('error');
+    } catch (err) {
+      console.error('Error fetching member users:', err);
+      error('Üye kullanıcıları alınırken hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -55,46 +53,45 @@ const MemberUsersSettings = () => {
     try {
       const response = await ApiService.toggleMemberUserStatus(userId);
       if (response.success) {
-        setMessage('Kullanıcı durumu güncellendi');
-        setMessageType('success');
+        success('Kullanıcı durumu güncellendi');
         await fetchMemberUsers();
       } else {
-        setMessage(response.message || 'Durum güncellenirken hata oluştu');
-        setMessageType('error');
+        error(response.message || 'Durum güncellenirken hata oluştu');
       }
-    } catch (error) {
-      console.error('Error toggling user status:', error);
-      setMessage('Kullanıcı durumu güncellenirken hata oluştu');
-      setMessageType('error');
+    } catch (err) {
+      console.error('Error toggling user status:', err);
+      error('Kullanıcı durumu güncellenirken hata oluştu');
     }
   };
 
   const handleDeleteUser = async (userId, userName) => {
-    if (window.confirm(`${userName} kullanıcısını silmek istediğinizden emin misiniz?`)) {
-      try {
-        const response = await ApiService.deleteMemberUser(userId);
-        if (response.success) {
-          setMessage('Kullanıcı başarıyla silindi');
-          setMessageType('success');
-          await fetchMemberUsers();
-        } else {
-          setMessage(response.message || 'Kullanıcı silinirken hata oluştu');
-          setMessageType('error');
+    confirm(
+      `${userName} kullanıcısını silmek istediğinizden emin misiniz?`,
+      async () => {
+        try {
+          const response = await ApiService.deleteMemberUser(userId);
+          if (response.success) {
+            success('Kullanıcı başarıyla silindi');
+            await fetchMemberUsers();
+          } else {
+            error(response.message || 'Kullanıcı silinirken hata oluştu');
+          }
+        } catch (err) {
+          console.error('Error deleting user:', err);
+          error('Kullanıcı silinirken hata oluştu');
         }
-      } catch (error) {
-        console.error('Error deleting user:', error);
-        setMessage('Kullanıcı silinirken hata oluştu');
-        setMessageType('error');
+      },
+      () => {
+        // Cancelled
       }
-    }
+    );
   };
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
     
     if (!createForm.memberId || !createForm.username || !createForm.password) {
-      setMessage('Tüm alanlar zorunludur');
-      setMessageType('error');
+      error('Tüm alanlar zorunludur');
       return;
     }
 
@@ -106,19 +103,16 @@ const MemberUsersSettings = () => {
       );
       
       if (response.success) {
-        setMessage('Kullanıcı başarıyla oluşturuldu');
-        setMessageType('success');
+        success('Kullanıcı başarıyla oluşturuldu');
         setShowCreateForm(false);
         setCreateForm({ memberId: '', username: '', password: '' });
         await fetchMemberUsers();
       } else {
-        setMessage(response.message || 'Kullanıcı oluşturulurken hata oluştu');
-        setMessageType('error');
+        error(response.message || 'Kullanıcı oluşturulurken hata oluştu');
       }
-    } catch (error) {
-      console.error('Error creating user:', error);
-      setMessage('Kullanıcı oluşturulurken hata oluştu');
-      setMessageType('error');
+    } catch (err) {
+      console.error('Error creating user:', err);
+      error('Kullanıcı oluşturulurken hata oluştu');
     }
   };
 
@@ -136,7 +130,6 @@ const MemberUsersSettings = () => {
   const handleUpdateAllCredentials = async () => {
     try {
       setIsUpdating(true);
-      setMessage('');
       
       const response = await ApiService.updateAllCredentials();
       
@@ -146,34 +139,26 @@ const MemberUsersSettings = () => {
         const totalErrors = results.memberUsers.errors.length + results.districtPresidents.errors.length + results.townPresidents.errors.length;
         const totalDeleted = results.cleaned?.deleted || 0;
         
-        let message = `Güncelleme tamamlandı!\n`;
-        message += `• Üye kullanıcıları: ${results.memberUsers.updated} güncellendi/oluşturuldu\n`;
-        message += `• İlçe başkanları: ${results.districtPresidents.updated} güncellendi/oluşturuldu\n`;
-        message += `• Belde başkanları: ${results.townPresidents.updated} güncellendi/oluşturuldu\n`;
+        let message = `Güncelleme tamamlandı! Üye kullanıcıları: ${results.memberUsers.updated}, İlçe başkanları: ${results.districtPresidents.updated}, Belde başkanları: ${results.townPresidents.updated}`;
         
         if (totalDeleted > 0) {
-          message += `• Silinen kullanıcılar: ${totalDeleted} kullanıcı silindi\n`;
+          message += ` Silinen kullanıcılar: ${totalDeleted}`;
         }
         
         if (totalErrors > 0) {
-          message += `\n${totalErrors} hata oluştu.`;
-          setMessageType('warning');
+          error(`${message}. ${totalErrors} hata oluştu.`);
         } else {
-          setMessageType('success');
+          success(message);
         }
-        
-        setMessage(message);
         
         // Refresh the user list
         await fetchMemberUsers();
       } else {
-        setMessage('Güncelleme sırasında hata oluştu: ' + response.message);
-        setMessageType('error');
+        error('Güncelleme sırasında hata oluştu: ' + response.message);
       }
-    } catch (error) {
-      console.error('Error updating credentials:', error);
-      setMessage('Güncelleme sırasında hata oluştu');
-      setMessageType('error');
+    } catch (err) {
+      console.error('Error updating credentials:', err);
+      error('Güncelleme sırasında hata oluştu');
     } finally {
       setIsUpdating(false);
     }
@@ -308,18 +293,6 @@ const MemberUsersSettings = () => {
         </div>
       )}
 
-      {/* Message */}
-      {message && (
-        <div className={`p-3 rounded-lg shadow-sm ${
-          messageType === 'success' 
-            ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 border border-green-200 dark:border-green-700' 
-            : messageType === 'warning'
-            ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-700'
-            : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 border border-red-200 dark:border-red-700'
-        }`}>
-          {message}
-        </div>
-      )}
 
       {/* Users Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700">
