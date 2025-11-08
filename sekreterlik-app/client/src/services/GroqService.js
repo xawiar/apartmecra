@@ -62,7 +62,12 @@ class GroqService {
       // Eğer context çok büyükse, kısalt
       if (contextText.length > MAX_CONTEXT_LENGTH) {
         contextText = contextText.substring(0, MAX_CONTEXT_LENGTH) + '\n\n[Context kısaltıldı - token limiti nedeniyle]';
-        console.warn('Context çok büyük, kısaltıldı:', contextText.length, 'karakter (limit:', MAX_CONTEXT_LENGTH, ')');
+        // Sadece debug modunda uyarı göster (production'da rahatsız etmesin)
+        if (import.meta.env.MODE === 'development') {
+          console.warn('Context çok büyük, kısaltıldı:', contextText.length, 'karakter (limit:', MAX_CONTEXT_LENGTH, ')');
+        } else {
+          console.debug('Context kısaltıldı:', contextText.length, 'karakter (limit:', MAX_CONTEXT_LENGTH, ')');
+        }
       }
 
       // System prompt - AI'nın kimliği ve sınırları (kısaltılmış - token limiti için)
