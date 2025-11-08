@@ -28,9 +28,13 @@ class GroqService {
             if (configDoc.api_key.startsWith('U2FsdGVkX1')) {
               const { decryptData } = await import('../utils/crypto');
               apiKey = decryptData(configDoc.api_key);
+              console.log('[GroqService] API key Firebase\'den decrypt edilerek yüklendi (ilk 10 karakter:', apiKey.substring(0, 10) + '...)');
             } else {
               apiKey = configDoc.api_key;
+              console.log('[GroqService] API key Firebase\'den yüklendi (ilk 10 karakter:', apiKey.substring(0, 10) + '...)');
             }
+          } else {
+            console.warn('[GroqService] Firebase\'de API key bulunamadı');
           }
         } catch (error) {
           console.warn('Firebase\'den Groq API key alınamadı, environment variable kullanılıyor:', error);
@@ -40,6 +44,9 @@ class GroqService {
       // Eğer Firebase'de yoksa, environment variable'dan al
       if (!apiKey) {
         apiKey = import.meta.env.VITE_GROQ_API_KEY;
+        if (apiKey) {
+          console.log('[GroqService] API key environment variable\'dan yüklendi (ilk 10 karakter:', apiKey.substring(0, 10) + '...)');
+        }
       }
       
       if (!apiKey) {
