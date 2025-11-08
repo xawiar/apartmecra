@@ -8,6 +8,7 @@ import MembersHeader from '../components/Members/MembersHeader';
 import SummaryStatistics from '../components/Members/SummaryStatistics';
 import MembersOperationsMenu from '../components/Members/MembersOperationsMenu';
 import MembersTable from '../components/Members/MembersTable';
+import ExcelImportPreview from '../components/Members/ExcelImportPreview';
 import { calculateMeetingStats, getAttendanceColor, calculateSummaryStats, calculateMemberRegistrations } from '../components/Members/membersUtils';
 import LoadingState from '../components/Members/LoadingState';
 
