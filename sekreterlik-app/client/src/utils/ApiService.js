@@ -970,10 +970,11 @@ class ApiService {
   }
 
   static async getPersonalDocuments(memberId) {
+    // Firebase kullanılıyorsa FirebaseApiService'i kullan
     if (USE_FIREBASE) {
-      // Firebase'de personal documents için placeholder - gerekirse collection eklenebilir
-      return [];
+      return FirebaseApiService.getPersonalDocuments(memberId);
     }
+    
     const response = await fetch(`${API_BASE_URL}/personal-documents/member/${memberId}`, {
       headers: this.getAuthHeaders(),
     });
