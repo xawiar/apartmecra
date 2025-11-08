@@ -459,11 +459,19 @@ const Chatbot = ({ isOpen, onClose }) => {
       console.error('Chat error:', error);
       setError(error.message || 'Mesaj gönderilirken hata oluştu');
       
+      // 402 hatası için özel mesaj
+      let errorContent = 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.';
+      if (error.message && error.message.includes('402')) {
+        errorContent = error.message + '\n\n💡 Çözüm: Ayarlar > Chatbot API sayfasından başka bir AI servisi (Groq, Gemini, DeepSeek) seçebilirsiniz.';
+      } else if (error.message) {
+        errorContent = error.message;
+      }
+      
       // Add error message
       const errorMessage = {
         id: Date.now() + 1,
         role: 'assistant',
-        content: 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.'
+        content: errorContent
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
