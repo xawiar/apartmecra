@@ -3,7 +3,10 @@ import FirebaseService from '../services/FirebaseService';
 import { decryptData, encryptData } from '../utils/crypto';
 
 const GroqApiSettings = () => {
-  const [apiKey, setApiKey] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState('groq'); // 'groq', 'gemini', 'chatgpt'
+  const [groqApiKey, setGroqApiKey] = useState('');
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [chatgptApiKey, setChatgptApiKey] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -11,54 +14,114 @@ const GroqApiSettings = () => {
   const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
-    loadApiKey();
+    loadApiKeys();
+    loadSelectedProvider();
   }, []);
 
-  const loadApiKey = async () => {
+  const loadSelectedProvider = async () => {
+    try {
+      const USE_FIREBASE = import.meta.env.VITE_USE_FIREBASE === 'true';
+      if (USE_FIREBASE) {
+        try {
+          const configDoc = await FirebaseService.getById('ai_provider_config', 'main');
+          if (configDoc && configDoc.provider) {
+            setSelectedProvider(configDoc.provider);
+          }
+        } catch (error) {
+          console.warn('AI provider config not found, using default (groq)');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading AI provider:', error);
+    }
+  };
+
+  const loadApiKeys = async () => {
     try {
       setLoading(true);
       setMessage('');
       
-      // Firebase'den API key'i yükle
       const USE_FIREBASE = import.meta.env.VITE_USE_FIREBASE === 'true';
       
       if (USE_FIREBASE) {
+        // Groq API Key
         try {
-          const configDoc = await FirebaseService.getById('groq_api_config', 'main');
-          if (configDoc && configDoc.api_key) {
-            // API key şifrelenmiş olabilir, decrypt et
-            const decryptedKey = configDoc.api_key.startsWith('U2FsdGVkX1') 
-              ? decryptData(configDoc.api_key)
-              : configDoc.api_key;
-            setApiKey(decryptedKey);
+          const groqConfig = await FirebaseService.getById('groq_api_config', 'main');
+          if (groqConfig && groqConfig.api_key) {
+            const decryptedKey = groqConfig.api_key.startsWith('U2FsdGVkX1') 
+              ? decryptData(groqConfig.api_key)
+              : groqConfig.api_key;
+            setGroqApiKey(decryptedKey);
           } else {
-            // Eğer Firebase'de yoksa, environment variable'dan al
             const envKey = import.meta.env.VITE_GROQ_API_KEY;
-            if (envKey) {
-              setApiKey(envKey);
-            }
+            if (envKey) setGroqApiKey(envKey);
           }
         } catch (error) {
-          console.error('Error loading Groq API key:', error);
-          // Eğer Firebase'de yoksa, environment variable'dan al
           const envKey = import.meta.env.VITE_GROQ_API_KEY;
-          if (envKey) {
-            setApiKey(envKey);
+          if (envKey) setGroqApiKey(envKey);
+        }
+
+        // Gemini API Key
+        try {
+          const geminiConfig = await FirebaseService.getById('gemini_api_config', 'main');
+          if (geminiConfig && geminiConfig.api_key) {
+            const decryptedKey = geminiConfig.api_key.startsWith('U2FsdGVkX1') 
+              ? decryptData(geminiConfig.api_key)
+              : geminiConfig.api_key;
+            setGeminiApiKey(decryptedKey);
+          } else {
+            const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+            if (envKey) setGeminiApiKey(envKey);
           }
+        } catch (error) {
+          const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+          if (envKey) setGeminiApiKey(envKey);
+        }
+
+        // ChatGPT API Key
+        try {
+          const chatgptConfig = await FirebaseService.getById('chatgpt_api_config', 'main');
+          if (chatgptConfig && chatgptConfig.api_key) {
+            const decryptedKey = chatgptConfig.api_key.startsWith('U2FsdGVkX1') 
+              ? decryptData(chatgptConfig.api_key)
+              : chatgptConfig.api_key;
+            setChatgptApiKey(decryptedKey);
+          } else {
+            const envKey = import.meta.env.VITE_OPENAI_API_KEY;
+            if (envKey) setChatgptApiKey(envKey);
+          }
+        } catch (error) {
+          const envKey = import.meta.env.VITE_OPENAI_API_KEY;
+          if (envKey) setChatgptApiKey(envKey);
         }
       } else {
-        // Firebase kullanılmıyorsa, environment variable'dan al
-        const envKey = import.meta.env.VITE_GROQ_API_KEY;
-        if (envKey) {
-          setApiKey(envKey);
-        }
+        setGroqApiKey(import.meta.env.VITE_GROQ_API_KEY || '');
+        setGeminiApiKey(import.meta.env.VITE_GEMINI_API_KEY || '');
+        setChatgptApiKey(import.meta.env.VITE_OPENAI_API_KEY || '');
       }
     } catch (error) {
-      console.error('Error loading Groq API key:', error);
-      setMessage('API anahtarı yüklenirken hata oluştu');
+      console.error('Error loading API keys:', error);
+      setMessage('API anahtarları yüklenirken hata oluştu');
       setMessageType('error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getCurrentApiKey = () => {
+    switch (selectedProvider) {
+      case 'groq': return groqApiKey;
+      case 'gemini': return geminiApiKey;
+      case 'chatgpt': return chatgptApiKey;
+      default: return '';
+    }
+  };
+
+  const setCurrentApiKey = (value) => {
+    switch (selectedProvider) {
+      case 'groq': setGroqApiKey(value); break;
+      case 'gemini': setGeminiApiKey(value); break;
+      case 'chatgpt': setChatgptApiKey(value); break;
     }
   };
 
@@ -67,42 +130,56 @@ const GroqApiSettings = () => {
       setSaving(true);
       setMessage('');
       
-      if (!apiKey.trim()) {
-        setMessage('Lütfen Groq API anahtarını girin');
+      const currentKey = getCurrentApiKey();
+      
+      if (!currentKey.trim()) {
+        setMessage(`Lütfen ${selectedProvider === 'groq' ? 'Groq' : selectedProvider === 'gemini' ? 'Gemini' : 'ChatGPT'} API anahtarını girin`);
         setMessageType('error');
         return;
       }
 
-      // API key formatını kontrol et (gsk_ ile başlamalı)
-      if (!apiKey.trim().startsWith('gsk_')) {
+      // API key formatını kontrol et
+      if (selectedProvider === 'groq' && !currentKey.trim().startsWith('gsk_')) {
         setMessage('Geçersiz Groq API anahtarı formatı. API anahtarı "gsk_" ile başlamalıdır.');
         setMessageType('error');
         return;
       }
 
-      // Firebase'e kaydet
+      if (selectedProvider === 'chatgpt' && !currentKey.trim().startsWith('sk-')) {
+        setMessage('Geçersiz ChatGPT API anahtarı formatı. API anahtarı "sk-" ile başlamalıdır.');
+        setMessageType('error');
+        return;
+      }
+
       const USE_FIREBASE = import.meta.env.VITE_USE_FIREBASE === 'true';
       
       if (USE_FIREBASE) {
         // API key'i şifreleyerek kaydet
-        const encryptedKey = encryptData(apiKey.trim());
+        const encryptedKey = encryptData(currentKey.trim());
         
         const configData = {
           api_key: encryptedKey,
           updated_at: new Date().toISOString()
         };
         
-        // setDoc kullanarak kaydet (id: 'main', encrypt: false - zaten şifreledik)
-        await FirebaseService.create('groq_api_config', 'main', configData, false);
+        // Provider'a göre collection adı
+        const collectionName = `${selectedProvider}_api_config`;
+        await FirebaseService.create(collectionName, 'main', configData, false);
         
-        setMessage('Groq API anahtarı başarıyla kaydedildi');
+        // Seçilen provider'ı kaydet
+        await FirebaseService.create('ai_provider_config', 'main', {
+          provider: selectedProvider,
+          updated_at: new Date().toISOString()
+        }, false);
+        
+        setMessage(`${selectedProvider === 'groq' ? 'Groq' : selectedProvider === 'gemini' ? 'Gemini' : 'ChatGPT'} API anahtarı başarıyla kaydedildi`);
         setMessageType('success');
       } else {
         setMessage('Firebase kullanılmıyor. API anahtarı environment variable olarak ayarlanmalıdır.');
         setMessageType('error');
       }
     } catch (error) {
-      console.error('Error saving Groq API key:', error);
+      console.error('Error saving API key:', error);
       setMessage('API anahtarı kaydedilirken hata oluştu: ' + error.message);
       setMessageType('error');
     } finally {
@@ -114,38 +191,66 @@ const GroqApiSettings = () => {
     try {
       setMessage('');
       
-      if (!apiKey.trim()) {
+      const currentKey = getCurrentApiKey();
+      
+      if (!currentKey.trim()) {
         setMessage('Lütfen önce API anahtarını kaydedin');
         setMessageType('error');
         return;
       }
 
-      // Test için basit bir API çağrısı yap
-      const testResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey.trim()}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [
-            { role: 'user', content: 'Test' }
-          ],
-          max_tokens: 10
-        })
-      });
+      let testResponse;
+      
+      if (selectedProvider === 'groq') {
+        testResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${currentKey.trim()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [{ role: 'user', content: 'Test' }],
+            max_tokens: 10
+          })
+        });
+      } else if (selectedProvider === 'gemini') {
+        testResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${currentKey.trim()}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{ text: 'Test' }]
+            }]
+          })
+        });
+      } else if (selectedProvider === 'chatgpt') {
+        testResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${currentKey.trim()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: 'Test' }],
+            max_tokens: 10
+          })
+        });
+      }
 
-      if (testResponse.ok) {
+      if (testResponse && testResponse.ok) {
         setMessage('API anahtarı geçerli ve çalışıyor! ✅');
         setMessageType('success');
       } else {
-        const errorData = await testResponse.json();
+        const errorData = await testResponse?.json().catch(() => ({}));
         setMessage('API anahtarı geçersiz: ' + (errorData.error?.message || 'Bilinmeyen hata'));
         setMessageType('error');
       }
     } catch (error) {
-      console.error('Error testing Groq API key:', error);
+      console.error('Error testing API key:', error);
       setMessage('API anahtarı test edilirken hata oluştu: ' + error.message);
       setMessageType('error');
     }
@@ -159,29 +264,72 @@ const GroqApiSettings = () => {
     );
   }
 
+  const providerInfo = {
+    groq: {
+      name: 'Groq',
+      placeholder: 'gsk_...',
+      link: 'https://console.groq.com/keys',
+      description: 'Ücretsiz ve hızlı AI servisi. 30 RPM limiti.'
+    },
+    gemini: {
+      name: 'Google Gemini',
+      placeholder: 'AIza...',
+      link: 'https://makersuite.google.com/app/apikey',
+      description: 'Google\'ın AI servisi. Ücretsiz tier mevcut.'
+    },
+    chatgpt: {
+      name: 'OpenAI ChatGPT',
+      placeholder: 'sk-...',
+      link: 'https://platform.openai.com/api-keys',
+      description: 'OpenAI\'nin ChatGPT servisi. Ücretli, ancak güçlü.'
+    }
+  };
+
+  const currentInfo = providerInfo[selectedProvider];
+
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          Groq Chatbot API Ayarları
+          Chatbot AI API Ayarları
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Groq API anahtarınızı buradan yönetebilirsiniz. API anahtarı değiştiğinde buraya yeni anahtarı girebilirsiniz.
+          Kullanmak istediğiniz AI servisini seçin ve API anahtarınızı girin. API anahtarı değiştiğinde buraya yeni anahtarı girebilirsiniz.
         </p>
       </div>
 
+      {/* AI Provider Seçimi */}
+      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          AI Servisi Seçin
+        </label>
+        <select
+          value={selectedProvider}
+          onChange={(e) => setSelectedProvider(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white"
+        >
+          <option value="groq">Groq (Ücretsiz - Önerilen)</option>
+          <option value="gemini">Google Gemini (Ücretsiz)</option>
+          <option value="chatgpt">OpenAI ChatGPT (Ücretli)</option>
+        </select>
+        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          {currentInfo.description}
+        </p>
+      </div>
+
+      {/* API Key Input */}
       <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Groq API Anahtarı
+              {currentInfo.name} API Anahtarı
             </label>
             <div className="flex items-center space-x-2">
               <input
                 type={showApiKey ? 'text' : 'password'}
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="gsk_..."
+                value={getCurrentApiKey()}
+                onChange={(e) => setCurrentApiKey(e.target.value)}
+                placeholder={currentInfo.placeholder}
                 className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white"
               />
               <button
@@ -202,7 +350,7 @@ const GroqApiSettings = () => {
               </button>
             </div>
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              API anahtarınızı <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">Groq Console</a>'dan alabilirsiniz.
+              API anahtarınızı <a href={currentInfo.link} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">{currentInfo.name} Console</a>'dan alabilirsiniz.
             </p>
           </div>
 
@@ -219,14 +367,14 @@ const GroqApiSettings = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={handleSave}
-              disabled={saving || !apiKey.trim()}
+              disabled={saving || !getCurrentApiKey().trim()}
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {saving ? 'Kaydediliyor...' : 'Kaydet'}
             </button>
             <button
               onClick={handleTest}
-              disabled={!apiKey.trim()}
+              disabled={!getCurrentApiKey().trim()}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Test Et
@@ -239,9 +387,10 @@ const GroqApiSettings = () => {
         <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Bilgi</h4>
         <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
           <li>API anahtarı şifrelenmiş olarak Firebase'de saklanır</li>
+          <li>Seçtiğiniz AI servisi chatbot tarafından kullanılacaktır</li>
           <li>API anahtarı değiştiğinde buraya yeni anahtarı girebilirsiniz</li>
           <li>Test butonu ile API anahtarının geçerli olup olmadığını kontrol edebilirsiniz</li>
-          <li>API anahtarı "gsk_" ile başlamalıdır</li>
+          <li>Groq: "gsk_" ile başlamalı | Gemini: "AIza" ile başlamalı | ChatGPT: "sk-" ile başlamalı</li>
         </ul>
       </div>
     </div>
@@ -249,4 +398,3 @@ const GroqApiSettings = () => {
 };
 
 export default GroqApiSettings;
-

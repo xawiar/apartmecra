@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import GroqService from '../services/GroqService';
+import GeminiService from '../services/GeminiService';
+import ChatGPTService from '../services/ChatGPTService';
 import ApiService from '../utils/ApiService';
+import FirebaseService from '../services/FirebaseService';
 
 const Chatbot = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState([]);
@@ -400,8 +403,15 @@ const Chatbot = ({ isOpen, onClose }) => {
         content: msg.content
       }));
 
-      // Call Groq API
-      const response = await GroqService.chat(userMessage, context, conversationHistory);
+      // Seçilen AI servisine göre API çağrısı yap
+      let response;
+      if (aiProvider === 'gemini') {
+        response = await GeminiService.chat(userMessage, context, conversationHistory);
+      } else if (aiProvider === 'chatgpt') {
+        response = await ChatGPTService.chat(userMessage, context, conversationHistory);
+      } else {
+        response = await GroqService.chat(userMessage, context, conversationHistory); // Default: Groq
+      }
 
       // Add assistant message
       const newAssistantMessage = {
