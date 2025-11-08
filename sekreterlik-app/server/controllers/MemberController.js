@@ -437,11 +437,11 @@ class MemberController {
             await MemberController.createPositionIfNotExists(position);
           }
 
-          // Insert member into database
+          // Insert member into database (İlçe kaldırıldı)
           console.log(`Inserting member: ${name}`);
           const result = await db.run(
-            'INSERT INTO members (tc, name, phone, position, region, district) VALUES (?, ?, ?, ?, ?, ?)',
-            [tc, name, phone, position, region, district]
+            'INSERT INTO members (tc, name, phone, position, region) VALUES (?, ?, ?, ?, ?)',
+            [tc, name, phone, position, region]
           );
           
           // Add member to in-memory collection as well
@@ -452,7 +452,6 @@ class MemberController {
             phone,
             position,
             region,
-            district,
             archived: false
           };
           db.add('members', newMember);
