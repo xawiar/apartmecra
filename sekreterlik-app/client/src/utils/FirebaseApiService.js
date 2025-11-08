@@ -201,10 +201,11 @@ class FirebaseApiService {
                   console.log('✅ Firebase Auth user created for member with Firestore password (phone):', user.uid);
                 }
               } catch (createError) {
-                // Email zaten kullanılıyorsa (başka bir kullanıcı tarafından)
+                // Email zaten kullanılıyorsa (başka bir kullanıcı tarafından veya aynı kullanıcı farklı şifre ile)
                 if (createError.code === 'auth/email-already-in-use') {
-                  console.log('⚠️ Email already in use by another user, trying to sign in:', email);
+                  console.log('⚠️ Email already in use, trying to sign in with Firestore password:', email);
                   try {
+                    // Firestore'daki şifre ile giriş yapmayı dene
                     userCredential = await signInWithEmailAndPassword(auth, email, firestorePassword);
                     user = userCredential.user;
                     
@@ -216,9 +217,24 @@ class FirebaseApiService {
                     
                     console.log('✅ Firebase Auth sign in successful for member:', user.uid);
                   } catch (signInError2) {
-                    // Şifre yanlış veya başka bir hata
-                    console.error('❌ Cannot sign in with existing email:', signInError2);
-                    throw new Error('Bu email başka bir kullanıcı tarafından kullanılıyor ve şifre eşleşmiyor');
+                    // Şifre yanlış - Firebase Auth'daki şifre Firestore'daki şifreyle eşleşmiyor
+                    console.error('❌ Cannot sign in with existing email - password mismatch:', signInError2.code);
+                    
+                    // Eğer authUid varsa ve email eşleşiyorsa, şifreyi güncellemek için re-authenticate gerekir
+                    // Ama şifre zaten yanlış olduğu için re-authenticate yapılamaz
+                    // Bu durumda Firestore'daki authUid'i temizle ve kullanıcıya bilgi ver
+                    if (memberUser.authUid) {
+                      console.log('⚠️ Clearing authUid from Firestore - password mismatch with Firebase Auth');
+                      await FirebaseService.update(this.COLLECTIONS.MEMBER_USERS, memberUser.id, {
+                        authUid: null,
+                        username: username
+                      }, false);
+                      
+                      // Kullanıcıya daha açıklayıcı hata mesajı ver
+                      throw new Error('Firebase Auth\'daki şifre Firestore\'daki şifreyle eşleşmiyor. Lütfen admin ile iletişime geçin veya sayfayı yenileyip tekrar deneyin.');
+                    } else {
+                      throw new Error('Bu email başka bir kullanıcı tarafından kullanılıyor ve şifre eşleşmiyor. Lütfen admin ile iletişime geçin.');
+                    }
                   }
                 } else {
                   throw createError;
