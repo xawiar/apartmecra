@@ -45,33 +45,33 @@ const FirebaseConfigSettings = () => {
             setAppId(configDoc.appId || '');
             setMeasurementId(configDoc.measurementId || '');
           } else {
-            // Environment variable'lardan yükle
-            setApiKey(import.meta.env.VITE_FIREBASE_API_KEY || '');
-            setAuthDomain(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '');
-            setProjectId(import.meta.env.VITE_FIREBASE_PROJECT_ID || '');
-            setStorageBucket(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '');
-            setMessagingSenderId(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '');
-            setAppId(import.meta.env.VITE_FIREBASE_APP_ID || '');
-            setMeasurementId(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || '');
+            // Environment variable'lardan yükle, yoksa mevcut yapılandırmadan
+            setApiKey(import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyAAkFCVr_IrA9qR8gAgDAZMGGk-xGsY2nA');
+            setAuthDomain(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'ilsekreterliki.firebaseapp.com');
+            setProjectId(import.meta.env.VITE_FIREBASE_PROJECT_ID || 'ilsekreterliki');
+            setStorageBucket(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'ilsekreterliki.firebasestorage.app');
+            setMessagingSenderId(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '112937724027');
+            setAppId(import.meta.env.VITE_FIREBASE_APP_ID || '1:112937724027:web:03e419ca720eea178c1ade');
+            setMeasurementId(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-YMN4TEP8Z1');
           }
         } catch (error) {
           console.warn('Firebase config not found in Firestore, using environment variables:', error);
-          setApiKey(import.meta.env.VITE_FIREBASE_API_KEY || '');
-          setAuthDomain(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '');
-          setProjectId(import.meta.env.VITE_FIREBASE_PROJECT_ID || '');
-          setStorageBucket(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '');
-          setMessagingSenderId(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '');
-          setAppId(import.meta.env.VITE_FIREBASE_APP_ID || '');
-          setMeasurementId(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || '');
+          setApiKey(import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyAAkFCVr_IrA9qR8gAgDAZMGGk-xGsY2nA');
+          setAuthDomain(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'ilsekreterliki.firebaseapp.com');
+          setProjectId(import.meta.env.VITE_FIREBASE_PROJECT_ID || 'ilsekreterliki');
+          setStorageBucket(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'ilsekreterliki.firebasestorage.app');
+          setMessagingSenderId(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '112937724027');
+          setAppId(import.meta.env.VITE_FIREBASE_APP_ID || '1:112937724027:web:03e419ca720eea178c1ade');
+          setMeasurementId(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-YMN4TEP8Z1');
         }
       } else {
-        setApiKey(import.meta.env.VITE_FIREBASE_API_KEY || '');
-        setAuthDomain(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '');
-        setProjectId(import.meta.env.VITE_FIREBASE_PROJECT_ID || '');
-        setStorageBucket(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '');
-        setMessagingSenderId(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '');
-        setAppId(import.meta.env.VITE_FIREBASE_APP_ID || '');
-        setMeasurementId(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || '');
+        setApiKey(import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyAAkFCVr_IrA9qR8gAgDAZMGGk-xGsY2nA');
+        setAuthDomain(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'ilsekreterliki.firebaseapp.com');
+        setProjectId(import.meta.env.VITE_FIREBASE_PROJECT_ID || 'ilsekreterliki');
+        setStorageBucket(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'ilsekreterliki.firebasestorage.app');
+        setMessagingSenderId(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '112937724027');
+        setAppId(import.meta.env.VITE_FIREBASE_APP_ID || '1:112937724027:web:03e419ca720eea178c1ade');
+        setMeasurementId(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-YMN4TEP8Z1');
       }
     } catch (error) {
       console.error('Error loading Firebase config:', error);

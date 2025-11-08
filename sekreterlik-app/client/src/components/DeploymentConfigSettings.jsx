@@ -44,24 +44,24 @@ const DeploymentConfigSettings = () => {
             setRenderServiceId(configDoc.renderServiceId || '');
             setGithubRepo(configDoc.githubRepo || '');
           } else {
-            // Environment variable'lardan yükle
+            // Environment variable'lardan yükle, yoksa mevcut yapılandırmadan
             setRenderApiKey(import.meta.env.VITE_RENDER_API_KEY || '');
-            setRenderServiceId(import.meta.env.VITE_RENDER_SERVICE_ID || '');
+            setRenderServiceId(import.meta.env.VITE_RENDER_SERVICE_ID || 'ilce-sekreterlik');
             setGithubToken(import.meta.env.VITE_GITHUB_TOKEN || '');
-            setGithubRepo(import.meta.env.VITE_GITHUB_REPO || '');
+            setGithubRepo(import.meta.env.VITE_GITHUB_REPO || 'xawiar/ilce-sekreterlik');
           }
         } catch (error) {
           console.warn('Deployment config not found in Firestore, using environment variables:', error);
           setRenderApiKey(import.meta.env.VITE_RENDER_API_KEY || '');
-          setRenderServiceId(import.meta.env.VITE_RENDER_SERVICE_ID || '');
+          setRenderServiceId(import.meta.env.VITE_RENDER_SERVICE_ID || 'ilce-sekreterlik');
           setGithubToken(import.meta.env.VITE_GITHUB_TOKEN || '');
-          setGithubRepo(import.meta.env.VITE_GITHUB_REPO || '');
+          setGithubRepo(import.meta.env.VITE_GITHUB_REPO || 'xawiar/ilce-sekreterlik');
         }
       } else {
         setRenderApiKey(import.meta.env.VITE_RENDER_API_KEY || '');
-        setRenderServiceId(import.meta.env.VITE_RENDER_SERVICE_ID || '');
+        setRenderServiceId(import.meta.env.VITE_RENDER_SERVICE_ID || 'ilce-sekreterlik');
         setGithubToken(import.meta.env.VITE_GITHUB_TOKEN || '');
-        setGithubRepo(import.meta.env.VITE_GITHUB_REPO || '');
+        setGithubRepo(import.meta.env.VITE_GITHUB_REPO || 'xawiar/ilce-sekreterlik');
       }
     } catch (error) {
       console.error('Error loading deployment config:', error);
