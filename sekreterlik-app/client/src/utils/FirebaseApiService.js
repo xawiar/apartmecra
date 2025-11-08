@@ -2540,25 +2540,45 @@ class FirebaseApiService {
 
   static async createOrUpdateDistrictOfficials(officialsData) {
     try {
+      // district_id kontrolü
+      if (!officialsData.district_id) {
+        throw new Error('district_id gereklidir');
+      }
+
+      // district_id'yi string'e çevir
+      const districtId = String(officialsData.district_id);
+      
+      // undefined değerleri temizle
+      const cleanedData = {
+        district_id: districtId,
+        chairman_name: officialsData.chairman_name || null,
+        chairman_phone: officialsData.chairman_phone || null,
+        chairman_member_id: officialsData.chairman_member_id || null,
+        inspector_name: officialsData.inspector_name || null,
+        inspector_phone: officialsData.inspector_phone || null,
+        inspector_member_id: officialsData.inspector_member_id || null,
+        deputy_inspectors: officialsData.deputy_inspectors || []
+      };
+
       // district_id ile mevcut kaydı bul
       const existing = await FirebaseService.findByField(
         this.COLLECTIONS.DISTRICT_OFFICIALS, 
         'district_id', 
-        officialsData.district_id
+        districtId
       );
       
       if (existing && existing.length > 0) {
         // Güncelle
-        await FirebaseService.update(this.COLLECTIONS.DISTRICT_OFFICIALS, existing[0].id, officialsData);
+        await FirebaseService.update(this.COLLECTIONS.DISTRICT_OFFICIALS, existing[0].id, cleanedData, false);
         return { success: true, id: existing[0].id, message: 'İlçe yetkilileri güncellendi' };
       } else {
         // Yeni oluştur
-        const docId = await FirebaseService.create(this.COLLECTIONS.DISTRICT_OFFICIALS, null, officialsData);
+        const docId = await FirebaseService.create(this.COLLECTIONS.DISTRICT_OFFICIALS, null, cleanedData, false);
         return { success: true, id: docId, message: 'İlçe yetkilileri oluşturuldu' };
       }
     } catch (error) {
       console.error('Create/update district officials error:', error);
-      throw new Error('İlçe yetkilileri kaydedilirken hata oluştu');
+      throw new Error('İlçe yetkilileri kaydedilirken hata oluştu: ' + (error.message || error));
     }
   }
 

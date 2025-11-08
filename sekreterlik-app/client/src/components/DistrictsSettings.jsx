@@ -181,27 +181,31 @@ const DistrictsSettings = () => {
 
     try {
       // İlçe oluştur veya güncelle
-      let district;
+      let districtId;
       if (editingDistrict) {
-        district = await ApiService.updateDistrict(editingDistrict.id, { name: formData.name });
-        // Optimistic update: update in UI immediately
-        setDistricts(districts.map(d => d.id === district.id ? district : d));
+        await ApiService.updateDistrict(editingDistrict.id, { name: formData.name });
+        districtId = editingDistrict.id;
         setMessage('İlçe başarıyla güncellendi');
       } else {
-        district = await ApiService.createDistrict({ name: formData.name });
-        // Optimistic update: add to UI immediately
-        setDistricts([...districts, district]);
+        const result = await ApiService.createDistrict({ name: formData.name });
+        // Firebase'de result.id, backend'de result.id veya result.district.id olabilir
+        districtId = result.id || result.district?.id || result;
         setMessage('İlçe başarıyla eklendi');
+      }
+
+      // district_id kontrolü
+      if (!districtId) {
+        throw new Error('İlçe ID alınamadı');
       }
 
       // Yönetici bilgilerini kaydet
       const officialsData = {
-        district_id: district.id,
-        chairman_name: formData.chairman_name,
-        chairman_phone: formData.chairman_phone,
+        district_id: String(districtId), // String'e çevirerek tutarlılık sağla
+        chairman_name: formData.chairman_name || null,
+        chairman_phone: formData.chairman_phone || null,
         chairman_member_id: formData.chairman_member_id || null,
-        inspector_name: formData.inspector_name,
-        inspector_phone: formData.inspector_phone,
+        inspector_name: formData.inspector_name || null,
+        inspector_phone: formData.inspector_phone || null,
         inspector_member_id: formData.inspector_member_id || null,
         deputy_inspectors: formData.deputy_inspectors.filter(deputy => 
           deputy.name.trim() || deputy.phone.trim() || deputy.member_id

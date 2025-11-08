@@ -271,22 +271,28 @@ const FirebaseConfigSettings = () => {
               {showConfig ? 'Gizle' : 'Göster'}
             </button>
           </div>
+        </div>
+      </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Admin Şifresi <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="password"
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-              placeholder="Yapılandırmayı kaydetmek için admin şifresini girin"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white"
-            />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Yapılandırma değişiklikleri için admin şifresi gereklidir
-            </p>
-          </div>
+      {/* Admin Şifresi - Her zaman görünür */}
+      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+        <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-3">Güvenlik</h4>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Admin Şifresi <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="password"
+            value={adminPassword}
+            onChange={(e) => setAdminPassword(e.target.value)}
+            placeholder="Yapılandırmayı kaydetmek için admin şifresini girin"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white"
+          />
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Yapılandırma değişiklikleri için admin şifresi gereklidir
+          </p>
+        </div>
+      </div>
 
           {message && (
             <div className={`p-3 rounded-lg ${
