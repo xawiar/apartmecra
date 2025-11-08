@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import FirebaseService from '../services/FirebaseService';
+import { decryptData, encryptData } from '../utils/crypto';
 
 const GroqApiSettings = () => {
   const [apiKey, setApiKey] = useState('');
@@ -27,7 +28,7 @@ const GroqApiSettings = () => {
           if (configDoc && configDoc.api_key) {
             // API key şifrelenmiş olabilir, decrypt et
             const decryptedKey = configDoc.api_key.startsWith('U2FsdGVkX1') 
-              ? await import('../utils/crypto').then(m => m.decryptData(configDoc.api_key))
+              ? decryptData(configDoc.api_key)
               : configDoc.api_key;
             setApiKey(decryptedKey);
           } else {
@@ -84,7 +85,6 @@ const GroqApiSettings = () => {
       
       if (USE_FIREBASE) {
         // API key'i şifreleyerek kaydet
-        const { encryptData } = await import('../utils/crypto');
         const encryptedKey = encryptData(apiKey.trim());
         
         const configData = {
