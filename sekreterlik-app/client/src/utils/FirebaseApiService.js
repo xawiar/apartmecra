@@ -2821,16 +2821,91 @@ class FirebaseApiService {
                 // Mevcut kullanıcıyı güncelle
                 const townUser = existingTownUsers.find(u => u.userType === 'town_president');
                 if (townUser) {
-                  await FirebaseService.update(this.COLLECTIONS.MEMBER_USERS, townUser.id, {
-                    username,
-                    password: password, // Şifreleme FirebaseService içinde yapılacak
-                    chairmanName: cleanedData.chairman_name,
-                    chairmanPhone: cleanedData.chairman_phone
-                  });
+                  // Firebase Auth'da kullanıcı yoksa oluştur
+                  if (!townUser.authUid) {
+                    try {
+                      const email = `${username}@ilsekreterlik.local`;
+                      const currentUser = auth.currentUser;
+                      const currentUserUid = currentUser ? currentUser.uid : null;
+                      
+                      const authUser = await createUserWithEmailAndPassword(auth, email, password);
+                      console.log('✅ Firebase Auth user created for existing town president:', authUser.user.uid);
+                      
+                      // Admin kullanıcısını geri yükle
+                      if (currentUserUid && currentUserUid !== authUser.user.uid) {
+                        try {
+                          await signInWithEmailAndPassword(auth, currentUser.email, currentUser.password || 'admin123');
+                          console.log('✅ Admin user restored');
+                        } catch (restoreError) {
+                          console.warn('⚠️ Could not restore admin user:', restoreError);
+                        }
+                      }
+                      
+                      // Firestore'da authUid'yi güncelle
+                      await FirebaseService.update(this.COLLECTIONS.MEMBER_USERS, townUser.id, {
+                        username,
+                        password: password,
+                        chairmanName: cleanedData.chairman_name,
+                        chairmanPhone: cleanedData.chairman_phone,
+                        authUid: authUser.user.uid
+                      });
+                    } catch (authError) {
+                      console.warn('⚠️ Firebase Auth user creation failed (non-critical):', authError);
+                      // Auth oluşturulamasa bile Firestore'u güncelle
+                      await FirebaseService.update(this.COLLECTIONS.MEMBER_USERS, townUser.id, {
+                        username,
+                        password: password,
+                        chairmanName: cleanedData.chairman_name,
+                        chairmanPhone: cleanedData.chairman_phone
+                      });
+                    }
+                  } else {
+                    // Auth UID varsa sadece Firestore'u güncelle
+                    await FirebaseService.update(this.COLLECTIONS.MEMBER_USERS, townUser.id, {
+                      username,
+                      password: password, // Şifreleme FirebaseService içinde yapılacak
+                      chairmanName: cleanedData.chairman_name,
+                      chairmanPhone: cleanedData.chairman_phone
+                    });
+                  }
                   console.log('✅ Updated town president user for town ID:', townId);
                 }
               } else {
                 // Yeni belde başkanı kullanıcısı oluştur
+                // Önce Firebase Auth'da kullanıcı oluştur
+                const email = `${username}@ilsekreterlik.local`;
+                let authUser = null;
+                
+                try {
+                  // Mevcut kullanıcıyı koru
+                  const currentUser = auth.currentUser;
+                  const currentUserUid = currentUser ? currentUser.uid : null;
+                  
+                  // Firebase Auth'da kullanıcı oluştur
+                  authUser = await createUserWithEmailAndPassword(auth, email, password);
+                  console.log('✅ Firebase Auth user created for town president:', authUser.user.uid);
+                  
+                  // Admin kullanıcısını geri yükle (eğer varsa)
+                  if (currentUserUid && currentUserUid !== authUser.user.uid) {
+                    try {
+                      await signInWithEmailAndPassword(auth, currentUser.email, currentUser.password || 'admin123');
+                      console.log('✅ Admin user restored after town president user creation');
+                    } catch (restoreError) {
+                      console.warn('⚠️ Could not restore admin user, will need to re-login:', restoreError);
+                    }
+                  }
+                } catch (authError) {
+                  // Email zaten kullanılıyorsa, mevcut kullanıcıyı kullan
+                  if (authError.code === 'auth/email-already-in-use') {
+                    console.warn('⚠️ Email already in use for town president, will use existing user:', email);
+                    // Mevcut kullanıcıyı bulmak için sign-in denemesi yapabiliriz ama bu karmaşık olabilir
+                    // Bu durumda sadece Firestore'a kaydediyoruz
+                  } else {
+                    console.warn('⚠️ Firebase Auth user creation failed (non-critical):', authError);
+                  }
+                }
+                
+                // Firestore'a kaydet
                 await FirebaseService.create(
                   this.COLLECTIONS.MEMBER_USERS,
                   null,
@@ -2841,7 +2916,8 @@ class FirebaseApiService {
                     townId: townId,
                     chairmanName: cleanedData.chairman_name,
                     chairmanPhone: cleanedData.chairman_phone,
-                    isActive: true
+                    isActive: true,
+                    authUid: authUser?.user?.uid || null // Auth UID varsa kaydet
                   }
                 );
                 console.log('✅ Created town president user for town ID:', townId, 'Username:', username, 'Password:', password);
