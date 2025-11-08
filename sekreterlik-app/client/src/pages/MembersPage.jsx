@@ -284,22 +284,58 @@ const MembersPage = () => {
 
   const handleExportExcel = async () => {
     try {
-      // Create a CSV string from the current members data
-      let csvContent = "TC,İsim Soyisim,Telefon,Görev,Bölge,İlçe,Toplantı Sayısı,Katıldığı, Katılım %\n";
+      // XLSX kütüphanesini dinamik olarak yükle
+      const XLSX = await import('xlsx');
       
+      // Excel verilerini hazırla
+      const worksheetData = [
+        // Başlık satırı
+        ['TC', 'İsim Soyisim', 'Telefon', 'Görev', 'Bölge', 'Toplantı Sayısı', 'Katıldığı', 'Katılım %']
+      ];
+      
+      // Üye verilerini ekle
       filteredMembers.forEach(member => {
         const stats = calculateMeetingStats(member, meetings);
-        csvContent += `${member.tc},${member.name},${member.phone},${member.position},${member.region},${member.district},${stats.totalMeetings},${stats.attendedMeetings},${stats.attendancePercentage}%\n`;
+        worksheetData.push([
+          member.tc || '',
+          member.name || '',
+          member.phone || '',
+          member.position || '',
+          member.region || '',
+          stats.totalMeetings || 0,
+          stats.attendedMeetings || 0,
+          `${stats.attendancePercentage || 0}%`
+        ]);
       });
       
-      // Create a Blob with the CSV content
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      // Worksheet oluştur
+      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
       
-      // Create a download link
-      const link = document.createElement('a');
+      // Sütun genişliklerini ayarla
+      worksheet['!cols'] = [
+        { wch: 12 }, // TC
+        { wch: 25 }, // İsim Soyisim
+        { wch: 15 }, // Telefon
+        { wch: 20 }, // Görev
+        { wch: 20 }, // Bölge
+        { wch: 15 }, // Toplantı Sayısı
+        { wch: 12 }, // Katıldığı
+        { wch: 12 }  // Katılım %
+      ];
+      
+      // Workbook oluştur
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Üyeler');
+      
+      // Excel dosyasını oluştur
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      
+      // Blob oluştur ve indir
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', 'uyeler.csv');
+      link.setAttribute('download', 'uyeler.xlsx');
       link.style.visibility = 'hidden';
       
       // Append to the document, click, and remove
@@ -307,10 +343,13 @@ const MembersPage = () => {
       link.click();
       document.body.removeChild(link);
       
+      // URL'i temizle
+      URL.revokeObjectURL(url);
+      
       console.log('Members exported to Excel');
     } catch (error) {
       console.error('Error exporting members to Excel:', error);
-      alert('Excel dışa aktarımı sırasında bir hata oluştu');
+      alert('Excel dışa aktarımı sırasında bir hata oluştu: ' + error.message);
     }
   };
 
