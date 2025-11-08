@@ -48,13 +48,14 @@ class GroqService {
 
       // Context'i token limitine göre kısalt (12000 token limiti için)
       // Her token yaklaşık 4 karakter (Türkçe için)
-      const MAX_CONTEXT_LENGTH = 40000; // ~10000 token için güvenli limit
+      // Güvenli limit: 10000 token = 40000 karakter (sistem prompt ve mesajlar için 2000 token bırakıyoruz)
+      const MAX_CONTEXT_LENGTH = 35000; // ~8750 token için güvenli limit (daha küçük)
       let contextText = context.length > 0 ? context.join('\n') : 'Henüz context bilgisi yok.';
       
       // Eğer context çok büyükse, kısalt
       if (contextText.length > MAX_CONTEXT_LENGTH) {
         contextText = contextText.substring(0, MAX_CONTEXT_LENGTH) + '\n\n[Context kısaltıldı - token limiti nedeniyle]';
-        console.warn('Context çok büyük, kısaltıldı:', contextText.length, 'karakter');
+        console.warn('Context çok büyük, kısaltıldı:', contextText.length, 'karakter (limit:', MAX_CONTEXT_LENGTH, ')');
       }
 
       // System prompt - AI'nın kimliği ve sınırları
@@ -129,7 +130,7 @@ ${contextText}`;
    */
   static buildSiteContext(siteData) {
     const context = [];
-    const MAX_ITEMS_PER_SECTION = 50; // Her bölüm için maksimum öğe sayısı
+    const MAX_ITEMS_PER_SECTION = 30; // Her bölüm için maksimum öğe sayısı (token limiti için daha küçük)
     
     // ÜYE BİLGİLERİ (Özet - detaylar sadece gerektiğinde)
     if (siteData.members && siteData.members.length > 0) {
