@@ -33,6 +33,7 @@ import DebugFirebasePage from './pages/DebugFirebasePage';
 import ClearAllDataPage from './pages/ClearAllDataPage';
 import FirebaseAuthUsersPage from './pages/FirebaseAuthUsersPage';
 import Sidebar from './components/Sidebar';
+import Footer from './components/Footer';
 import PWANotification from './components/PWANotification';
 import AppInstallBanner from './components/AppInstallBanner';
 import OfflineStatus from './components/OfflineStatus';
@@ -272,6 +273,9 @@ function AppContent() {
                         </Routes>
                       </div>
                     </main>
+                    
+                    {/* Footer */}
+                    <Footer />
                   </div>
                 </div>
               </AdminRoute>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import ApiService from '../utils/ApiService';
+import Footer from '../components/Footer';
 
 const DistrictPresidentDashboardPage = () => {
   const { user, logout } = useAuth();
@@ -413,6 +414,7 @@ const DistrictPresidentDashboardPage = () => {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 };

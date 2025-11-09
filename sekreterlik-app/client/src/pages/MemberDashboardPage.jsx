@@ -21,6 +21,7 @@ import RepresentativesPage from './RepresentativesPage';
 import NeighborhoodsPage from './NeighborhoodsPage';
 import VillagesPage from './VillagesPage';
 import GroupsPage from './GroupsPage';
+import Footer from '../components/Footer';
 
 const MemberDashboardPage = () => {
   const { user, logout } = useAuth();
@@ -998,6 +999,7 @@ const MemberDashboardPage = () => {
         </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };
