@@ -234,9 +234,6 @@ const STKSettings = () => {
                   {stk.description && (
                     <p className="text-sm text-gray-500 mt-1">{stk.description}</p>
                   )}
-                  <p className="text-xs text-gray-400 mt-1">
-                    Eklenme: {new Date(stk.created_at).toLocaleDateString('tr-TR')}
-                  </p>
                 </div>
                 <div className="flex space-x-2">
                   <button
