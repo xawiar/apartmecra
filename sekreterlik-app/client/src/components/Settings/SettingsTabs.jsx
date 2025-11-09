@@ -233,6 +233,21 @@ const SettingsTabs = ({ activeTab, setActiveTab }) => {
           Deployment Yapılandırması
         </button>
         
+        {/* SMS Yapılandırması */}
+        <button
+          onClick={() => setActiveTab('sms-config')}
+          className={`${
+            activeTab === 'sms-config'
+              ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+          } px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          SMS Yapılandırması
+        </button>
+        
       </nav>
     </div>
   );

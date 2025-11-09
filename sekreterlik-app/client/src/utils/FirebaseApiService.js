@@ -1039,6 +1039,19 @@ class FirebaseApiService {
         await updateDoc(docRef, updateData);
       }
       
+      // Planlanan toplantı için otomatik SMS gönder
+      if (meetingDataWithoutNotesAndDescription.isPlanned && meetingDataWithoutNotesAndDescription.regions) {
+        try {
+          await this.sendAutoSmsForScheduled('meeting', {
+            name: meetingDataWithoutNotesAndDescription.name,
+            date: meetingDataWithoutNotesAndDescription.date
+          }, meetingDataWithoutNotesAndDescription.regions);
+        } catch (smsError) {
+          console.error('Auto SMS error (non-blocking):', smsError);
+          // SMS hatası toplantı oluşturmayı engellemez
+        }
+      }
+      
       return { success: true, id: docId, message: 'Toplantı oluşturuldu' };
     } catch (error) {
       console.error('Create meeting error:', error);
@@ -1173,6 +1186,19 @@ class FirebaseApiService {
         await updateDoc(docRef, {
           description: descriptionValue // Şifrelenmeden sakla
         });
+      }
+      
+      // Planlanan etkinlik için otomatik SMS gönder
+      if (eventDataWithoutDescription.isPlanned && eventDataWithoutDescription.regions) {
+        try {
+          await this.sendAutoSmsForScheduled('event', {
+            name: eventDataWithoutDescription.name || eventDataWithoutDescription.category_name,
+            date: eventDataWithoutDescription.date
+          }, eventDataWithoutDescription.regions);
+        } catch (smsError) {
+          console.error('Auto SMS error (non-blocking):', smsError);
+          // SMS hatası etkinlik oluşturmayı engellemez
+        }
       }
       
       return { success: true, id: docId, message: 'Etkinlik oluşturuldu' };
@@ -3442,6 +3468,296 @@ class FirebaseApiService {
     } catch (error) {
       console.error('Delete personal document error:', error);
       throw new Error('Belge silinirken hata oluştu');
+    }
+  }
+
+  // SMS API Methods
+  /**
+   * Planlanan toplantı/etkinlik için otomatik SMS gönder
+   * @param {string} type - 'meeting' veya 'event'
+   * @param {object} data - Toplantı/etkinlik verisi
+   * @param {string[]} regions - Bölge isimleri
+   */
+  static async sendAutoSmsForScheduled(type, data, regions) {
+    try {
+      // Otomatik SMS ayarlarını kontrol et
+      const autoSettings = await FirebaseService.getById('sms_auto_settings', 'main');
+      if (!autoSettings) {
+        console.log('Auto SMS settings not found, skipping SMS');
+        return { success: false, message: 'Otomatik SMS ayarları bulunamadı' };
+      }
+
+      const isEnabled = type === 'meeting' 
+        ? autoSettings.autoSmsForMeetings 
+        : autoSettings.autoSmsForEvents;
+
+      if (!isEnabled) {
+        console.log(`Auto SMS for ${type} is disabled`);
+        return { success: false, message: `Otomatik SMS ${type === 'meeting' ? 'toplantılar' : 'etkinlikler'} için devre dışı` };
+      }
+
+      // SMS servisini yükle
+      const { default: smsService } = await import('../services/SmsService');
+      await smsService.loadConfig();
+
+      // Seçili bölgelerdeki üyeleri al
+      const allMembers = await this.getMembers();
+      const filteredMembers = allMembers.filter(member => 
+        member.region && regions.includes(member.region)
+      );
+
+      if (filteredMembers.length === 0) {
+        console.log('No members found for selected regions');
+        return { success: false, message: 'Seçili bölgelerde üye bulunamadı' };
+      }
+
+      // Tarih ve saat formatla
+      const dateObj = new Date(data.date);
+      const dateStr = dateObj.toLocaleDateString('tr-TR', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      });
+      const timeStr = dateObj.toLocaleTimeString('tr-TR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+
+      // Özel metin
+      const customText = type === 'meeting' 
+        ? (autoSettings.meetingCustomText || '') 
+        : (autoSettings.eventCustomText || '');
+
+      // Mesaj formatla
+      const typeText = type === 'meeting' ? 'toplantı' : 'etkinlik';
+      const nameText = data.name || (type === 'meeting' ? 'Toplantı' : 'Etkinlik');
+
+      // Telefon numaralarını topla
+      const phones = filteredMembers
+        .map(member => {
+          const phone = member.phone || '';
+          return phone ? smsService.formatPhoneNumber(phone) : null;
+        })
+        .filter(phone => phone !== null);
+
+      if (phones.length === 0) {
+        console.log('No valid phone numbers found');
+        return { success: false, message: 'Geçerli telefon numarası bulunamadı' };
+      }
+
+      // Her üye için kişiselleştirilmiş mesaj gönder
+      const results = {
+        sent: 0,
+        failed: 0,
+        errors: []
+      };
+
+      for (const member of filteredMembers) {
+        const phone = smsService.formatPhoneNumber(member.phone);
+        if (!phone) {
+          results.failed++;
+          results.errors.push({ member: member.name, error: 'Geçersiz telefon numarası' });
+          continue;
+        }
+
+        const memberName = member.name || 'Üye';
+        const message = smsService.formatScheduledMessage(
+          memberName,
+          type,
+          dateStr,
+          timeStr,
+          customText
+        );
+
+        try {
+          const result = await smsService.sendSms(phone, message);
+          if (result.success) {
+            results.sent++;
+          } else {
+            results.failed++;
+            results.errors.push({ member: memberName, error: result.message });
+          }
+          // Rate limiting için kısa bir bekleme
+          await new Promise(resolve => setTimeout(resolve, 200));
+        } catch (error) {
+          results.failed++;
+          results.errors.push({ member: memberName, error: error.message });
+        }
+      }
+
+      return {
+        success: results.failed === 0,
+        message: `${results.sent} SMS gönderildi, ${results.failed} başarısız`,
+        sent: results.sent,
+        failed: results.failed,
+        errors: results.errors
+      };
+    } catch (error) {
+      console.error('Send auto SMS error:', error);
+      return { success: false, message: 'Otomatik SMS gönderilirken hata oluştu: ' + error.message };
+    }
+  }
+
+  /**
+   * Toplu SMS gönder
+   * @param {string} message - Gönderilecek mesaj
+   * @param {string[]} regions - Bölge isimleri (boş ise tüm üyelere)
+   * @param {string[]} memberIds - Belirli üye ID'leri (opsiyonel)
+   */
+  static async sendBulkSms(message, regions = [], memberIds = []) {
+    try {
+      // SMS servisini yükle
+      const { default: smsService } = await import('../services/SmsService');
+      await smsService.loadConfig();
+
+      // Üyeleri al
+      let members = await this.getMembers();
+      
+      // Bölge filtresi
+      if (regions.length > 0) {
+        members = members.filter(member => 
+          member.region && regions.includes(member.region)
+        );
+      }
+
+      // Belirli üye ID'leri filtresi
+      if (memberIds.length > 0) {
+        members = members.filter(member => 
+          memberIds.includes(String(member.id))
+        );
+      }
+
+      if (members.length === 0) {
+        return { success: false, message: 'Gönderilecek üye bulunamadı', sent: 0, failed: 0 };
+      }
+
+      // Telefon numaralarını topla ve mesajları formatla
+      const smsData = members
+        .map(member => {
+          const phone = smsService.formatPhoneNumber(member.phone);
+          if (!phone) return null;
+          
+          const memberName = member.name || 'Üye';
+          const personalizedMessage = smsService.formatBulkMessage(memberName, message);
+          
+          return { phone, message: personalizedMessage, memberName };
+        })
+        .filter(item => item !== null);
+
+      if (smsData.length === 0) {
+        return { success: false, message: 'Geçerli telefon numarası bulunamadı', sent: 0, failed: 0 };
+      }
+
+      // SMS gönder
+      const results = {
+        sent: 0,
+        failed: 0,
+        errors: []
+      };
+
+      for (const { phone, message: personalizedMessage, memberName } of smsData) {
+        try {
+          const result = await smsService.sendSms(phone, personalizedMessage);
+          if (result.success) {
+            results.sent++;
+          } else {
+            results.failed++;
+            results.errors.push({ member: memberName, error: result.message });
+          }
+          // Rate limiting için kısa bir bekleme
+          await new Promise(resolve => setTimeout(resolve, 200));
+        } catch (error) {
+          results.failed++;
+          results.errors.push({ member: memberName, error: error.message });
+        }
+      }
+
+      return {
+        success: results.failed === 0,
+        message: `${results.sent} SMS gönderildi, ${results.failed} başarısız`,
+        sent: results.sent,
+        failed: results.failed,
+        errors: results.errors
+      };
+    } catch (error) {
+      console.error('Send bulk SMS error:', error);
+      return { success: false, message: 'Toplu SMS gönderilirken hata oluştu: ' + error.message };
+    }
+  }
+
+  /**
+   * Temsilcilere SMS gönder (mahalle/köy temsilcileri)
+   * @param {string} type - 'neighborhood' veya 'village'
+   * @param {string} message - Gönderilecek mesaj
+   * @param {string[]} representativeIds - Temsilci ID'leri (boş ise tüm temsilcilere)
+   */
+  static async sendSmsToRepresentatives(type, message, representativeIds = []) {
+    try {
+      // SMS servisini yükle
+      const { default: smsService } = await import('../services/SmsService');
+      await smsService.loadConfig();
+
+      // Temsilcileri al
+      const representatives = type === 'neighborhood'
+        ? await this.getNeighborhoodRepresentatives()
+        : await this.getVillageRepresentatives();
+
+      // ID filtresi
+      let filteredRepresentatives = representatives;
+      if (representativeIds.length > 0) {
+        filteredRepresentatives = representatives.filter(rep =>
+          representativeIds.includes(String(rep.id))
+        );
+      }
+
+      if (filteredRepresentatives.length === 0) {
+        return { success: false, message: 'Gönderilecek temsilci bulunamadı', sent: 0, failed: 0 };
+      }
+
+      // SMS gönder
+      const results = {
+        sent: 0,
+        failed: 0,
+        errors: []
+      };
+
+      for (const rep of filteredRepresentatives) {
+        const phone = smsService.formatPhoneNumber(rep.phone);
+        if (!phone) {
+          results.failed++;
+          results.errors.push({ representative: rep.name || 'Temsilci', error: 'Geçersiz telefon numarası' });
+          continue;
+        }
+
+        const repName = rep.name || 'Temsilci';
+        const personalizedMessage = smsService.formatBulkMessage(repName, message);
+
+        try {
+          const result = await smsService.sendSms(phone, personalizedMessage);
+          if (result.success) {
+            results.sent++;
+          } else {
+            results.failed++;
+            results.errors.push({ representative: repName, error: result.message });
+          }
+          // Rate limiting için kısa bir bekleme
+          await new Promise(resolve => setTimeout(resolve, 200));
+        } catch (error) {
+          results.failed++;
+          results.errors.push({ representative: repName, error: error.message });
+        }
+      }
+
+      return {
+        success: results.failed === 0,
+        message: `${results.sent} SMS gönderildi, ${results.failed} başarısız`,
+        sent: results.sent,
+        failed: results.failed,
+        errors: results.errors
+      };
+    } catch (error) {
+      console.error('Send SMS to representatives error:', error);
+      return { success: false, message: 'Temsilcilere SMS gönderilirken hata oluştu: ' + error.message };
     }
   }
 }

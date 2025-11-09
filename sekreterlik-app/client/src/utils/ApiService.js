@@ -2524,6 +2524,47 @@ class ApiService {
     return response.json();
   }
 
+  // SMS API Methods
+  /**
+   * Toplu SMS gönder
+   * @param {string} message - Gönderilecek mesaj
+   * @param {string[]} regions - Bölge isimleri (boş ise tüm üyelere)
+   * @param {string[]} memberIds - Belirli üye ID'leri (opsiyonel)
+   */
+  static async sendBulkSms(message, regions = [], memberIds = []) {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.sendBulkSms(message, regions, memberIds);
+    }
+
+    // Backend API için (gelecekte eklenebilir)
+    const response = await fetch(`${API_BASE_URL}/sms/bulk`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ message, regions, memberIds }),
+    });
+    return response.json();
+  }
+
+  /**
+   * Temsilcilere SMS gönder (mahalle/köy temsilcileri)
+   * @param {string} type - 'neighborhood' veya 'village'
+   * @param {string} message - Gönderilecek mesaj
+   * @param {string[]} representativeIds - Temsilci ID'leri (boş ise tüm temsilcilere)
+   */
+  static async sendSmsToRepresentatives(type, message, representativeIds = []) {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.sendSmsToRepresentatives(type, message, representativeIds);
+    }
+
+    // Backend API için (gelecekte eklenebilir)
+    const response = await fetch(`${API_BASE_URL}/sms/representatives`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ type, message, representativeIds }),
+    });
+    return response.json();
+  }
+
 }
 
 export default ApiService;
