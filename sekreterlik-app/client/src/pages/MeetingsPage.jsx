@@ -395,6 +395,7 @@ const MeetingsPage = () => {
         <MeetingForm 
           meeting={selectedMeeting}
           regions={regions}
+          members={members}
           onClose={closeEditModal}
           onMeetingSaved={handleMeetingSaved}
         />

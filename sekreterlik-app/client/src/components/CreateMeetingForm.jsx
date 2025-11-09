@@ -5,6 +5,7 @@ import { formatMemberName } from '../utils/nameFormatter';
 const CreateMeetingForm = ({ regions, onClose, onMeetingCreated }) => {
   const [selectedRegions, setSelectedRegions] = useState([]);
   const [meetingName, setMeetingName] = useState('');
+  const [meetingDate, setMeetingDate] = useState('');
   const [meetingNotes, setMeetingNotes] = useState('');
   const [members, setMembers] = useState([]);
   const [attendance, setAttendance] = useState({});
@@ -113,13 +114,18 @@ const CreateMeetingForm = ({ regions, onClose, onMeetingCreated }) => {
       return;
     }
     
+    if (!meetingDate) {
+      alert('Toplantı tarihi ve saati zorunludur');
+      return;
+    }
+    
     try {
       // Create meeting
       const meetingData = {
         name: meetingName,
         regions: selectedRegions,
-        notes: meetingNotes,
-        date: new Date().toISOString().split('T')[0], // Today's date
+        notes: meetingNotes || '', // Empty string if no notes
+        date: meetingDate,
         attendees: members.map(member => {
           // ID'leri string'e çevirerek tutarlılık sağla
           const memberId = String(member.id);
@@ -166,21 +172,35 @@ const CreateMeetingForm = ({ regions, onClose, onMeetingCreated }) => {
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Toplantı Adı
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Toplantı Adı <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={meetingName}
               onChange={(e) => setMeetingName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               placeholder="Toplantı adını girin"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Tarih ve Saat <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="datetime-local"
+              value={meetingDate}
+              onChange={(e) => setMeetingDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              required
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Bölgeler
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Bölgeler <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
               {regions.map((region, idx) => (
@@ -198,14 +218,14 @@ const CreateMeetingForm = ({ regions, onClose, onMeetingCreated }) => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Toplantı Notları
             </label>
             <textarea
               value={meetingNotes}
               onChange={(e) => setMeetingNotes(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               placeholder="Toplantı notlarını girin"
             />
           </div>

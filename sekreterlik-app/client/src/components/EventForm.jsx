@@ -192,7 +192,8 @@ const EventForm = ({ event, onClose, onEventSaved, members }) => {
         />
       </div>
 
-      {/* Attendance Section */}
+      {/* Attendance Section - Only show if not planned */}
+      {!event?.isPlanned && (
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-4">Katılım Durumu</h3>
         <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
@@ -246,6 +247,7 @@ const EventForm = ({ event, onClose, onEventSaved, members }) => {
           </div>
         </div>
       </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">

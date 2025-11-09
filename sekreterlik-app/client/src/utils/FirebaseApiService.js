@@ -985,34 +985,44 @@ class FirebaseApiService {
 
   static async createMeeting(meetingData) {
     try {
-      // description alanını şifrelemeden saklamak için özel işlem
-      // description hassas bir alan değil, normal metin olarak saklanmalı
+      // notes ve description alanlarını şifrelemeden saklamak için özel işlem
+      // notes ve description hassas alanlar değil, normal metin olarak saklanmalı
       const { doc, updateDoc } = await import('firebase/firestore');
       const { db } = await import('../config/firebase');
       
       const descriptionValue = meetingData.description;
-      const meetingDataWithoutDescription = { ...meetingData };
-      delete meetingDataWithoutDescription.description;
+      const notesValue = meetingData.notes;
+      const meetingDataWithoutNotesAndDescription = { ...meetingData };
+      delete meetingDataWithoutNotesAndDescription.description;
+      delete meetingDataWithoutNotesAndDescription.notes;
       
       // isPlanned field'ını ekle (varsayılan: false)
-      if (meetingDataWithoutDescription.isPlanned === undefined) {
-        meetingDataWithoutDescription.isPlanned = false;
+      if (meetingDataWithoutNotesAndDescription.isPlanned === undefined) {
+        meetingDataWithoutNotesAndDescription.isPlanned = false;
       }
       
-      // Önce description olmadan kaydet
+      // Önce notes ve description olmadan kaydet
       const docId = await FirebaseService.create(
         this.COLLECTIONS.MEETINGS,
         null,
-        meetingDataWithoutDescription,
-        true // encrypt = true (description hariç diğer hassas alanlar şifrelenecek)
+        meetingDataWithoutNotesAndDescription,
+        true // encrypt = true (notes ve description hariç diğer hassas alanlar şifrelenecek)
       );
       
-      // Sonra description'ı şifrelemeden ekle
+      // Sonra notes ve description'ı şifrelemeden ekle
+      const updateData = {};
+      if (notesValue !== undefined && notesValue !== null && notesValue !== '') {
+        updateData.notes = notesValue; // Şifrelenmeden sakla
+      } else {
+        updateData.notes = null; // Boş ise null olarak sakla
+      }
       if (descriptionValue !== undefined && descriptionValue !== null && descriptionValue !== '') {
+        updateData.description = descriptionValue; // Şifrelenmeden sakla
+      }
+      
+      if (Object.keys(updateData).length > 0) {
         const docRef = doc(db, this.COLLECTIONS.MEETINGS, docId);
-        await updateDoc(docRef, {
-          description: descriptionValue // Şifrelenmeden sakla
-        });
+        await updateDoc(docRef, updateData);
       }
       
       return { success: true, id: docId, message: 'Toplantı oluşturuldu' };
@@ -1024,23 +1034,31 @@ class FirebaseApiService {
 
   static async updateMeeting(id, meetingData) {
     try {
-      // description alanını şifrelemeden saklamak için özel işlem
+      // notes ve description alanlarını şifrelemeden saklamak için özel işlem
       const { doc, updateDoc } = await import('firebase/firestore');
       const { db } = await import('../config/firebase');
       
       const descriptionValue = meetingData.description;
-      const meetingDataWithoutDescription = { ...meetingData };
-      delete meetingDataWithoutDescription.description;
+      const notesValue = meetingData.notes;
+      const meetingDataWithoutNotesAndDescription = { ...meetingData };
+      delete meetingDataWithoutNotesAndDescription.description;
+      delete meetingDataWithoutNotesAndDescription.notes;
       
-      // Önce description olmadan güncelle
-      await FirebaseService.update(this.COLLECTIONS.MEETINGS, id, meetingDataWithoutDescription);
+      // Önce notes ve description olmadan güncelle
+      await FirebaseService.update(this.COLLECTIONS.MEETINGS, id, meetingDataWithoutNotesAndDescription);
       
-      // Sonra description'ı şifrelemeden ekle/güncelle
+      // Sonra notes ve description'ı şifrelemeden ekle/güncelle
+      const updateData = {};
+      if (notesValue !== undefined && notesValue !== null) {
+        updateData.notes = notesValue !== '' ? notesValue : null; // Şifrelenmeden sakla
+      }
       if (descriptionValue !== undefined && descriptionValue !== null) {
+        updateData.description = descriptionValue !== '' ? descriptionValue : null; // Şifrelenmeden sakla
+      }
+      
+      if (Object.keys(updateData).length > 0) {
         const docRef = doc(db, this.COLLECTIONS.MEETINGS, id);
-        await updateDoc(docRef, {
-          description: descriptionValue !== '' ? descriptionValue : null // Şifrelenmeden sakla
-        });
+        await updateDoc(docRef, updateData);
       }
       
       return { success: true, message: 'Toplantı güncellendi' };
