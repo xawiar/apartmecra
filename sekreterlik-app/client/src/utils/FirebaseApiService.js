@@ -1971,21 +1971,6 @@ class FirebaseApiService {
 
   static async deleteRegion(id) {
     try {
-      // CRITICAL: Use console.error so it's visible in production
-      console.error('[FIREBASE API] deleteRegion CALLED with:', {
-        id: id,
-        idType: typeof id,
-        idValue: id,
-        idString: String(id || ''),
-        idIsNull: id === null,
-        idIsUndefined: id === undefined,
-        idIsArray: Array.isArray(id),
-        idIsObject: typeof id === 'object' && id !== null,
-        collection: this.COLLECTIONS.REGIONS,
-        collectionType: typeof this.COLLECTIONS.REGIONS,
-        collectionValue: this.COLLECTIONS.REGIONS
-      });
-      
       if (id === null || id === undefined) {
         throw new Error('Bölge ID null veya undefined');
       }
@@ -2016,50 +2001,18 @@ class FirebaseApiService {
       
       stringId = stringId.trim();
       
-      console.error('[FIREBASE API] deleteRegion - converted ID:', {
-        originalId: id,
-        originalIdType: typeof id,
-        stringId: stringId,
-        stringIdType: typeof stringId,
-        stringIdLength: stringId.length,
-        stringIdValue: stringId,
-        collection: this.COLLECTIONS.REGIONS
-      });
-      
       // Collection name kontrolü
       const collectionName = String(this.COLLECTIONS.REGIONS || 'regions');
       if (!collectionName || collectionName.trim() === '') {
         throw new Error(`Collection name geçersiz: ${this.COLLECTIONS.REGIONS}`);
       }
       
-      console.error('[FIREBASE API] Calling FirebaseService.delete with:', {
-        collectionName: collectionName,
-        collectionNameType: typeof collectionName,
-        collectionNameValue: collectionName,
-        collectionNameLength: collectionName.length,
-        stringId: stringId,
-        stringIdType: typeof stringId,
-        stringIdValue: stringId,
-        stringIdLength: stringId.length
-      });
-      
-      // Region'ı sil - getById kontrolünü kaldırdık (gereksiz)
+      // Region'ı sil
       await FirebaseService.delete(collectionName, stringId);
       
-      console.log('✅ FirebaseApiService.deleteRegion - success');
       return { success: true, message: 'Bölge silindi' };
     } catch (error) {
-      console.error('❌ FirebaseApiService.deleteRegion error:', error);
-      console.error('❌ Delete region error details:', {
-        id,
-        idType: typeof id,
-        idValue: id,
-        stringId: String(id),
-        collection: this.COLLECTIONS.REGIONS,
-        errorMessage: error.message,
-        errorCode: error.code,
-        errorStack: error.stack?.substring(0, 500)
-      });
+      console.error('Delete region error:', error);
       throw new Error('Bölge silinirken hata oluştu: ' + (error.message || error));
     }
   }
