@@ -857,6 +857,8 @@ const EditScheduledSmsForm = ({ sms, regions, onSave, onCancel }) => {
   const [includeObservers, setIncludeObservers] = useState(sms.options?.includeObservers || false);
   const [includeChiefObservers, setIncludeChiefObservers] = useState(sms.options?.includeChiefObservers || false);
   const [includeTownPresidents, setIncludeTownPresidents] = useState(sms.options?.includeTownPresidents || false);
+  const [includeNeighborhoodRepresentatives, setIncludeNeighborhoodRepresentatives] = useState(sms.options?.includeNeighborhoodRepresentatives || false);
+  const [includeVillageRepresentatives, setIncludeVillageRepresentatives] = useState(sms.options?.includeVillageRepresentatives || false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -964,6 +966,24 @@ const EditScheduledSmsForm = ({ sms, regions, onSave, onCancel }) => {
             className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
           />
           <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Belde Başkanları</span>
+        </label>
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            checked={includeNeighborhoodRepresentatives}
+            onChange={(e) => setIncludeNeighborhoodRepresentatives(e.target.checked)}
+            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+          />
+          <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Mahalle Temsilcileri</span>
+        </label>
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            checked={includeVillageRepresentatives}
+            onChange={(e) => setIncludeVillageRepresentatives(e.target.checked)}
+            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+          />
+          <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Köy Temsilcileri</span>
         </label>
       </div>
 
