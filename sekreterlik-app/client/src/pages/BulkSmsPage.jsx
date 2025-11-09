@@ -162,24 +162,28 @@ const BulkSmsPage = () => {
       if (includeTownPresidents) {
         const towns = await ApiService.getTowns();
         for (const town of towns) {
-          const townOfficials = await ApiService.getTownOfficials(town.id);
-          const presidents = townOfficials.filter(official => 
-            official.type === 'president' || 
-            official.role === 'president' || 
-            official.position === 'president' ||
-            official.chairman_name
-          );
-          presidents.forEach(president => {
-            const phone = president.chairman_phone || president.phone;
-            if (phone) {
-              recipients.push({
-                name: president.chairman_name || president.name || 'Belde Başkanı',
-                phone: phone,
-                type: 'town_president',
-                town: town.name
-              });
-            }
-          });
+          try {
+            const townOfficials = await ApiService.getTownOfficialsByTown(town.id);
+            const presidents = townOfficials.filter(official => 
+              official.type === 'president' || 
+              official.role === 'president' || 
+              official.position === 'president' ||
+              official.chairman_name
+            );
+            presidents.forEach(president => {
+              const phone = president.chairman_phone || president.phone;
+              if (phone) {
+                recipients.push({
+                  name: president.chairman_name || president.name || 'Belde Başkanı',
+                  phone: phone,
+                  type: 'town_president',
+                  town: town.name
+                });
+              }
+            });
+          } catch (error) {
+            console.error(`Error loading town officials for town ${town.id}:`, error);
+          }
         }
       }
 
