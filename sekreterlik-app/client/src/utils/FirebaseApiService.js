@@ -3760,6 +3760,266 @@ class FirebaseApiService {
       return { success: false, message: 'Temsilcilere SMS gönderilirken hata oluştu: ' + error.message };
     }
   }
+
+  // Messages API
+  /**
+   * Kullanıcıya mesaj gönder
+   * @param {object} messageData - { receiverId, message, messageType, filePath }
+   */
+  static async sendMessageToUser(messageData) {
+    try {
+      const { receiverId, message, messageType = 'text', filePath } = messageData;
+      
+      if (!receiverId || !message) {
+        return { success: false, message: 'Alıcı ID ve mesaj gerekli' };
+      }
+
+      // Mevcut kullanıcıyı al (senderId)
+      const { auth } = await import('../config/firebase');
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        return { success: false, message: 'Kullanıcı giriş yapmamış' };
+      }
+
+      // Firestore'dan sender bilgisini al
+      const senderUsers = await FirebaseService.findByField(
+        this.COLLECTIONS.MEMBER_USERS,
+        'authUid',
+        currentUser.uid
+      );
+      
+      const senderId = senderUsers && senderUsers.length > 0 
+        ? senderUsers[0].id 
+        : currentUser.uid;
+
+      // Mesajı kaydet
+      const messageDoc = {
+        senderId: String(senderId),
+        receiverId: String(receiverId),
+        message: message,
+        messageType: messageType,
+        filePath: filePath || null,
+        createdAt: new Date().toISOString()
+      };
+
+      const docId = await FirebaseService.create(
+        this.COLLECTIONS.MESSAGES,
+        null,
+        messageDoc,
+        false // Mesaj içeriği şifrelenmez
+      );
+
+      // Özel mesaj için otomatik SMS gönder
+      try {
+        await this.sendAutoSmsForCustomMessage(receiverId, message);
+      } catch (smsError) {
+        console.error('Auto SMS error (non-blocking):', smsError);
+        // SMS hatası mesaj göndermeyi engellemez
+      }
+
+      return { 
+        success: true, 
+        id: docId, 
+        message: 'Mesaj gönderildi',
+        data: { ...messageDoc, id: docId }
+      };
+    } catch (error) {
+      console.error('Send message to user error:', error);
+      return { success: false, message: 'Mesaj gönderilirken hata oluştu: ' + error.message };
+    }
+  }
+
+  /**
+   * Gruba mesaj gönder
+   * @param {object} messageData - { groupId, message, messageType, filePath }
+   */
+  static async sendMessageToGroup(messageData) {
+    try {
+      const { groupId, message, messageType = 'text', filePath } = messageData;
+      
+      if (!groupId || !message) {
+        return { success: false, message: 'Grup ID ve mesaj gerekli' };
+      }
+
+      // Mevcut kullanıcıyı al (senderId)
+      const { auth } = await import('../config/firebase');
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        return { success: false, message: 'Kullanıcı giriş yapmamış' };
+      }
+
+      // Firestore'dan sender bilgisini al
+      const senderUsers = await FirebaseService.findByField(
+        this.COLLECTIONS.MEMBER_USERS,
+        'authUid',
+        currentUser.uid
+      );
+      
+      const senderId = senderUsers && senderUsers.length > 0 
+        ? senderUsers[0].id 
+        : currentUser.uid;
+
+      // Mesajı kaydet
+      const messageDoc = {
+        senderId: String(senderId),
+        groupId: String(groupId),
+        message: message,
+        messageType: messageType,
+        filePath: filePath || null,
+        createdAt: new Date().toISOString()
+      };
+
+      const docId = await FirebaseService.create(
+        this.COLLECTIONS.MESSAGES,
+        null,
+        messageDoc,
+        false // Mesaj içeriği şifrelenmez
+      );
+
+      // Gruba mesaj gönderildiğinde otomatik SMS gönder (grup üyelerine)
+      try {
+        await this.sendAutoSmsForGroupMessage(groupId, message);
+      } catch (smsError) {
+        console.error('Auto SMS error (non-blocking):', smsError);
+        // SMS hatası mesaj göndermeyi engellemez
+      }
+
+      return { 
+        success: true, 
+        id: docId, 
+        message: 'Mesaj gönderildi',
+        data: { ...messageDoc, id: docId }
+      };
+    } catch (error) {
+      console.error('Send message to group error:', error);
+      return { success: false, message: 'Mesaj gönderilirken hata oluştu: ' + error.message };
+    }
+  }
+
+  /**
+   * Özel mesaj için otomatik SMS gönder
+   * @param {string} receiverId - Alıcı üye ID'si
+   * @param {string} messageText - Mesaj metni
+   */
+  static async sendAutoSmsForCustomMessage(receiverId, messageText) {
+    try {
+      // Otomatik SMS ayarlarını kontrol et
+      const autoSettings = await FirebaseService.getById('sms_auto_settings', 'main');
+      if (!autoSettings || !autoSettings.autoSmsForCustom) {
+        console.log('Auto SMS for custom messages is disabled');
+        return { success: false, message: 'Özel mesajlar için otomatik SMS devre dışı' };
+      }
+
+      // SMS servisini yükle
+      const { default: smsService } = await import('../services/SmsService');
+      await smsService.loadConfig();
+
+      // Alıcı üyeyi al
+      const receiver = await FirebaseService.getById(this.COLLECTIONS.MEMBERS, receiverId);
+      if (!receiver) {
+        console.log('Receiver member not found');
+        return { success: false, message: 'Alıcı üye bulunamadı' };
+      }
+
+      // Telefon numarasını formatla
+      const phone = smsService.formatPhoneNumber(receiver.phone);
+      if (!phone) {
+        console.log('No valid phone number for receiver');
+        return { success: false, message: 'Alıcının geçerli telefon numarası yok' };
+      }
+
+      // Mesaj formatla
+      const receiverName = receiver.name || 'Üye';
+      const smsMessage = `Sn ${receiverName}, size özel bir mesaj gönderildi: ${messageText}`;
+
+      // SMS gönder
+      const result = await smsService.sendSms(phone, smsMessage);
+      
+      if (result.success) {
+        return { success: true, message: 'SMS başarıyla gönderildi' };
+      } else {
+        return { success: false, message: result.message };
+      }
+    } catch (error) {
+      console.error('Send auto SMS for custom message error:', error);
+      return { success: false, message: 'Otomatik SMS gönderilirken hata oluştu: ' + error.message };
+    }
+  }
+
+  /**
+   * Grup mesajı için otomatik SMS gönder
+   * @param {string} groupId - Grup ID'si
+   * @param {string} messageText - Mesaj metni
+   */
+  static async sendAutoSmsForGroupMessage(groupId, messageText) {
+    try {
+      // Otomatik SMS ayarlarını kontrol et
+      const autoSettings = await FirebaseService.getById('sms_auto_settings', 'main');
+      if (!autoSettings || !autoSettings.autoSmsForCustom) {
+        console.log('Auto SMS for custom messages is disabled');
+        return { success: false, message: 'Özel mesajlar için otomatik SMS devre dışı' };
+      }
+
+      // SMS servisini yükle
+      const { default: smsService } = await import('../services/SmsService');
+      await smsService.loadConfig();
+
+      // Grup bilgisini al (grup üyelerini bulmak için)
+      // Not: Grup yapısına göre bu kısım güncellenebilir
+      // Şimdilik tüm üyelere gönderiyoruz
+      const allMembers = await this.getMembers();
+      
+      if (allMembers.length === 0) {
+        console.log('No members found for group message');
+        return { success: false, message: 'Grup üyesi bulunamadı' };
+      }
+
+      // Her üye için SMS gönder
+      const results = {
+        sent: 0,
+        failed: 0,
+        errors: []
+      };
+
+      for (const member of allMembers) {
+        const phone = smsService.formatPhoneNumber(member.phone);
+        if (!phone) {
+          results.failed++;
+          results.errors.push({ member: member.name, error: 'Geçersiz telefon numarası' });
+          continue;
+        }
+
+        const memberName = member.name || 'Üye';
+        const smsMessage = `Sn ${memberName}, grup mesajı: ${messageText}`;
+
+        try {
+          const result = await smsService.sendSms(phone, smsMessage);
+          if (result.success) {
+            results.sent++;
+          } else {
+            results.failed++;
+            results.errors.push({ member: memberName, error: result.message });
+          }
+          // Rate limiting için kısa bir bekleme
+          await new Promise(resolve => setTimeout(resolve, 200));
+        } catch (error) {
+          results.failed++;
+          results.errors.push({ member: memberName, error: error.message });
+        }
+      }
+
+      return {
+        success: results.failed === 0,
+        message: `${results.sent} SMS gönderildi, ${results.failed} başarısız`,
+        sent: results.sent,
+        failed: results.failed,
+        errors: results.errors
+      };
+    } catch (error) {
+      console.error('Send auto SMS for group message error:', error);
+      return { success: false, message: 'Otomatik SMS gönderilirken hata oluştu: ' + error.message };
+    }
+  }
 }
 
 export default FirebaseApiService;

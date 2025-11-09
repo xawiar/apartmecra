@@ -408,7 +408,7 @@ const SmsSettings = () => {
                 </span>
               </label>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 ml-7">
-                Özel mesaj gönderildiğinde otomatik SMS gönderilir (yakında).
+                Bir üyeye özel mesaj gönderildiğinde veya gruba mesaj gönderildiğinde otomatik SMS gönderilir.
               </p>
             </div>
           </div>

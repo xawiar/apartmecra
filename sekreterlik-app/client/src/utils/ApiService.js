@@ -2179,6 +2179,10 @@ class ApiService {
   }
 
   static async sendMessageToUser(messageData) {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.sendMessageToUser(messageData);
+    }
+
     const response = await fetch(`${API_BASE_URL}/messages/send-to-user`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
