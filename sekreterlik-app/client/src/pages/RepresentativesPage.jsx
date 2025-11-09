@@ -116,9 +116,6 @@ const RepresentativesPage = () => {
       
       setNeighborhoodRepresentatives(decryptedNeighborhoodData);
       setVillageRepresentatives(decryptedVillageData);
-      
-      // Ziyaret sayılarını ve etkinlikleri yükle
-      await fetchVisitCountsAndEvents();
     } catch (error) {
       console.error('Error fetching representatives:', error);
       setError('Temsilciler yüklenirken hata oluştu');
@@ -127,31 +124,72 @@ const RepresentativesPage = () => {
     }
   };
 
+  // Representatives yüklendikten sonra ziyaret sayılarını hesapla
+  useEffect(() => {
+    if (neighborhoodRepresentatives.length > 0 || villageRepresentatives.length > 0) {
+      fetchVisitCountsAndEvents();
+    }
+  }, [neighborhoodRepresentatives, villageRepresentatives]);
+
   const fetchVisitCountsAndEvents = async () => {
     try {
-      // Ziyaret sayılarını yükle
-      const [neighborhoodVisits, villageVisits, eventsData] = await Promise.all([
-        ApiService.getAllVisitCounts('neighborhood'),
-        ApiService.getAllVisitCounts('village'),
-        ApiService.getEvents(false) // Sadece aktif etkinlikler
-      ]);
-      
-      // Neighborhood visit counts'u map'e çevir
-      const neighborhoodCounts = {};
-      neighborhoodVisits.forEach(visit => {
-        neighborhoodCounts[visit.neighborhood_id] = visit.visit_count || 0;
-      });
-      setNeighborhoodVisitCounts(neighborhoodCounts);
-      
-      // Village visit counts'u map'e çevir
-      const villageCounts = {};
-      villageVisits.forEach(visit => {
-        villageCounts[visit.village_id] = visit.visit_count || 0;
-      });
-      setVillageVisitCounts(villageCounts);
-      
-      // Events'i kaydet
+      // Etkinlikleri yükle
+      const eventsData = await ApiService.getEvents(false); // Sadece aktif etkinlikler
       setEvents(eventsData || []);
+      
+      // Etkinliklerden gerçek ziyaret sayılarını hesapla
+      const neighborhoodCounts = {};
+      const villageCounts = {};
+      
+      // Tüm temsilcilerin mahalle/köy ID'lerini topla
+      neighborhoodRepresentatives.forEach(rep => {
+        if (rep.neighborhood_id) {
+          neighborhoodCounts[rep.neighborhood_id] = 0;
+        }
+      });
+      
+      villageRepresentatives.forEach(rep => {
+        if (rep.village_id) {
+          villageCounts[rep.village_id] = 0;
+        }
+      });
+      
+      // Her etkinlik için ziyaret sayılarını hesapla
+      eventsData.forEach(event => {
+        if (event.selectedLocationTypes && event.selectedLocations) {
+          const locationTypes = event.selectedLocationTypes;
+          const locations = event.selectedLocations;
+          
+          // Neighborhood ziyaret sayıları
+          if (locationTypes.includes('neighborhood') && locations.neighborhood) {
+            const neighborhoodIds = locations.neighborhood;
+            neighborhoodIds.forEach(neighborhoodId => {
+              const id = String(neighborhoodId);
+              if (neighborhoodCounts[id] !== undefined) {
+                neighborhoodCounts[id] = (neighborhoodCounts[id] || 0) + 1;
+              } else {
+                neighborhoodCounts[id] = 1;
+              }
+            });
+          }
+          
+          // Village ziyaret sayıları
+          if (locationTypes.includes('village') && locations.village) {
+            const villageIds = locations.village;
+            villageIds.forEach(villageId => {
+              const id = String(villageId);
+              if (villageCounts[id] !== undefined) {
+                villageCounts[id] = (villageCounts[id] || 0) + 1;
+              } else {
+                villageCounts[id] = 1;
+              }
+            });
+          }
+        }
+      });
+      
+      setNeighborhoodVisitCounts(neighborhoodCounts);
+      setVillageVisitCounts(villageCounts);
     } catch (error) {
       console.error('Error fetching visit counts and events:', error);
     }

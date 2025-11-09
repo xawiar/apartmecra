@@ -34,9 +34,6 @@ const VillagesPage = () => {
       setVillages(villagesData);
       setVillageRepresentatives(representativesData);
       setVillageSupervisors(supervisorsData);
-      
-      // Ziyaret sayılarını yükle
-      await fetchVisitCounts();
     } catch (error) {
       console.error('Error fetching villages:', error);
       setError('Köyler yüklenirken hata oluştu');
@@ -45,13 +42,45 @@ const VillagesPage = () => {
     }
   };
 
+  // Villages yüklendikten sonra ziyaret sayılarını hesapla
+  useEffect(() => {
+    if (villages.length > 0) {
+      fetchVisitCounts();
+    }
+  }, [villages]);
+
   const fetchVisitCounts = async () => {
     try {
-      const data = await ApiService.getAllVisitCounts('village');
+      // Etkinliklerden gerçek ziyaret sayılarını hesapla
+      const events = await ApiService.getEvents(false); // Sadece aktif etkinlikler
+      
       const counts = {};
-      data.forEach(visit => {
-        counts[visit.village_id] = visit.visit_count || 0;
+      
+      // Tüm köyler için başlangıç değeri 0
+      villages.forEach(village => {
+        counts[village.id] = 0;
       });
+      
+      // Her etkinlik için köy ziyaret sayılarını hesapla
+      events.forEach(event => {
+        if (event.selectedLocationTypes && event.selectedLocations) {
+          const locationTypes = event.selectedLocationTypes;
+          const locations = event.selectedLocations;
+          
+          if (locationTypes.includes('village') && locations.village) {
+            const villageIds = locations.village;
+            villageIds.forEach(villageId => {
+              const id = String(villageId);
+              if (counts[id] !== undefined) {
+                counts[id] = (counts[id] || 0) + 1;
+              } else {
+                counts[id] = 1;
+              }
+            });
+          }
+        }
+      });
+      
       setVisitCounts(counts);
     } catch (error) {
       console.error('Error fetching visit counts:', error);

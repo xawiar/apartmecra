@@ -34,9 +34,6 @@ const NeighborhoodsPage = () => {
       setNeighborhoods(neighborhoodsData);
       setNeighborhoodRepresentatives(representativesData);
       setNeighborhoodSupervisors(supervisorsData);
-      
-      // Ziyaret sayılarını yükle
-      await fetchVisitCounts();
     } catch (error) {
       console.error('Error fetching neighborhoods:', error);
       setError('Mahalleler yüklenirken hata oluştu');
@@ -45,13 +42,45 @@ const NeighborhoodsPage = () => {
     }
   };
 
+  // Neighborhoods yüklendikten sonra ziyaret sayılarını hesapla
+  useEffect(() => {
+    if (neighborhoods.length > 0) {
+      fetchVisitCounts();
+    }
+  }, [neighborhoods]);
+
   const fetchVisitCounts = async () => {
     try {
-      const data = await ApiService.getAllVisitCounts('neighborhood');
+      // Etkinliklerden gerçek ziyaret sayılarını hesapla
+      const events = await ApiService.getEvents(false); // Sadece aktif etkinlikler
+      
       const counts = {};
-      data.forEach(visit => {
-        counts[visit.neighborhood_id] = visit.visit_count || 0;
+      
+      // Tüm mahalleler için başlangıç değeri 0
+      neighborhoods.forEach(neighborhood => {
+        counts[neighborhood.id] = 0;
       });
+      
+      // Her etkinlik için mahalle ziyaret sayılarını hesapla
+      events.forEach(event => {
+        if (event.selectedLocationTypes && event.selectedLocations) {
+          const locationTypes = event.selectedLocationTypes;
+          const locations = event.selectedLocations;
+          
+          if (locationTypes.includes('neighborhood') && locations.neighborhood) {
+            const neighborhoodIds = locations.neighborhood;
+            neighborhoodIds.forEach(neighborhoodId => {
+              const id = String(neighborhoodId);
+              if (counts[id] !== undefined) {
+                counts[id] = (counts[id] || 0) + 1;
+              } else {
+                counts[id] = 1;
+              }
+            });
+          }
+        }
+      });
+      
       setVisitCounts(counts);
     } catch (error) {
       console.error('Error fetching visit counts:', error);
