@@ -27,6 +27,7 @@ const AVAILABLE_PERMISSIONS = [
   { key: 'access_neighborhoods_page', label: 'Mahalleler Sayfası Erişimi' },
   { key: 'access_villages_page', label: 'Köyler Sayfası Erişimi' },
   { key: 'access_groups_page', label: 'Gruplar Sayfası Erişimi' },
+  { key: 'access_bulk_sms_page', label: 'Toplu SMS Sayfası Erişimi' },
 ];
 
 const AuthorizationSettings = () => {

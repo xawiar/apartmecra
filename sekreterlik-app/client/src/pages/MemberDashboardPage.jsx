@@ -787,7 +787,8 @@ const MemberDashboardPage = () => {
             grantedPermissions.includes('access_representatives_page') ||
             grantedPermissions.includes('access_neighborhoods_page') ||
             grantedPermissions.includes('access_villages_page') ||
-            grantedPermissions.includes('access_groups_page')) && (
+            grantedPermissions.includes('access_groups_page') ||
+            grantedPermissions.includes('access_bulk_sms_page')) && (
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-sky-50 to-sky-100 dark:from-sky-900 dark:to-sky-800">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
@@ -977,6 +978,21 @@ const MemberDashboardPage = () => {
                           </svg>
                         </div>
                         <span className="font-medium text-gray-900 dark:text-gray-100">Gruplar</span>
+                      </div>
+                    </button>
+                  )}
+                  {grantedPermissions.includes('access_bulk_sms_page') && (
+                    <button 
+                      onClick={() => window.location.href = '/bulk-sms'} 
+                      className="group p-4 bg-gradient-to-r from-pink-50 to-pink-100 dark:from-pink-900 dark:to-pink-800 rounded-xl border border-pink-200 dark:border-pink-700 hover:from-pink-100 hover:to-pink-200 dark:hover:from-pink-800 dark:hover:to-pink-700 transition-all duration-200 hover:shadow-md text-left"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-pink-500 dark:bg-pink-600 rounded-lg flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                        </div>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">Toplu SMS</span>
                       </div>
                     </button>
                   )}

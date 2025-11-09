@@ -347,7 +347,61 @@ const EventDetails = ({ event, members }) => {
             <tbody className="bg-white divide-y divide-gray-100">
               {event.attendees && event.attendees.length > 0 ? (
                 event.attendees
-                  .filter(attendance => attendance.attended) // Sadece katılan kişileri filtrele
+                  .filter(attendance => {
+                    // Sadece katılan kişileri filtrele
+                    if (!attendance.attended) return false;
+                    
+                    // Eğer etkinlikte seçilen konumlar varsa, sadece o konumlardaki temsilcileri göster
+                    if (event.selectedLocationTypes && event.selectedLocations) {
+                      const memberId = String(attendance.memberId);
+                      
+                      // Önce normal üye mi kontrol et
+                      const member = members.find(m => String(m.id) === memberId);
+                      if (member) return true; // Normal üyeler her zaman gösterilir
+                      
+                      // Mahalle temsilcisi mi kontrol et
+                      const neighborhoodRep = neighborhoodRepresentatives.find(rep => String(rep.member_id) === memberId);
+                      if (neighborhoodRep) {
+                        // Etkinlikte bu mahalle seçilmiş mi kontrol et
+                        const selectedNeighborhoodIds = event.selectedLocations.neighborhood || [];
+                        return selectedNeighborhoodIds.includes(neighborhoodRep.neighborhood_id) || 
+                               selectedNeighborhoodIds.includes(String(neighborhoodRep.neighborhood_id));
+                      }
+                      
+                      // Köy temsilcisi mi kontrol et
+                      const villageRep = villageRepresentatives.find(rep => String(rep.member_id) === memberId);
+                      if (villageRep) {
+                        // Etkinlikte bu köy seçilmiş mi kontrol et
+                        const selectedVillageIds = event.selectedLocations.village || [];
+                        return selectedVillageIds.includes(villageRep.village_id) || 
+                               selectedVillageIds.includes(String(villageRep.village_id));
+                      }
+                      
+                      // Mahalle sorumlusu mu kontrol et
+                      const neighborhoodSup = neighborhoodSupervisors.find(sup => String(sup.member_id) === memberId);
+                      if (neighborhoodSup) {
+                        // Etkinlikte bu mahalle seçilmiş mi kontrol et
+                        const selectedNeighborhoodIds = event.selectedLocations.neighborhood || [];
+                        return selectedNeighborhoodIds.includes(neighborhoodSup.neighborhood_id) || 
+                               selectedNeighborhoodIds.includes(String(neighborhoodSup.neighborhood_id));
+                      }
+                      
+                      // Köy sorumlusu mu kontrol et
+                      const villageSup = villageSupervisors.find(sup => String(sup.member_id) === memberId);
+                      if (villageSup) {
+                        // Etkinlikte bu köy seçilmiş mi kontrol et
+                        const selectedVillageIds = event.selectedLocations.village || [];
+                        return selectedVillageIds.includes(villageSup.village_id) || 
+                               selectedVillageIds.includes(String(villageSup.village_id));
+                      }
+                      
+                      // Temsilci/sorumlu değilse göster (normal üye olabilir)
+                      return true;
+                    }
+                    
+                    // Seçilen konumlar yoksa, tüm katılanları göster
+                    return true;
+                  })
                   .sort((a, b) => {
                     // ID'leri string'e çevirerek karşılaştır (tip uyumsuzluğu sorununu çözer)
                     const memberInfoA = getMemberInfo(a.memberId);
