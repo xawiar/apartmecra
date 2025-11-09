@@ -12,11 +12,13 @@ import {
   ArchivedMeetingsTable,
   ArchivedEventsTable
 } from '../components/Archive';
+import MemberDocumentsTable from '../components/Archive/MemberDocumentsTable';
 import DocumentUploadForm from '../components/Archive/DocumentUploadForm';
 import { LoadingSpinner } from '../components/UI';
 
 const ArchivePage = () => {
   const [documents, setDocuments] = useState([]);
+  const [memberDocuments, setMemberDocuments] = useState([]);
   const [archivedMembers, setArchivedMembers] = useState([]);
   const [archivedMeetings, setArchivedMeetings] = useState([]);
   const [archivedEvents, setArchivedEvents] = useState([]);
@@ -30,12 +32,14 @@ const ArchivePage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('documents'); // 'documents', 'members', 'meetings', 'events'
+  const [documentType, setDocumentType] = useState('admin'); // 'admin' or 'member'
   const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchArchivedData();
     fetchMeetings();
     fetchDocuments();
+    fetchMemberDocuments();
   }, []);
 
   const fetchArchivedData = async () => {
@@ -70,6 +74,35 @@ const ArchivePage = () => {
       setDocuments(documentsData);
     } catch (error) {
       console.error('Error fetching documents:', error);
+    }
+  };
+
+  const fetchMemberDocuments = async () => {
+    try {
+      // Tüm üyeleri al
+      const members = await ApiService.getMembers();
+      
+      // Her üye için personal documents'ları al
+      const allMemberDocuments = [];
+      for (const member of members) {
+        try {
+          const memberDocs = await ApiService.getPersonalDocuments(member.id);
+          // Her belgeye üye bilgisi ekle
+          const docsWithMemberInfo = memberDocs.map(doc => ({
+            ...doc,
+            member_name: member.name,
+            member_id: member.id,
+            is_member_document: true
+          }));
+          allMemberDocuments.push(...docsWithMemberInfo);
+        } catch (error) {
+          console.error(`Error fetching documents for member ${member.id}:`, error);
+        }
+      }
+      
+      setMemberDocuments(allMemberDocuments);
+    } catch (error) {
+      console.error('Error fetching member documents:', error);
     }
   };
 
@@ -168,9 +201,14 @@ const ArchivePage = () => {
     }
   };
 
-  const handleDownloadDocument = async (id, filename) => {
+  const handleDownloadDocument = async (id, filename, isMemberDocument = false) => {
     try {
-      const blob = await ApiService.downloadDocument(id);
+      let blob;
+      if (isMemberDocument) {
+        blob = await ApiService.downloadPersonalDocument(id);
+      } else {
+        blob = await ApiService.downloadDocument(id);
+      }
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -185,12 +223,18 @@ const ArchivePage = () => {
     }
   };
 
-  const handleDeleteDocument = async (id) => {
+  const handleDeleteDocument = async (id, isMemberDocument = false) => {
     if (window.confirm('Bu belgeyi silmek istediğinize emin misiniz?')) {
       try {
-        await ApiService.deleteDocument(id);
-        // Refresh documents list
-        await fetchDocuments();
+        if (isMemberDocument) {
+          await ApiService.deletePersonalDocument(id);
+          // Refresh member documents list
+          await fetchMemberDocuments();
+        } else {
+          await ApiService.deleteDocument(id);
+          // Refresh documents list
+          await fetchDocuments();
+        }
         alert('Belge başarıyla silindi');
       } catch (error) {
         console.error('Error deleting document:', error);
