@@ -2538,10 +2538,11 @@ class ApiService {
    * @param {string} message - Gönderilecek mesaj
    * @param {string[]} regions - Bölge isimleri (boş ise tüm üyelere)
    * @param {string[]} memberIds - Belirli üye ID'leri (opsiyonel)
+   * @param {object} options - { includeObservers, includeChiefObservers, includeTownPresidents }
    */
-  static async sendBulkSms(message, regions = [], memberIds = []) {
+  static async sendBulkSms(message, regions = [], memberIds = [], options = {}) {
     if (USE_FIREBASE) {
-      return FirebaseApiService.sendBulkSms(message, regions, memberIds);
+      return FirebaseApiService.sendBulkSms(message, regions, memberIds, options);
     }
 
     // Backend API için (gelecekte eklenebilir)
@@ -2569,6 +2570,58 @@ class ApiService {
       method: 'POST',
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ type, message, representativeIds }),
+    });
+    return response.json();
+  }
+
+  /**
+   * İleri tarihli SMS planla
+   * @param {object} smsData - { message, regions, memberIds, scheduledDate, options }
+   */
+  static async scheduleSms(smsData) {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.scheduleSms(smsData);
+    }
+
+    // Backend API için (gelecekte eklenebilir)
+    const response = await fetch(`${API_BASE_URL}/sms/schedule`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(smsData),
+    });
+    return response.json();
+  }
+
+  /**
+   * Planlanmış SMS'leri al
+   * @param {string} status - 'pending', 'sent', 'failed', 'cancelled' veya null (tümü)
+   */
+  static async getScheduledSms(status = null) {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.getScheduledSms(status);
+    }
+
+    // Backend API için (gelecekte eklenebilir)
+    const response = await fetch(`${API_BASE_URL}/sms/scheduled${status ? `?status=${status}` : ''}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    return response.json();
+  }
+
+  /**
+   * Planlanmış SMS'i iptal et
+   * @param {string} id - Scheduled SMS ID
+   */
+  static async cancelScheduledSms(id) {
+    if (USE_FIREBASE) {
+      return FirebaseApiService.cancelScheduledSms(id);
+    }
+
+    // Backend API için (gelecekte eklenebilir)
+    const response = await fetch(`${API_BASE_URL}/sms/scheduled/${id}/cancel`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
     });
     return response.json();
   }

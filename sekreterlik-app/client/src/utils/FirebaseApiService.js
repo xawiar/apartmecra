@@ -53,7 +53,8 @@ class FirebaseApiService {
     PERSONAL_DOCUMENTS: 'personal_documents',
     ARCHIVE: 'archive',
     GROUPS: 'groups',
-    POSITION_PERMISSIONS: 'position_permissions'
+    POSITION_PERMISSIONS: 'position_permissions',
+    SCHEDULED_SMS: 'scheduled_sms'
   };
 
   // Auth API
@@ -3603,9 +3604,16 @@ class FirebaseApiService {
    * @param {string} message - Gönderilecek mesaj
    * @param {string[]} regions - Bölge isimleri (boş ise tüm üyelere)
    * @param {string[]} memberIds - Belirli üye ID'leri (opsiyonel)
+   * @param {object} options - { includeObservers: boolean, includeChiefObservers: boolean, includeTownPresidents: boolean }
    */
-  static async sendBulkSms(message, regions = [], memberIds = []) {
+  static async sendBulkSms(message, regions = [], memberIds = [], options = {}) {
     try {
+      const { 
+        includeObservers = false, 
+        includeChiefObservers = false, 
+        includeTownPresidents = false 
+      } = options;
+
       // SMS servisini yükle
       const { default: smsService } = await import('../services/SmsService');
       await smsService.loadConfig();
@@ -3627,12 +3635,8 @@ class FirebaseApiService {
         );
       }
 
-      if (members.length === 0) {
-        return { success: false, message: 'Gönderilecek üye bulunamadı', sent: 0, failed: 0 };
-      }
-
       // Telefon numaralarını topla ve mesajları formatla
-      const smsData = members
+      let smsData = members
         .map(member => {
           const phone = smsService.formatPhoneNumber(member.phone);
           if (!phone) return null;
@@ -3640,12 +3644,62 @@ class FirebaseApiService {
           const memberName = member.name || 'Üye';
           const personalizedMessage = smsService.formatBulkMessage(memberName, message);
           
-          return { phone, message: personalizedMessage, memberName };
+          return { phone, message: personalizedMessage, name: memberName, type: 'member' };
         })
         .filter(item => item !== null);
 
+      // Müşahitler ekle
+      if (includeObservers) {
+        const observers = await this.getBallotBoxObservers();
+        const regularObservers = observers.filter(obs => !obs.is_chief_observer);
+        
+        for (const observer of regularObservers) {
+          const phone = smsService.formatPhoneNumber(observer.observer_phone || observer.phone);
+          if (phone) {
+            const observerName = observer.observer_name || observer.name || 'Müşahit';
+            const personalizedMessage = smsService.formatBulkMessage(observerName, message);
+            smsData.push({ phone, message: personalizedMessage, name: observerName, type: 'observer' });
+          }
+        }
+      }
+
+      // Baş müşahitler ekle
+      if (includeChiefObservers) {
+        const observers = await this.getBallotBoxObservers();
+        const chiefObservers = observers.filter(obs => obs.is_chief_observer === true);
+        
+        for (const observer of chiefObservers) {
+          const phone = smsService.formatPhoneNumber(observer.observer_phone || observer.phone);
+          if (phone) {
+            const observerName = observer.observer_name || observer.name || 'Baş Müşahit';
+            const personalizedMessage = smsService.formatBulkMessage(observerName, message);
+            smsData.push({ phone, message: personalizedMessage, name: observerName, type: 'chief_observer' });
+          }
+        }
+      }
+
+      // Belde başkanları ekle
+      if (includeTownPresidents) {
+        const townOfficials = await FirebaseService.getAll(this.COLLECTIONS.TOWN_OFFICIALS);
+        const presidents = townOfficials.filter(official => 
+          official.type === 'president' || 
+          official.role === 'president' || 
+          official.position === 'president' ||
+          official.chairman_name // Eğer chairman_name varsa başkan olabilir
+        );
+        
+        for (const president of presidents) {
+          const phone = smsService.formatPhoneNumber(president.chairman_phone || president.phone);
+          if (phone) {
+            const presidentName = president.chairman_name || president.name || 'Belde Başkanı';
+            const personalizedMessage = smsService.formatBulkMessage(presidentName, message);
+            smsData.push({ phone, message: personalizedMessage, name: presidentName, type: 'town_president' });
+          }
+        }
+      }
+
       if (smsData.length === 0) {
-        return { success: false, message: 'Geçerli telefon numarası bulunamadı', sent: 0, failed: 0 };
+        return { success: false, message: 'Gönderilecek kişi bulunamadı', sent: 0, failed: 0 };
       }
 
       // SMS gönder
@@ -3655,20 +3709,20 @@ class FirebaseApiService {
         errors: []
       };
 
-      for (const { phone, message: personalizedMessage, memberName } of smsData) {
+      for (const { phone, message: personalizedMessage, name, type } of smsData) {
         try {
           const result = await smsService.sendSms(phone, personalizedMessage);
           if (result.success) {
             results.sent++;
           } else {
             results.failed++;
-            results.errors.push({ member: memberName, error: result.message });
+            results.errors.push({ name, type, error: result.message });
           }
           // Rate limiting için kısa bir bekleme
           await new Promise(resolve => setTimeout(resolve, 200));
         } catch (error) {
           results.failed++;
-          results.errors.push({ member: memberName, error: error.message });
+          results.errors.push({ name, type, error: error.message });
         }
       }
 
@@ -4018,6 +4072,163 @@ class FirebaseApiService {
     } catch (error) {
       console.error('Send auto SMS for group message error:', error);
       return { success: false, message: 'Otomatik SMS gönderilirken hata oluştu: ' + error.message };
+    }
+  }
+
+  /**
+   * İleri tarihli SMS planla
+   * @param {object} smsData - { message, regions, memberIds, scheduledDate, options }
+   */
+  static async scheduleSms(smsData) {
+    try {
+      const { message, regions = [], memberIds = [], scheduledDate, options = {} } = smsData;
+      
+      if (!message || !scheduledDate) {
+        return { success: false, message: 'Mesaj ve planlanan tarih gerekli' };
+      }
+
+      // Tarih kontrolü
+      const scheduledDateTime = new Date(scheduledDate);
+      const now = new Date();
+      
+      if (scheduledDateTime <= now) {
+        return { success: false, message: 'Planlanan tarih gelecekte olmalıdır' };
+      }
+
+      // Scheduled SMS kaydet
+      const scheduledSmsDoc = {
+        message: message,
+        regions: regions,
+        memberIds: memberIds,
+        options: options,
+        scheduledDate: scheduledDateTime.toISOString(),
+        status: 'pending', // 'pending', 'sent', 'failed', 'cancelled'
+        createdAt: new Date().toISOString(),
+        sentAt: null,
+        result: null
+      };
+
+      const docId = await FirebaseService.create(
+        this.COLLECTIONS.SCHEDULED_SMS,
+        null,
+        scheduledSmsDoc,
+        false // SMS mesajı şifrelenmez
+      );
+
+      return { 
+        success: true, 
+        id: docId, 
+        message: 'SMS başarıyla planlandı',
+        scheduledDate: scheduledDateTime.toISOString()
+      };
+    } catch (error) {
+      console.error('Schedule SMS error:', error);
+      return { success: false, message: 'SMS planlanırken hata oluştu: ' + error.message };
+    }
+  }
+
+  /**
+   * Planlanmış SMS'leri al
+   * @param {string} status - 'pending', 'sent', 'failed', 'cancelled' veya null (tümü)
+   */
+  static async getScheduledSms(status = null) {
+    try {
+      const allScheduled = await FirebaseService.getAll(this.COLLECTIONS.SCHEDULED_SMS);
+      
+      if (status) {
+        return allScheduled.filter(sms => sms.status === status);
+      }
+      
+      return allScheduled;
+    } catch (error) {
+      console.error('Get scheduled SMS error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Planlanmış SMS'i iptal et
+   * @param {string} id - Scheduled SMS ID
+   */
+  static async cancelScheduledSms(id) {
+    try {
+      await FirebaseService.update(this.COLLECTIONS.SCHEDULED_SMS, id, {
+        status: 'cancelled',
+        cancelledAt: new Date().toISOString()
+      });
+      return { success: true, message: 'Planlanmış SMS iptal edildi' };
+    } catch (error) {
+      console.error('Cancel scheduled SMS error:', error);
+      return { success: false, message: 'SMS iptal edilirken hata oluştu: ' + error.message };
+    }
+  }
+
+  /**
+   * Planlanmış SMS'leri kontrol et ve gönder (cron job benzeri)
+   * Bu metod periyodik olarak çağrılmalı (örneğin her dakika)
+   */
+  static async processScheduledSms() {
+    try {
+      const pendingSms = await this.getScheduledSms('pending');
+      const now = new Date();
+      
+      const smsToSend = pendingSms.filter(sms => {
+        const scheduledDate = new Date(sms.scheduledDate);
+        return scheduledDate <= now;
+      });
+
+      const results = {
+        processed: 0,
+        sent: 0,
+        failed: 0
+      };
+
+      for (const sms of smsToSend) {
+        try {
+          // SMS gönder
+          const sendResult = await this.sendBulkSms(
+            sms.message,
+            sms.regions || [],
+            sms.memberIds || [],
+            sms.options || {}
+          );
+
+          // Durumu güncelle
+          await FirebaseService.update(this.COLLECTIONS.SCHEDULED_SMS, sms.id, {
+            status: sendResult.success ? 'sent' : 'failed',
+            sentAt: new Date().toISOString(),
+            result: sendResult
+          });
+
+          results.processed++;
+          if (sendResult.success) {
+            results.sent++;
+          } else {
+            results.failed++;
+          }
+        } catch (error) {
+          console.error('Error processing scheduled SMS:', error);
+          // Hata durumunu kaydet
+          await FirebaseService.update(this.COLLECTIONS.SCHEDULED_SMS, sms.id, {
+            status: 'failed',
+            sentAt: new Date().toISOString(),
+            result: { success: false, message: error.message }
+          });
+          results.processed++;
+          results.failed++;
+        }
+      }
+
+      return {
+        success: true,
+        message: `${results.processed} SMS işlendi, ${results.sent} başarılı, ${results.failed} başarısız`,
+        processed: results.processed,
+        sent: results.sent,
+        failed: results.failed
+      };
+    } catch (error) {
+      console.error('Process scheduled SMS error:', error);
+      return { success: false, message: 'Planlanmış SMS işlenirken hata oluştu: ' + error.message };
     }
   }
 }
