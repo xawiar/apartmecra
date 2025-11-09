@@ -473,8 +473,6 @@ const MosquesSettings = () => {
                     {mosque.town_name && ` • Belde: ${mosque.town_name}`}
                     {mosque.neighborhood_name && ` • Mahalle: ${mosque.neighborhood_name}`}
                     {mosque.village_name && ` • Köy: ${mosque.village_name}`}
-                    <br />
-                    Eklenme: {new Date(mosque.created_at).toLocaleDateString('tr-TR')}
                   </p>
                 </div>
                 <div className="flex space-x-2">
