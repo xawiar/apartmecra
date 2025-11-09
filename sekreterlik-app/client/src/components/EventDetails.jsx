@@ -158,11 +158,12 @@ const EventDetails = ({ event, members }) => {
     if (event.attendees && event.attendees.length > 0) {
       event.attendees.forEach(attendance => {
         // ID'leri string'e çevirerek karşılaştır (tip uyumsuzluğu sorununu çözer)
+        const memberInfo = getMemberInfo(attendance.memberId);
         const member = members.find(m => String(m.id) === String(attendance.memberId));
-        const memberName = member ? member.name : 'Bilinmeyen Üye';
+        const memberName = memberInfo.name;
         const memberTc = member ? member.tc : '-';
-        const memberPosition = member ? member.position : '-';
-        const memberRegion = member ? member.region : '-';
+        const memberPosition = memberInfo.position;
+        const memberRegion = memberInfo.region;
         const memberDistrict = member ? member.district : '-';
         const memberPhone = member ? member.phone : '-';
         const memberEmail = member ? member.email : '-';
