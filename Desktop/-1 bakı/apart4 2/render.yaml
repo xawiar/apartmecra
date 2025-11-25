@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: apartmecra
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:production
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    healthCheckPath: /api/sites
+    autoDeploy: true
+

@@ -1,7 +1,19 @@
 // src/services/localApi.js
 // Local API service that uses JSON Server for offline functionality
 
-const API_BASE_URL = 'http://localhost:3001';
+// Use environment variable or detect current origin for production
+// In production (Render), API is served from the same origin
+const getApiBaseUrl = () => {
+  // Check if we're in production (Render)
+  if (import.meta.env.PROD || window.location.hostname !== 'localhost') {
+    // In production, API is on the same origin
+    return window.location.origin;
+  }
+  // In development, use localhost:3001
+  return 'http://localhost:3001';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Generate site ID based on name and sequence number
 const generateSiteId = (name, sequenceNumber, siteType = 'site') => {
