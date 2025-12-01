@@ -1,0 +1,1276 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { getSites, createSite, updateSite, getTransactions, getAgreements, getCompanies } from '../../services/api';
+import SiteHandlers from './SiteHandlers';
+import SiteUIHandlers from './SiteUIHandlers';
+import SiteHelpers from './SiteHelpers';
+
+const SitesMain = () => {
+  const [sites, setSites] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [agreements, setAgreements] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [currentSite, setCurrentSite] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    manager: '',
+    phone: '',
+    blocks: '',
+    elevatorsPerBlock: '',
+    agreementPercentage: '',
+    notes: '',
+    neighborhood: ''
+  });
+  const [showPaymentSelection, setShowPaymentSelection] = useState(false);
+  const [selectedSiteForPayment, setSelectedSiteForPayment] = useState(null);
+  const [pendingPayments, setPendingPayments] = useState([]);
+  const [excelFile, setExcelFile] = useState(null);
+  const [showExcelInfo, setShowExcelInfo] = useState(false);
+  const [showActiveAgreements, setShowActiveAgreements] = useState(false);
+  const [currentSiteForAgreements, setCurrentSiteForAgreements] = useState(null);
+  const [showAllPendingPayments, setShowAllPendingPayments] = useState(false);
+  const [allPendingPayments, setAllPendingPayments] = useState([]);
+  
+  // Ref for PDF generation
+  const modalContentRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // Initialize helper object first
+  const helpers = SiteHelpers({
+    companies, sites, agreements,
+    transactions
+  });
+
+  // Function to refresh all data
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+      const [sitesData, transactionsData, agreementsData, companiesData] = await Promise.all([
+        getSites(),
+        getTransactions(),
+        getAgreements(),
+        getCompanies()
+      ]);
+      
+      // Initialize sites with payment properties
+      const initializedSites = sitesData.map(site => ({
+        ...site,
+        pendingPayments: site.pendingPayments || [],
+        hasPendingPayment: (site.pendingPayments && site.pendingPayments.length > 0) || false
+      }));
+      
+      setSites(initializedSites);
+      setTransactions(transactionsData);
+      setAgreements(agreementsData);
+      setCompanies(companiesData);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to collect all pending payments from all sites
+  const collectAllPendingPayments = () => {
+    const allPayments = [];
+    sites.forEach(site => {
+      if (site.hasPendingPayment && site.pendingPayments && site.pendingPayments.length > 0) {
+        site.pendingPayments.forEach(payment => {
+          allPayments.push({
+            ...payment,
+            siteId: site.id,
+            siteName: site.name
+          });
+        });
+      }
+    });
+    return allPayments;
+  };
+
+  // Function to show all pending payments
+  const handleShowAllPendingPayments = () => {
+    const allPayments = collectAllPendingPayments();
+    setAllPendingPayments(allPayments);
+    setShowAllPendingPayments(true);
+  };
+
+  // Function to process all pending payments
+  const handleBulkPayment = async () => {
+    const allPayments = collectAllPendingPayments();
+    
+    if (allPayments.length === 0) {
+      // Check if window.showAlert is available, if not use a fallback
+      if (typeof window.showAlert === 'function') {
+        await window.showAlert(
+          'Bilgi',
+          'Ödenecek bir tutar bulunmamaktadır.',
+          'info'
+        );
+      } else {
+        alert('Ödenecek bir tutar bulunmamaktadır.');
+      }
+      return;
+    }
+
+    // Check if window.showConfirm is available, if not use a fallback
+    let result;
+    if (typeof window.showConfirm === 'function') {
+      result = await window.showConfirm(
+        'Toplu Ödeme',
+        `${allPayments.length} adet ödemenin tamamını yapmak istediğinize emin misiniz? Toplam tutar: ${helpers.formatCurrency(allPayments.reduce((sum, payment) => sum + payment.amount, 0))}`,
+        'warning',
+        'Evet',
+        'Hayır'
+      );
+    } else {
+      result = window.confirm(`${allPayments.length} adet ödemenin tamamını yapmak istediğinize emin misiniz? Toplam tutar: ${helpers.formatCurrency(allPayments.reduce((sum, payment) => sum + payment.amount, 0))}`);
+    }
+    
+    if (result) {
+      try {
+        // Process all payments
+        for (const paymentData of allPayments) {
+          const site = sites.find(s => s.id === paymentData.siteId);
+          if (site) {
+            // Create a payment object similar to what's expected by processSitePayment
+            const payment = {
+              agreementId: paymentData.agreementId,
+              companyName: paymentData.companyName,
+              amount: paymentData.amount
+            };
+            await handlers.processSitePayment(site, payment, true); // Pass true for isBulkPayment
+          }
+        }
+        
+        // Show single success message for all payments
+        if (typeof window.showAlert === 'function') {
+          await window.showAlert(
+            'Başarılı',
+            'Tüm ödemeler gerçekleşmiştir.',
+            'success'
+          );
+        } else {
+          alert('Tüm ödemeler gerçekleşmiştir.');
+        }
+        
+        // Close the modal
+        setShowAllPendingPayments(false);
+        setAllPendingPayments([]);
+      } catch (error) {
+        console.error('Error processing bulk payments:', error);
+        // Check if window.showAlert is available, if not use a fallback
+        if (typeof window.showAlert === 'function') {
+          await window.showAlert(
+            'Hata',
+            'Toplu ödeme işlemi sırasında bir hata oluştu.',
+            'error'
+          );
+        } else {
+          alert('Toplu ödeme işlemi sırasında bir hata oluştu.');
+        }
+      }
+    }
+  };
+
+  // Initialize handler objects after refreshData is defined
+  const handlers = SiteHandlers({
+    sites, setSites,
+    transactions, setTransactions,
+    agreements, setAgreements,
+    companies, setCompanies,
+    formData, setFormData,
+    selectedSiteForPayment, setSelectedSiteForPayment,
+    pendingPayments, setPendingPayments,
+    showPaymentSelection, setShowPaymentSelection,
+    currentSiteForAgreements, setCurrentSiteForAgreements,
+    currentSite, setCurrentSite,
+    setShowAddForm,
+    calculateTotalElevators: helpers.calculateTotalElevators,
+    calculatePanels: helpers.calculatePanels,
+    formatCurrency: helpers.formatCurrency,
+    refreshData // Pass the refreshData function to handlers
+  });
+
+  // Initialize UI handler objects
+  const uiHandlers = SiteUIHandlers({
+    setShowModal,
+    setCurrentSite,
+    setShowAddForm,
+    setFormData,
+    setShowPaymentSelection,
+    setSelectedSiteForPayment,
+    setShowActiveAgreements,
+    setCurrentSiteForAgreements,
+    setShowExcelInfo,
+    fileInputRef
+  });
+
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-100">
+        <div className="text-center">
+          <div className="loading-spinner mx-auto"></div>
+          <p className="mt-3 text-muted">Siteler yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container-fluid">
+      <style>
+        {`
+          .cursor-pointer {
+            cursor: pointer;
+          }
+          .cursor-pointer:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s ease-in-out;
+          }
+        `}
+      </style>
+      {/* Header with title and buttons */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="h3 fw-bold">Siteler</h2>
+        <div className="d-flex gap-2 align-items-center">
+          <button 
+            onClick={uiHandlers.handleAddSite}
+            className="btn btn-primary-gradient btn-icon"
+          >
+            <i className="bi bi-plus-lg"></i>
+            Site Ekle
+          </button>
+          <div className="position-relative">
+            <button 
+              className="btn btn-success btn-icon"
+              onClick={() => fileInputRef.current && fileInputRef.current.click()}
+            >
+              <i className="bi bi-file-earmark-spreadsheet"></i>
+              Excel ile Yükle
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".xlsx, .xls"
+              onChange={handlers.handleExcelImport}
+              style={{ display: 'none' }}
+            />
+          </div>
+          <button 
+            onClick={handlers.exportSitesToExcel}
+            className="btn btn-info btn-icon"
+          >
+            <i className="bi bi-file-earmark-excel"></i>
+            Excel Çıktısı Al
+          </button>
+          <button 
+            className="btn btn-info"
+            onClick={() => uiHandlers.setShowExcelInfo(!showExcelInfo)}
+            title="Excel Bilgilendirme"
+          >
+            <i className="bi bi-info-circle"></i>
+          </button>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="row g-3 mb-4">
+        {(() => {
+          const stats = helpers.calculateSummaryStats(sites, transactions);
+          return (
+            <>
+              <div className="col-md-3">
+                <div className="card summary-card bg-primary text-white h-100">
+                  <div className="card-body text-center">
+                    <i className="bi bi-building fs-1 mb-2"></i>
+                    <h5 className="card-title">Toplam Site</h5>
+                    <h2 className="card-text">{stats.totalSites}</h2>
+                  </div>
+                </div>
+              </div>
+              <div className="col-md-3">
+                <div className="card summary-card bg-success text-white h-100">
+                  <div className="card-body text-center">
+                    <i className="bi bi-chevron-double-down fs-1 mb-2"></i>
+                    <h5 className="card-title">Toplam Asansör</h5>
+                    <h2 className="card-text">{stats.totalElevators}</h2>
+                  </div>
+                </div>
+              </div>
+              <div className="col-md-3">
+                <div className="card summary-card bg-info text-white h-100">
+                  <div className="card-body text-center">
+                    <i className="bi bi-grid fs-1 mb-2"></i>
+                    <h5 className="card-title">Toplam Panel</h5>
+                    <h2 className="card-text">{stats.totalPanels}</h2>
+                  </div>
+                </div>
+              </div>
+              <div className="col-md-3">
+                <div 
+                  className="card summary-card bg-warning text-white h-100 cursor-pointer"
+                  onClick={handleShowAllPendingPayments}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="card-body text-center">
+                    <i className="bi bi-currency-dollar fs-1 mb-2"></i>
+                    <h5 className="card-title">Ödenecek Tutar</h5>
+                    <h2 className="card-text">{helpers.formatCurrency(stats.totalPendingPayments)}</h2>
+                  </div>
+                </div>
+              </div>
+            </>
+          );
+        })()}
+      </div>
+
+      {/* Info about Excel template - shown only when info icon is clicked */}
+      {showExcelInfo && (
+        <div className="alert alert-info alert-dismissible fade show mb-4" role="alert">
+          <i className="bi bi-info-circle me-2"></i>
+          <strong>Excel Şablonu:</strong> Siteleri toplu olarak yüklemek için Excel dosyanızda aşağıdaki sütunları kullanın:
+          <ul className="mb-1 mt-2">
+            <li><strong>A1:</strong> Site Adı</li>
+            <li><strong>B1:</strong> Mahalle</li>
+            <li><strong>C1:</strong> Yönetici Adı</li>
+            <li><strong>D1:</strong> Yönetici İletişim</li>
+            <li><strong>E1:</strong> Blok Sayısı</li>
+            <li><strong>F1:</strong> 1 Blok için Asansör Sayısı</li>
+            <li><strong>G1:</strong> Anlaşma Yüzdesi</li>
+            <li><strong>H1:</strong> Not</li>
+          </ul>
+          <small>
+            <a href="/site-template-new.csv" target="_blank" rel="noopener noreferrer" className="alert-link">
+              Örnek şablonu indirmek için tıklayın
+            </a>
+          </small>
+          <button type="button" className="btn-close" aria-label="Close" onClick={() => uiHandlers.setShowExcelInfo(false)}></button>
+        </div>
+      )}
+
+      {/* Sites Table */}
+      <div className="card custom-card shadow-sm">
+        <div className="card-body">
+          <div className="table-responsive">
+            <table className="table custom-table">
+              <thead>
+                <tr>
+                  <th>Sıra</th>
+                  <th>ID</th>
+                  <th>Site Adı</th>
+                  <th>Mahalle</th>
+                  <th>Yönetici</th>
+                  <th>Telefon</th>
+                  <th>Blok</th>
+                  <th>Toplam Asansör</th>
+                  <th>Paneller</th>
+                  <th>Anlaşma %</th>
+                  <th>Notlar</th>
+                  <th>İşlemler</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sites.map((site, index) => (
+                  <tr key={site.id}>
+                    <td>{site.sequenceNumber || index + 1}</td>
+                    <td>{site.id}</td>
+                    <td className="fw-medium">{site.name}</td>
+                    <td>{site.neighborhood}</td>
+                    <td>{site.manager}</td>
+                    <td>{site.phone}</td>
+                    <td>{site.blocks}</td>
+                    <td>{site.elevators}</td>
+                    <td>{site.panels}</td>
+                    <td>{site.agreementPercentage}%</td>
+                    <td>{site.notes}</td>
+                    <td>
+                      <div className="d-flex gap-2">
+                        <button
+                          onClick={() => uiHandlers.handleShowSite(site)}
+                          className="btn btn-sm btn-outline-primary"
+                          title="Göster"
+                        >
+                          <i className="bi bi-eye"></i>
+                        </button>
+                        <button
+                          onClick={() => uiHandlers.handleEditSite(site)}
+                          className="btn btn-sm btn-outline-secondary"
+                          title="Düzenle"
+                        >
+                          <i className="bi bi-pencil"></i>
+                        </button>
+                        <button
+                          onClick={() => uiHandlers.handleShowActiveAgreements(site)}
+                          className={`btn btn-sm ${
+                            helpers.getActiveAgreementsForSite(site.id).length > 0 
+                              ? 'btn-info' 
+                              : 'btn-outline-info disabled'
+                          }`}
+                          title={helpers.getActiveAgreementsForSite(site.id).length > 0 ? "Aktif Anlaşmalar" : "Aktif anlaşma yok"}
+                          disabled={helpers.getActiveAgreementsForSite(site.id).length === 0}
+                        >
+                          <i className="bi bi-clipboard-check"></i>
+                        </button>
+                        <button
+                          onClick={() => handlers.handlePaymentSite(site)}
+                          className={`btn btn-sm ${site.hasPendingPayment ? 'btn-success' : 'btn-secondary'}`}
+                          title={site.hasPendingPayment ? "Ödeme Yap" : "Bekleyen ödeme yok"}
+                          disabled={!site.hasPendingPayment}
+                        >
+                          <i className="bi bi-currency-dollar"></i>
+                        </button>
+                        <button
+                          onClick={() => handlers.handleArchiveSite(site.id)}
+                          className="btn btn-sm btn-outline-warning"
+                          title="Arşiv"
+                        >
+                          <i className="bi bi-archive"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {sites.length === 0 && (
+                  <tr>
+                    <td colSpan="12" className="text-center py-5">
+                      <div className="empty-state">
+                        <i className="bi bi-building"></i>
+                        <p className="mb-3">Henüz site bulunmamaktadır.</p>
+                        <button 
+                          onClick={uiHandlers.handleAddSite}
+                          className="btn btn-primary-gradient"
+                        >
+                          Site Ekle
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Site Detail Modal - Enhanced Responsive Design */}
+      {showModal && currentSite && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            uiHandlers.handleCloseModal();
+          }
+        }}>
+          <div className="modal-dialog modal-xl modal-dialog-scrollable" onClick={e => e.stopPropagation()}>
+            <div className="modal-content border-0 shadow-lg">
+              <div className="modal-header bg-primary text-white rounded-top">
+                <h5 className="modal-title d-flex align-items-center">
+                  <i className="bi bi-building me-2"></i>
+                  <span className="fw-bold">{currentSite.name} - Detay</span>
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={uiHandlers.handleCloseModal}
+                ></button>
+              </div>
+              <div className="modal-body p-0" ref={modalContentRef}>
+                <div className="container-fluid p-4">
+                  {/* Site Information Section - Responsive Grid */}
+                  <div className="section mb-4">
+                    <div className="d-flex align-items-center mb-3">
+                      <i className="bi bi-info-circle-fill text-primary me-2"></i>
+                      <h6 className="section-title mb-0 fw-bold">Site Bilgileri</h6>
+                    </div>
+                    <div className="card border-0 shadow-sm">
+                      <div className="card-body">
+                        <div className="row g-3">
+                          <div className="col-lg-6">
+                            <div className="row g-2 mb-2">
+                              <div className="col-sm-4">
+                                <small className="text-muted">Site Adı</small>
+                              </div>
+                              <div className="col-sm-8">
+                                <strong>{currentSite.name}</strong>
+                              </div>
+                            </div>
+                            <div className="row g-2 mb-2">
+                              <div className="col-sm-4">
+                                <small className="text-muted">Mahalle</small>
+                              </div>
+                              <div className="col-sm-8">
+                                {currentSite.neighborhood || '-'}
+                              </div>
+                            </div>
+                            <div className="row g-2 mb-2">
+                              <div className="col-sm-4">
+                                <small className="text-muted">Yönetici</small>
+                              </div>
+                              <div className="col-sm-8">
+                                {currentSite.manager}
+                              </div>
+                            </div>
+                            <div className="row g-2 mb-2">
+                              <div className="col-sm-4">
+                                <small className="text-muted">Telefon</small>
+                              </div>
+                              <div className="col-sm-8">
+                                {currentSite.phone}
+                              </div>
+                            </div>
+                            <div className="row g-2 mb-2">
+                              <div className="col-sm-4">
+                                <small className="text-muted">Notlar</small>
+                              </div>
+                              <div className="col-sm-8">
+                                {currentSite.notes || '-'}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-lg-6">
+                            <div className="row g-2 mb-2">
+                              <div className="col-sm-5">
+                                <small className="text-muted">Blok Sayısı</small>
+                              </div>
+                              <div className="col-sm-7">
+                                {currentSite.blocks}
+                              </div>
+                            </div>
+                            <div className="row g-2 mb-2">
+                              <div className="col-sm-5">
+                                <small className="text-muted">1 Bloktaki Asansör</small>
+                              </div>
+                              <div className="col-sm-7">
+                                {currentSite.elevatorsPerBlock || 0}
+                              </div>
+                            </div>
+                            <div className="row g-2 mb-2">
+                              <div className="col-sm-5">
+                                <small className="text-muted">Toplam Asansör</small>
+                              </div>
+                              <div className="col-sm-7">
+                                {currentSite.elevators}
+                                <small className="text-muted d-block">
+                                  ({currentSite.blocks || 0} × {currentSite.elevatorsPerBlock || 0})
+                                </small>
+                              </div>
+                            </div>
+                            <div className="row g-2 mb-2">
+                              <div className="col-sm-5">
+                                <small className="text-muted">Panel Sayısı</small>
+                              </div>
+                              <div className="col-sm-7">
+                                {currentSite.panels}
+                                <small className="text-muted d-block">
+                                  ({currentSite.elevators || 0} × 2)
+                                </small>
+                              </div>
+                            </div>
+                            <div className="row g-2 mb-2">
+                              <div className="col-sm-5">
+                                <small className="text-muted">Kullanılan Panel</small>
+                              </div>
+                              <div className="col-sm-7">
+                                {helpers.calculatePanelsSold(currentSite.id, agreements)}
+                              </div>
+                            </div>
+                            <div className="row g-2">
+                              <div className="col-sm-5">
+                                <small className="text-muted">Anlaşma Yüzdesi</small>
+                              </div>
+                              <div className="col-sm-7">
+                                <span className="badge bg-primary-subtle text-primary-emphasis">
+                                  {currentSite.agreementPercentage}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                  {/* Payment Information Section - Responsive Design */}
+                  <div className="section">
+                    <div className="d-flex align-items-center mb-3">
+                      <i className="bi bi-currency-dollar text-success me-2"></i>
+                      <h6 className="section-title mb-0 fw-bold">Ödeme Bilgileri</h6>
+                    </div>
+                    
+                    {/* Total Payments Display */}
+                    <div className="alert alert-success mb-4">
+                      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                        <div className="d-flex align-items-center">
+                          <i className="bi bi-wallet2 me-2"></i>
+                          <span className="fw-bold">Toplam Alınan Ödemeler:</span>
+                        </div>
+                        <span className="fw-bold fs-5">
+                          {helpers.formatCurrency(
+                            helpers.getSitePaymentHistoryDetailed(currentSite.id, transactions, agreements, companies)
+                              .reduce((sum, payment) => sum + Math.abs(payment.amount), 0)
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Pending Payments from New Agreements */}
+                    {currentSite.hasPendingPayment && currentSite.pendingPayments && currentSite.pendingPayments.length > 0 ? (
+                      <div className="card border-0 shadow-sm mb-4">
+                        <div className="card-header bg-warning-subtle border-0">
+                          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                            <div className="d-flex align-items-center">
+                              <i className="bi bi-clock-history me-2 text-warning"></i>
+                              <span className="fw-bold">Bekleyen Ödemeler</span>
+                            </div>
+                            <span className="fw-bold text-warning">
+                              {helpers.formatCurrency(currentSite.pendingPayments.reduce((sum, p) => sum + p.amount, 0))}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="card-body">
+                          <div className="table-responsive">
+                            <table className="table table-bordered table-hover">
+                              <thead className="table-light">
+                                <tr>
+                                  <th className="text-nowrap">Anlaşma ID</th>
+                                  <th className="text-nowrap">Firma</th>
+                                  <th className="text-center text-nowrap">Panel Sayısı</th>
+                                  <th className="text-nowrap">Haftalık Tutar</th>
+                                  <th className="text-nowrap">Siteye Ödenen</th>
+                                  <th className="text-center text-nowrap">İşlem</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {helpers.getPendingPaymentsDetailed(currentSite, agreements, companies).map((payment, index) => (
+                                  <tr key={`${payment.agreementId}-${index}`}>
+                                    <td className="text-nowrap">#{payment.agreementId}</td>
+                                    <td className="text-truncate" style={{ maxWidth: '150px' }}>{payment.companyName}</td>
+                                    <td className="text-center text-nowrap">{payment.panelCount}</td>
+                                    <td className="text-nowrap">{helpers.formatCurrency(payment.weeklyTotalAmount)}</td>
+                                    <td className="fw-bold text-nowrap">{helpers.formatCurrency(payment.amount)}</td>
+                                    <td className="text-center">
+                                      <button 
+                                        onClick={() => {
+                                          uiHandlers.handleCloseModal();
+                                          handlers.processSitePayment(currentSite, payment);
+                                        }}
+                                        className="btn btn-success btn-sm"
+                                      >
+                                        <i className="bi bi-currency-dollar me-1"></i> Öde
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                    
+                    {/* Payment History Section */}
+                    <div className="card border-0 shadow-sm">
+                      <div className="card-header bg-info-subtle border-0">
+                        <div className="d-flex align-items-center">
+                          <i className="bi bi-clock-history me-2 text-info"></i>
+                          <span className="fw-bold">Geçmiş Ödemeler</span>
+                        </div>
+                      </div>
+                      <div className="card-body">
+                        {helpers.getSitePaymentHistoryDetailed(currentSite.id, transactions, agreements, companies).length > 0 ? (
+                          <div className="table-responsive">
+                            <table className="table table-bordered table-hover">
+                              <thead className="table-light">
+                                <tr>
+                                  <th className="text-nowrap">Anlaşma ID</th>
+                                  <th className="text-nowrap">Firma</th>
+                                  <th className="text-center text-nowrap">Panel Sayısı</th>
+                                  <th className="text-nowrap">Haftalık Tutar</th>
+                                  <th className="text-nowrap">Siteye Ödenen</th>
+                                  <th className="text-nowrap">Tarih</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {helpers.getSitePaymentHistoryDetailed(currentSite.id, transactions, agreements, companies).map((payment, index) => {
+                                  const companyName = payment.agreement ? helpers.getCompanyName(payment.agreement.companyId) : 'Bilinmeyen Firma';
+                                  
+                                  return (
+                                    <tr key={index}>
+                                      <td className="text-nowrap">#{payment.agreementId}</td>
+                                      <td className="text-truncate" style={{ maxWidth: '150px' }}>{companyName}</td>
+                                      <td className="text-center text-nowrap">{payment.panelCount || 'Bilinmiyor'}</td>
+                                      <td className="text-nowrap">{payment.weeklyTotalAmount ? helpers.formatCurrency(payment.weeklyTotalAmount) : 'Bilinmiyor'}</td>
+                                      <td className="fw-bold text-success text-nowrap">{helpers.formatCurrency(payment.totalPaid)}</td>
+                                      <td className="text-nowrap">{payment.date}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div className="text-center py-4 text-muted">
+                            <i className="bi bi-clock-history fs-1"></i>
+                            <p className="mb-0 mt-2">Henüz ödeme yapılmamış</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer bg-light rounded-bottom">
+                <div className="d-flex flex-column flex-md-row gap-2 w-100">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      uiHandlers.handleCloseModal();
+                    }}
+                  >
+                    <i className="bi bi-x-lg me-1"></i> Kapat
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      helpers.generateSitePDF(currentSite, modalContentRef);
+                      uiHandlers.handleCloseModal();
+                    }}
+                  >
+                    <i className="bi bi-file-earmark-pdf me-1"></i> PDF Olarak İndir
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add/Edit Site Form Modal */}
+      {showAddForm && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  {currentSite ? 'Site Düzenle' : 'Yeni Site Ekle'}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={uiHandlers.handleCloseAddForm}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <form onSubmit={handlers.handleFormSubmit}>
+                  <div className="row">
+                    <div className="col-md-6 mb-3">
+                      <label htmlFor="name" className="form-label">Site Adı *</label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={uiHandlers.handleFormChange}
+                        className="form-control form-control-custom"
+                        placeholder="Site adını girin"
+                      />
+                    </div>
+                    
+                    <div className="col-md-6 mb-3">
+                      <label htmlFor="neighborhood" className="form-label">Mahalle</label>
+                      <input
+                        type="text"
+                        id="neighborhood"
+                        name="neighborhood"
+                        value={formData.neighborhood}
+                        onChange={uiHandlers.handleFormChange}
+                        className="form-control form-control-custom"
+                        placeholder="Mahalle adını girin"
+                      />
+                    </div>
+                    
+                    <div className="col-md-6 mb-3">
+                      <label htmlFor="manager" className="form-label">Yönetici Adı *</label>
+                      <input
+                        type="text"
+                        id="manager"
+                        name="manager"
+                        value={formData.manager}
+                        onChange={uiHandlers.handleFormChange}
+                        className="form-control form-control-custom"
+                        placeholder="Yönetici adını girin"
+                      />
+                    </div>
+                    
+                    <div className="col-md-6 mb-3">
+                      <label htmlFor="phone" className="form-label">Yönetici İletişim</label>
+                      <input
+                        type="text"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={uiHandlers.handleFormChange}
+                        className="form-control form-control-custom"
+                        placeholder="örn: (555) 123 45 67"
+                      />
+                    </div>
+                    
+                    <div className="col-md-6 mb-3">
+                      <label htmlFor="blocks" className="form-label">Blok Sayısı</label>
+                      <input
+                        type="number"
+                        id="blocks"
+                        name="blocks"
+                        value={formData.blocks}
+                        onChange={uiHandlers.handleFormChange}
+                        className="form-control form-control-custom"
+                        min="0"
+                      />
+                    </div>
+                    
+                    <div className="col-md-6 mb-3">
+                      <label htmlFor="elevatorsPerBlock" className="form-label">1 Bloktaki Asansör Sayısı</label>
+                      <input
+                        type="number"
+                        id="elevatorsPerBlock"
+                        name="elevatorsPerBlock"
+                        value={formData.elevatorsPerBlock}
+                        onChange={uiHandlers.handleFormChange}
+                        className="form-control form-control-custom"
+                        min="0"
+                      />
+                    </div>
+                    
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">Toplam Asansör Sayısı (Otomatik)</label>
+                      <input
+                        type="number"
+                        className="form-control form-control-custom"
+                        value={helpers.calculateTotalElevators(formData.blocks, formData.elevatorsPerBlock)}
+                        readOnly
+                      />
+                      <div className="form-text">Blok Sayısı × 1 Bloktaki Asansör Sayısı</div>
+                    </div>
+                    
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">Panel Sayısı (Otomatik)</label>
+                      <input
+                        type="number"
+                        className="form-control form-control-custom"
+                        value={helpers.calculatePanels(formData.blocks, formData.elevatorsPerBlock)}
+                        readOnly
+                      />
+                      <div className="form-text">Toplam Asansör Sayısı × 2</div>
+                    </div>
+                    
+                    <div className="col-md-6 mb-3">
+                      <label htmlFor="agreementPercentage" className="form-label">Anlaşma Yüzdesi (%)</label>
+                      <input
+                        type="number"
+                        id="agreementPercentage"
+                        name="agreementPercentage"
+                        value={formData.agreementPercentage}
+                        onChange={uiHandlers.handleFormChange}
+                        className="form-control form-control-custom"
+                        min="0"
+                        max="100"
+                        placeholder="0-100 arası"
+                      />
+                    </div>
+                    
+                    <div className="col-12 mb-3">
+                      <label htmlFor="notes" className="form-label">Notlar</label>
+                      <textarea
+                        id="notes"
+                        name="notes"
+                        value={formData.notes}
+                        onChange={uiHandlers.handleFormChange}
+                        className="form-control form-control-custom"
+                        rows="3"
+                        placeholder="Ek notlar..."
+                      ></textarea>
+                    </div>
+                  </div>
+                  
+                  <div className="d-flex justify-content-end gap-2">
+                    <button
+                      type="button"
+                      onClick={uiHandlers.handleCloseAddForm}
+                      className="btn btn-secondary"
+                    >
+                      İptal
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn btn-primary-gradient"
+                    >
+                      {currentSite ? 'Güncelle' : 'Kaydet'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Selection Modal */}
+      {showPaymentSelection && selectedSiteForPayment && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">{selectedSiteForPayment.name} - Ödeme Seçimi</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={uiHandlers.handleClosePaymentSelection}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>Bu site için birden fazla bekleyen ödeme bulunmaktadır. Lütfen ödemek istediğiniz anlaşmayı seçin:</p>
+                
+                <div className="table-responsive">
+                  <table className="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Anlaşma ID</th>
+                        <th>Firma</th>
+                        <th>Panel Sayısı</th>
+                        <th>Haftalık Tutar</th>
+                        <th>Siteye Ödenen</th>
+                        <th>İşlem</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {helpers.getPendingPaymentsDetailed(selectedSiteForPayment, agreements, companies).map((payment, index) => (
+                        <tr key={`${payment.agreementId}-${index}`}>
+                          <td>#{payment.agreementId}</td>
+                          <td>{payment.companyName}</td>
+                          <td className="text-center">{payment.panelCount}</td>
+                          <td>{helpers.formatCurrency(payment.weeklyTotalAmount)}</td>
+                          <td className="fw-bold">{helpers.formatCurrency(payment.amount)}</td>
+                          <td>
+                            <button 
+                              onClick={() => handlers.handleSelectPayment(payment)}
+                              className="btn btn-success btn-sm"
+                            >
+                              Öde
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={uiHandlers.handleClosePaymentSelection}
+                >
+                  İptal
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active Agreements Modal */}
+      {showActiveAgreements && currentSiteForAgreements && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-xl">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">{currentSiteForAgreements.name} - Aktif Anlaşmalar</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={uiHandlers.handleCloseActiveAgreements}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {(() => {
+                  const activeAgreements = helpers.getActiveAgreementsForSite(currentSiteForAgreements.id);
+                  
+                  if (activeAgreements.length === 0) {
+                    return (
+                      <div className="text-center py-5">
+                        <i className="bi bi-clipboard-x fs-1 text-muted"></i>
+                        <p className="mt-3 text-muted">Bu site için aktif anlaşma bulunmamaktadır.</p>
+                      </div>
+                    );
+                  }
+
+                  const blockCount = parseInt(currentSiteForAgreements.blocks) || 0;
+                  const elevatorsPerBlock = parseInt(currentSiteForAgreements.elevatorsPerBlock) || 0;
+                  const panelsPerBlock = elevatorsPerBlock * 2;
+                  const blockLabels = helpers.generateBlockLabels(blockCount);
+
+                  return (
+                    <div>
+                      <div className="alert alert-info mb-4">
+                        <h6 className="fw-bold mb-2">
+                          <i className="bi bi-info-circle me-1"></i>
+                          Site Bilgileri:
+                        </h6>
+                        <div className="row">
+                          <div className="col-md-4">
+                            <small><strong>Blok Sayısı:</strong> {blockCount}</small>
+                          </div>
+                          <div className="col-md-4">
+                            <small><strong>Blok Başına Asansör:</strong> {elevatorsPerBlock}</small>
+                          </div>
+                          <div className="col-md-4">
+                            <small><strong>Blok Başına Panel:</strong> {panelsPerBlock}</small>
+                          </div>
+                        </div>
+                      </div>
+
+                      {activeAgreements.map((agreement, agreementIndex) => {
+                        const companyName = helpers.getCompanyName(agreement.companyId);
+                        const usedBlocks = agreement.siteBlockSelections?.[currentSiteForAgreements.id] || [];
+                        const panelSelections = agreement.sitePanelSelections?.[currentSiteForAgreements.id] || {};
+
+                        return (
+                          <div key={agreement.id} className="card mb-4">
+                            <div className="card-header bg-primary text-white">
+                              <div className="d-flex justify-content-between align-items-center">
+                                <h6 className="mb-0">
+                                  <i className="bi bi-building me-2"></i>
+                                  {companyName}
+                                </h6>
+                                <div className="small">
+                                  <i className="bi bi-calendar me-1"></i>
+                                  {agreement.startDate} - {agreement.endDate}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="card-body">
+                              {usedBlocks.length === 0 ? (
+                                <div className="text-center py-3 text-muted">
+                                  <i className="bi bi-exclamation-triangle"></i>
+                                  <p className="mb-0 mt-2">Bu anlaşma için blok bilgisi bulunamadı.</p>
+                                </div>
+                              ) : (
+                                <div className="row g-3">
+                                  {usedBlocks.map(blockKey => {
+                                    // Extract block label from the new block key format (siteId-block-A)
+                                    const blockLabel = blockKey.split('-')[2];
+                                    const usedPanels = panelSelections[blockKey] || [];
+
+                                    return (
+                                      <div key={blockKey} className="col-md-6 col-lg-4">
+                                        <div className="card border-success">
+                                          <div className="card-header bg-success-subtle">
+                                            <h6 className="mb-0 fw-bold">
+                                              <i className="bi bi-grid-3x3-gap me-1"></i>
+                                              {blockLabel} Blok
+                                            </h6>
+                                          </div>
+                                          <div className="card-body">
+                                            <div className="small text-muted mb-2">
+                                              Kullanılan Paneller: {usedPanels.length} / {panelsPerBlock}
+                                            </div>
+                                            <div className="d-flex flex-wrap gap-1">
+                                              {Array.from({ length: panelsPerBlock }, (_, panelIndex) => {
+                                                const panelId = panelIndex + 1;
+                                                const panelKey = `panel-${panelId}`;
+                                                const isPanelUsed = usedPanels.includes(panelKey);
+                                                const panelNumber = panelId;
+                                                
+                                                // Generate panel name using the site ID, block label, and panel number
+                                                const panelName = `${currentSiteForAgreements.id}${blockLabel}${panelNumber}`;
+                                                
+                                                // Get panel usage information if panel is used
+                                                let panelUsageInfo = null;
+                                                if (isPanelUsed) {
+                                                  panelUsageInfo = helpers.getPanelUsageInfo(
+                                                    currentSiteForAgreements.id,
+                                                    blockKey,
+                                                    panelKey,
+                                                    agreement.startDate,
+                                                    agreement.endDate
+                                                  );
+                                                }
+
+                                                return (
+                                                  <div
+                                                    key={panelKey}
+                                                    className={`card panel-card h-100 border-2 ${isPanelUsed ? 'border-primary bg-primary bg-opacity-10' : 'border-light'}`}
+                                                    style={{
+                                                      width: '60px',
+                                                      height: '60px',
+                                                      cursor: isPanelUsed ? 'pointer' : 'default',
+                                                      transition: 'all 0.2s'
+                                                    }}
+                                                    title={isPanelUsed ? `Panel ${panelNumber} - ${companyName}` : `Panel ${panelNumber} - Boş`}
+                                                    onClick={() => {
+                                                      if (isPanelUsed && panelUsageInfo) {
+                                                        // Show agreement photo or info when clicking on used panel
+                                                        const agreementWithPhoto = agreements.find(a => 
+                                                          String(a.id) === String(panelUsageInfo.agreementId) && a.photoUrl
+                                                        );
+                                                        
+                                                        if (agreementWithPhoto && agreementWithPhoto.photoUrl) {
+                                                          // Show photo modal
+                                                          window.showAlert(
+                                                            'Reklam Görseli',
+                                                            `<div class="text-center"><img src="${agreementWithPhoto.photoUrl}" style="max-width: 100%; max-height: 300px;" alt="Reklam Görseli" /></div>`,
+                                                            'info'
+                                                          );
+                                                        } else {
+                                                          // Show panel usage info
+                                                          window.showAlert(
+                                                            'Panel Bilgisi',
+                                                            `<strong>Firma:</strong> ${panelUsageInfo.companyName}<br/>
+                                                            <strong>Anlaşma Bitiş:</strong> ${panelUsageInfo.endDate}`,
+                                                            'info'
+                                                          );
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            >
+                                              <div className="card-body p-1 d-flex flex-column align-items-center justify-content-center">
+                                                      <div className="text-center">
+                                                        <div className="fw-bold text-truncate" style={{ fontSize: '9px', maxWidth: '55px' }}>{panelName}</div>
+                                                        <div className="small text-muted mt-1" style={{ fontSize: '8px' }}>
+                                                          {isPanelUsed && panelUsageInfo ? 
+                                                            (panelUsageInfo.companyName.length > 8 ? 
+                                                              panelUsageInfo.companyName.substring(0, 8) + '...' : 
+                                                              panelUsageInfo.companyName) : 
+                                                            `Panel ${panelNumber}`}
+                                                        </div>
+                                                      </div>
+                                                      {isPanelUsed && (
+                                                        <div className="position-absolute top-0 end-0" style={{ fontSize: '8px' }}>
+                                                          <i className="bi bi-lock-fill"></i>
+                                                        </div>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={uiHandlers.handleCloseActiveAgreements}
+                >
+                  Kapat
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* All Pending Payments Modal */}
+      {showAllPendingPayments && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} onClick={() => {
+          setShowAllPendingPayments(false);
+          setAllPendingPayments([]);
+        }}>
+          <div className="modal-dialog modal-xl" onClick={e => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Tüm Bekleyen Ödemeler</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setShowAllPendingPayments(false);
+                    setAllPendingPayments([]);
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {allPendingPayments.length > 0 ? (
+                  <>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h6>Toplam Ödenecek Tutar: {helpers.formatCurrency(allPendingPayments.reduce((sum, payment) => sum + payment.amount, 0))}</h6>
+                      <button
+                        onClick={handleBulkPayment}
+                        className="btn btn-success"
+                      >
+                        <i className="bi bi-currency-dollar"></i> Toplu Öde
+                      </button>
+                    </div>
+                    <div className="table-responsive">
+                      <table className="table table-bordered">
+                        <thead>
+                          <tr>
+                            <th>Site Adı</th>
+                            <th>Anlaşma ID</th>
+                            <th>Firma</th>
+                            <th>Tutar</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {allPendingPayments.map((payment, index) => (
+                            <tr key={index}>
+                              <td>{payment.siteName}</td>
+                              <td>#{payment.agreementId}</td>
+                              <td>{payment.companyName}</td>
+                              <td className="fw-bold text-success">{helpers.formatCurrency(payment.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-5">
+                    <i className="bi bi-currency-dollar fs-1 text-muted"></i>
+                    <p className="mt-3 text-muted">Bekleyen ödeme bulunmamaktadır.</p>
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowAllPendingPayments(false);
+                    setAllPendingPayments([]);
+                  }}
+                >
+                  Kapat
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SitesMain;

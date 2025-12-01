@@ -1,0 +1,2871 @@
+{
+  "users": [
+    {
+      "username": "admin",
+      "password": "1491aaa1491",
+      "role": "administrator",
+      "status": "active",
+      "id": 2
+    },
+    {
+      "username": "VAD1",
+      "password": "0543 624 79 25",
+      "role": "site_user",
+      "siteId": "VAD1",
+      "status": "active",
+      "id": 3
+    },
+    {
+      "username": "TEP2",
+      "password": "0535 347 00 33",
+      "role": "site_user",
+      "siteId": "TEP2",
+      "status": "active",
+      "id": 4
+    },
+    {
+      "username": "BEY3",
+      "password": "0532 130 58 64",
+      "role": "site_user",
+      "siteId": "BEY3",
+      "status": "active",
+      "id": 5
+    },
+    {
+      "username": "SAH4",
+      "password": "0505 483 62 10",
+      "role": "site_user",
+      "siteId": "SAH4",
+      "status": "active",
+      "id": 6
+    },
+    {
+      "username": "SAH5",
+      "password": "0533 638 93 12",
+      "role": "site_user",
+      "siteId": "SAH5",
+      "status": "active",
+      "id": 7
+    },
+    {
+      "username": "ELI6",
+      "password": "0532 253 52 17",
+      "role": "site_user",
+      "siteId": "ELI6",
+      "status": "active",
+      "id": 8
+    },
+    {
+      "username": "ARM8",
+      "password": "0537 231 41 84",
+      "role": "site_user",
+      "siteId": "ARM8",
+      "status": "active",
+      "id": 10
+    },
+    {
+      "username": "YAK10",
+      "password": "0505 561 90 01",
+      "role": "site_user",
+      "siteId": "YAK10",
+      "status": "active",
+      "id": 12
+    },
+    {
+      "username": "ERS13",
+      "password": "0533 415 21 51",
+      "role": "site_user",
+      "siteId": "ERS13",
+      "status": "active",
+      "id": 15
+    },
+    {
+      "username": "ARM14",
+      "password": "0532 635 19 47",
+      "role": "site_user",
+      "siteId": "ARM14",
+      "status": "active",
+      "id": 16
+    },
+    {
+      "username": "YAK15",
+      "password": "0538 786 42 17",
+      "role": "site_user",
+      "siteId": "YAK15",
+      "status": "active",
+      "id": 17
+    },
+    {
+      "username": "ARA16",
+      "password": "0530 880 99 04",
+      "role": "site_user",
+      "siteId": "ARA16",
+      "status": "active",
+      "id": 18
+    },
+    {
+      "username": "SUG17",
+      "password": "0533 225 55 80",
+      "role": "site_user",
+      "siteId": "SUG17",
+      "status": "active",
+      "email": "SUG17@site.local",
+      "id": 21
+    },
+    {
+      "username": "HAZ18",
+      "password": "0533 296 52 40",
+      "role": "site_user",
+      "siteId": "HAZ18",
+      "status": "active",
+      "email": "HAZ18@site.local",
+      "id": 22
+    },
+    {
+      "username": "YAK19",
+      "password": "1",
+      "role": "site_user",
+      "siteId": "YAK19",
+      "status": "active",
+      "email": "YAK19@site.local",
+      "id": 23
+    },
+    {
+      "username": "SUG20",
+      "password": "1",
+      "role": "site_user",
+      "siteId": "SUG20",
+      "status": "active",
+      "email": "SUG20@site.local",
+      "id": 24
+    },
+    {
+      "username": "GOK23",
+      "password": "1",
+      "role": "site_user",
+      "siteId": "GOK23",
+      "status": "active",
+      "email": "GOK23@site.local",
+      "id": 27
+    },
+    {
+      "username": "OZD24",
+      "password": "1",
+      "role": "site_user",
+      "siteId": "OZD24",
+      "status": "active",
+      "email": "OZD24@site.local",
+      "id": 28
+    },
+    {
+      "username": "YAV25",
+      "password": "1",
+      "role": "site_user",
+      "siteId": "YAV25",
+      "status": "active",
+      "email": "YAV25@site.local",
+      "id": 29
+    },
+    {
+      "username": "BAH26",
+      "password": "1",
+      "role": "site_user",
+      "siteId": "BAH26",
+      "status": "active",
+      "email": "BAH26@site.local",
+      "id": 30
+    },
+    {
+      "username": "MOD27",
+      "password": "1",
+      "role": "site_user",
+      "siteId": "MOD27",
+      "status": "active",
+      "email": "MOD27@site.local",
+      "id": 31
+    },
+    {
+      "username": "KAR28",
+      "password": "1",
+      "role": "site_user",
+      "siteId": "KAR28",
+      "status": "active",
+      "email": "KAR28@site.local",
+      "id": 32
+    },
+    {
+      "username": "NEV29",
+      "password": "1",
+      "role": "site_user",
+      "siteId": "NEV29",
+      "status": "active",
+      "email": "NEV29@site.local",
+      "id": 33
+    },
+    {
+      "username": "IMAYD26",
+      "password": "11111",
+      "role": "site_user",
+      "siteId": "IMAYD26",
+      "status": "active",
+      "email": "IMAYD26@site.local",
+      "id": 34
+    },
+    {
+      "username": "IMHAZ27",
+      "password": "11111",
+      "role": "site_user",
+      "siteId": "IMHAZ27",
+      "status": "active",
+      "email": "IMHAZ27@site.local",
+      "id": 35
+    },
+    {
+      "username": "IMDAY28",
+      "password": "11111",
+      "role": "site_user",
+      "siteId": "IMDAY28",
+      "status": "active",
+      "email": "IMDAY28@site.local",
+      "id": 36
+    },
+    {
+      "name": "mazi",
+      "username": "mazi",
+      "password": "aaaaaa",
+      "role": "personnel",
+      "status": "active",
+      "id": 38
+    },
+    {
+      "username": "admin",
+      "password": "1491aaa1491",
+      "id": 41
+    },
+    {
+      "username": "PIR2",
+      "password": "5347129977",
+      "role": "company",
+      "companyId": "PIR2",
+      "status": "active",
+      "email": "PIR2@company.local",
+      "id": 42
+    },
+    {
+      "username": "PIR2",
+      "password": "5347129977",
+      "role": "company",
+      "companyId": "PIR2",
+      "status": "active",
+      "id": 43
+    },
+    {
+      "username": "BOS3",
+      "password": "05468108615",
+      "role": "company",
+      "companyId": "BOS3",
+      "status": "active",
+      "email": "BOS3@company.local",
+      "id": 44
+    },
+    {
+      "username": "BOS3",
+      "password": "05468108615",
+      "role": "company",
+      "companyId": "BOS3",
+      "status": "active",
+      "id": 45
+    },
+    {
+      "username": "PIL4",
+      "password": "PIL4",
+      "role": "company",
+      "companyId": "PIL4",
+      "status": "active",
+      "email": "PIL4@company.local",
+      "id": 46
+    },
+    {
+      "username": "PIL4",
+      "password": "PIL4",
+      "role": "company",
+      "companyId": "PIL4",
+      "status": "active",
+      "id": 47
+    }
+  ],
+  "sites": [
+    {
+      "name": "VADi PARK",
+      "manager": "VEYSEL DiLEK",
+      "phone": "0543 624 79 25",
+      "blocks": 11,
+      "elevatorsPerBlock": 2,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ÇAYDAÇIRA MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "220",
+      "elevators": 22,
+      "panels": 44,
+      "averagePeople": 660,
+      "id": "VAD1"
+    },
+    {
+      "name": "TEPE PARK KONUTLARI",
+      "manager": "ADNAN BEY",
+      "phone": "0535 347 00 33",
+      "blocks": 6,
+      "elevatorsPerBlock": 3,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ÇAYDAÇIRA MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "120",
+      "elevators": 18,
+      "panels": 36,
+      "averagePeople": 360,
+      "id": "TEP2",
+      "status": "archived",
+      "archivedAt": "2025-11-08T18:20:36.596Z"
+    },
+    {
+      "name": "BEYAZiNCİ",
+      "manager": "iSMAİL BEY",
+      "phone": "0532 130 58 64",
+      "blocks": 8,
+      "elevatorsPerBlock": 1,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ÇAYDAÇIRA MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "176",
+      "elevators": 8,
+      "panels": 16,
+      "averagePeople": 528,
+      "id": "BEY3"
+    },
+    {
+      "name": "SAHRA DELÜX",
+      "manager": "CENGİZ ÜNER",
+      "phone": "0505 483 62 10",
+      "blocks": 4,
+      "elevatorsPerBlock": 2,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ÇAYDAÇIRA MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "76",
+      "elevators": 8,
+      "panels": 16,
+      "averagePeople": 228,
+      "id": "SAH4"
+    },
+    {
+      "name": "SAHRA ELEGANCE",
+      "manager": "HASAN YILDIZ / NEJAT",
+      "phone": "0533 638 93 12",
+      "blocks": 3,
+      "elevatorsPerBlock": 1,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ÇAYDAÇIRA MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "24",
+      "elevators": 3,
+      "panels": 6,
+      "averagePeople": 72,
+      "id": "SAH5",
+      "status": "archived",
+      "archivedAt": "2025-11-08T18:20:42.591Z"
+    },
+    {
+      "name": "ELİF KENT",
+      "manager": "ZÜLKÜF EVLİYAOĞLU",
+      "phone": "0532 253 52 17",
+      "blocks": 3,
+      "elevatorsPerBlock": 1,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ÇAYDAÇIRA MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "42",
+      "elevators": 3,
+      "panels": 6,
+      "averagePeople": 126,
+      "id": "ELI6"
+    },
+    {
+      "name": "ARMADA LiFE",
+      "manager": "CEMAL BEY",
+      "phone": "0537 231 41 84",
+      "blocks": 6,
+      "elevatorsPerBlock": 1,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ÇAYDAÇIRA MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "108",
+      "elevators": 6,
+      "panels": 12,
+      "averagePeople": 324,
+      "id": "ARM8"
+    },
+    {
+      "name": "YAKAMOZ 5 SiTESi",
+      "manager": "İSMAİL KAHRAMAN",
+      "phone": "0505 561 90 01",
+      "blocks": 5,
+      "elevatorsPerBlock": 1,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ÇAYDAÇIRA MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "60",
+      "elevators": 5,
+      "panels": 10,
+      "averagePeople": 180,
+      "id": "YAK10"
+    },
+    {
+      "name": "ERSÖZ RESİDANCE",
+      "manager": "MEHMET BEY ERS",
+      "phone": "0533 415 21 51",
+      "blocks": 4,
+      "elevatorsPerBlock": 4,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "CUMHURİYRET MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "108",
+      "elevators": 16,
+      "panels": 32,
+      "averagePeople": 324,
+      "id": "ERS13",
+      "status": "archived",
+      "archivedAt": "2025-11-08T18:20:54.540Z"
+    },
+    {
+      "name": "ARMA KENT SİTESİ",
+      "manager": "ERGÜN BEY",
+      "phone": "0532 635 19 47",
+      "blocks": 9,
+      "elevatorsPerBlock": 1,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "CUMHURİYRET MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "176",
+      "elevators": 9,
+      "panels": 18,
+      "averagePeople": 528,
+      "id": "ARM14"
+    },
+    {
+      "name": "YAKAMOZ 4 SiTESi",
+      "manager": "ERDEM BEY",
+      "phone": "0538 786 42 17",
+      "blocks": 5,
+      "elevatorsPerBlock": 1,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "CUMHURİYRET MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "87",
+      "elevators": 5,
+      "panels": 10,
+      "averagePeople": 261,
+      "id": "YAK15"
+    },
+    {
+      "name": "ARAMADA KONUTLARI",
+      "manager": "ÜMİT PİRİNÇÇİ",
+      "phone": "0530 880 99 04",
+      "blocks": 3,
+      "elevatorsPerBlock": 1,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "CUMHURİYRET MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "58",
+      "elevators": 3,
+      "panels": 6,
+      "averagePeople": 174,
+      "id": "ARA16"
+    },
+    {
+      "name": "SUGÖZÜ CADDE",
+      "manager": "AHMET SUGÖZÜ",
+      "phone": "0533 225 55 80",
+      "blocks": 2,
+      "elevatorsPerBlock": "2",
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ÇAYDAÇIRA MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "19",
+      "elevators": 4,
+      "panels": 8,
+      "averagePeople": 57,
+      "id": "SUG17"
+    },
+    {
+      "name": "HAZAR RESiDANCE",
+      "manager": "HAKAN ÇELİK",
+      "phone": "0533 296 52 40",
+      "blocks": 6,
+      "elevatorsPerBlock": 1,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "CUMHURİYRET MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "107",
+      "elevators": 6,
+      "panels": 12,
+      "averagePeople": 321,
+      "id": "HAZ18"
+    },
+    {
+      "name": "YAKAMOZ 7 SİTESİ",
+      "manager": "BİLİNMİYOR",
+      "phone": "1",
+      "blocks": "3",
+      "elevatorsPerBlock": "2",
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ÇAYDAÇIRA MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "60",
+      "elevators": 6,
+      "panels": 12,
+      "averagePeople": 180,
+      "id": "YAK19",
+      "status": "archived",
+      "archivedAt": "2025-11-08T18:21:04.693Z"
+    },
+    {
+      "name": "SUGÖZÜ OLİVYA SİTESİ",
+      "manager": "BİLİNMİYOR",
+      "phone": "1",
+      "blocks": "4",
+      "elevatorsPerBlock": 1,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ÇAYDAÇIRA MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "120",
+      "elevators": 4,
+      "panels": 8,
+      "averagePeople": 360,
+      "id": "SUG20"
+    },
+    {
+      "name": "GÖK SUİT SİTESİ",
+      "manager": "BİLİNMİYOR",
+      "phone": "1",
+      "blocks": "3",
+      "elevatorsPerBlock": "2",
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ÇAYDAÇIRA MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "62",
+      "elevators": 6,
+      "panels": 12,
+      "averagePeople": 186,
+      "id": "GOK23"
+    },
+    {
+      "name": "ÖZDAL SİTESİ",
+      "manager": "SEREL YÖNETİM",
+      "phone": "1",
+      "blocks": 1,
+      "elevatorsPerBlock": 2,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "CUMHURİYRET MAHALLESi",
+      "siteType": "site",
+      "apartmentCount": "34",
+      "elevators": 2,
+      "panels": 4,
+      "averagePeople": 102,
+      "id": "OZD24"
+    },
+    {
+      "name": "YAVUZ SİNEM SİTESİ",
+      "manager": "SEREL YÖNETİM",
+      "phone": "1",
+      "blocks": 1,
+      "elevatorsPerBlock": 2,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ATAŞEHİR MAHALLESİ",
+      "siteType": "site",
+      "apartmentCount": "28",
+      "elevators": 2,
+      "panels": 4,
+      "averagePeople": 84,
+      "id": "YAV25"
+    },
+    {
+      "name": "BAHAR SİTESİ",
+      "manager": "SEREL YÖNETİM",
+      "phone": "1",
+      "blocks": 1,
+      "elevatorsPerBlock": 1,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "İZZETPAŞA MAHALLESİ",
+      "siteType": "site",
+      "apartmentCount": "32",
+      "elevators": 1,
+      "panels": 2,
+      "averagePeople": 96,
+      "id": "BAH26"
+    },
+    {
+      "name": "MODA VİZYON SİTESİ",
+      "manager": "SEREL YÖNETİM",
+      "phone": "1",
+      "blocks": "2",
+      "elevatorsPerBlock": 1,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "CUMHURİYET MAHALLESİ",
+      "siteType": "site",
+      "apartmentCount": "40",
+      "elevators": 2,
+      "panels": 4,
+      "averagePeople": 120,
+      "id": "MOD27"
+    },
+    {
+      "name": "KARAKAYA SİTESİ",
+      "manager": "SEREL YÖNETİM",
+      "phone": "1",
+      "blocks": 1,
+      "elevatorsPerBlock": 1,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ATAŞEHİR MAHALLESİ",
+      "siteType": "site",
+      "apartmentCount": "28",
+      "elevators": 1,
+      "panels": 2,
+      "averagePeople": 84,
+      "id": "KAR28"
+    },
+    {
+      "name": "NEVA SİTESİ",
+      "manager": "SEREL YÖNETİM",
+      "phone": "1",
+      "blocks": 1,
+      "elevatorsPerBlock": 2,
+      "agreementPercentage": 25,
+      "notes": "",
+      "neighborhood": "ATAŞEHİR MAHALLESİ",
+      "siteType": "site",
+      "apartmentCount": "22",
+      "elevators": 2,
+      "panels": 4,
+      "averagePeople": 66,
+      "id": "NEV29"
+    },
+    {
+      "name": "AYDINLAR İŞ MERKEZİ",
+      "manager": "ARAS SÜRÜCÜ KURSU",
+      "phone": "11111",
+      "blocks": "1",
+      "elevatorsPerBlock": "1",
+      "agreementPercentage": "25",
+      "notes": "",
+      "neighborhood": "ÇARŞI MAHALLESİ",
+      "siteType": "business_center",
+      "businessCount": "30",
+      "manualPanels": "3",
+      "peopleCount": "1000",
+      "elevators": 1,
+      "panels": 3,
+      "averagePeople": 0,
+      "id": "IMAYD26"
+    },
+    {
+      "name": "HAZAR İŞ MERKEZİ",
+      "manager": "SEREL YÖNETİM",
+      "phone": "11111",
+      "blocks": "1",
+      "elevatorsPerBlock": "1",
+      "agreementPercentage": "25",
+      "notes": "",
+      "neighborhood": "YENİ MAHALLE",
+      "siteType": "business_center",
+      "manualPanels": "3",
+      "businessCount": "22",
+      "peopleCount": "1000",
+      "elevators": 1,
+      "panels": 3,
+      "averagePeople": 0,
+      "id": "IMHAZ27"
+    },
+    {
+      "name": "DAYI İŞ MERKEZİ",
+      "manager": "SEREL YÖNETİM",
+      "phone": "11111",
+      "blocks": "1",
+      "elevatorsPerBlock": "2",
+      "agreementPercentage": "25",
+      "notes": "",
+      "neighborhood": "ÇARŞI MAHALLESİ",
+      "siteType": "business_center",
+      "manualPanels": "5",
+      "businessCount": "24",
+      "peopleCount": "1000",
+      "elevators": 2,
+      "panels": 5,
+      "averagePeople": 0,
+      "id": "IMDAY28"
+    }
+  ],
+  "companies": [
+    {
+      "name": "Piraye",
+      "contact": "Emre bey",
+      "phone": "5347129977",
+      "email": "",
+      "notes": "",
+      "status": "active",
+      "id": "PIR2",
+      "sequenceNumber": 2
+    },
+    {
+      "name": "BOSH KARABULUT",
+      "contact": "EMRE BEY",
+      "phone": "05468108615",
+      "email": "",
+      "notes": "",
+      "status": "active",
+      "id": "BOS3",
+      "sequenceNumber": 3
+    },
+    {
+      "name": "PİLA LAHMACUN",
+      "contact": "BEKİR BEY",
+      "phone": "",
+      "email": "",
+      "notes": "",
+      "status": "active",
+      "id": "PIL4",
+      "sequenceNumber": 4
+    }
+  ],
+  "agreements": [
+    {
+      "companyId": "PIR2",
+      "startDate": "2025-11-17",
+      "endDate": "2025-11-23",
+      "weeklyRatePerPanel": "250",
+      "notes": "",
+      "siteIds": [
+        "ELI6",
+        "VAD1",
+        "SUG17",
+        "SUG20",
+        "BEY3",
+        "GOK23"
+      ],
+      "sitePanelCounts": {
+        "ELI6": 3,
+        "VAD1": 22,
+        "SUG17": 4,
+        "SUG20": 4,
+        "BEY3": 8,
+        "GOK23": 6
+      },
+      "siteBlockSelections": {
+        "ELI6": [
+          "ELI6-block-A",
+          "ELI6-block-B",
+          "ELI6-block-C"
+        ],
+        "VAD1": [
+          "VAD1-block-A",
+          "VAD1-block-B",
+          "VAD1-block-C",
+          "VAD1-block-D",
+          "VAD1-block-H",
+          "VAD1-block-G",
+          "VAD1-block-F",
+          "VAD1-block-E",
+          "VAD1-block-I",
+          "VAD1-block-J",
+          "VAD1-block-K"
+        ],
+        "SUG17": [
+          "SUG17-block-A",
+          "SUG17-block-B"
+        ],
+        "SUG20": [
+          "SUG20-block-A",
+          "SUG20-block-B",
+          "SUG20-block-C",
+          "SUG20-block-D"
+        ],
+        "BEY3": [
+          "BEY3-block-A",
+          "BEY3-block-B",
+          "BEY3-block-C",
+          "BEY3-block-H",
+          "BEY3-block-D",
+          "BEY3-block-G",
+          "BEY3-block-F",
+          "BEY3-block-E"
+        ],
+        "GOK23": [
+          "GOK23-block-A",
+          "GOK23-block-B",
+          "GOK23-block-C"
+        ]
+      },
+      "sitePanelSelections": {
+        "ELI6": {
+          "ELI6-block-A": [
+            "panel-1"
+          ],
+          "ELI6-block-B": [
+            "panel-1"
+          ],
+          "ELI6-block-C": [
+            "panel-1"
+          ]
+        },
+        "VAD1": {
+          "VAD1-block-A": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-B": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-C": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-D": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-H": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-G": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-F": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-E": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-I": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-J": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-K": [
+            "panel-1",
+            "panel-3"
+          ]
+        },
+        "SUG17": {
+          "SUG17-block-A": [
+            "panel-1",
+            "panel-3"
+          ],
+          "SUG17-block-B": [
+            "panel-1",
+            "panel-3"
+          ]
+        },
+        "SUG20": {
+          "SUG20-block-A": [
+            "panel-1"
+          ],
+          "SUG20-block-B": [
+            "panel-1"
+          ],
+          "SUG20-block-C": [
+            "panel-1"
+          ],
+          "SUG20-block-D": [
+            "panel-1"
+          ]
+        },
+        "BEY3": {
+          "BEY3-block-A": [
+            "panel-1"
+          ],
+          "BEY3-block-B": [
+            "panel-1"
+          ],
+          "BEY3-block-C": [
+            "panel-1"
+          ],
+          "BEY3-block-H": [
+            "panel-1"
+          ],
+          "BEY3-block-D": [
+            "panel-1"
+          ],
+          "BEY3-block-G": [
+            "panel-1"
+          ],
+          "BEY3-block-F": [
+            "panel-1"
+          ],
+          "BEY3-block-E": [
+            "panel-1"
+          ]
+        },
+        "GOK23": {
+          "GOK23-block-A": [
+            "panel-1",
+            "panel-3"
+          ],
+          "GOK23-block-B": [
+            "panel-1",
+            "panel-3"
+          ],
+          "GOK23-block-C": [
+            "panel-1",
+            "panel-3"
+          ]
+        }
+      },
+      "totalWeeks": 1,
+      "totalAmount": 11750,
+      "status": "active",
+      "id": "2031125"
+    },
+    {
+      "companyId": "PIL4",
+      "startDate": "2025-11-10",
+      "endDate": "2025-11-16",
+      "weeklyRatePerPanel": "215",
+      "notes": "",
+      "siteIds": [
+        "VAD1",
+        "BEY3",
+        "TEP2",
+        "SAH4",
+        "ELI6",
+        "SAH5",
+        "ARM8",
+        "YAK10",
+        "YAK19",
+        "SUG17",
+        "SUG20",
+        "GOK23"
+      ],
+      "sitePanelCounts": {
+        "VAD1": 22,
+        "BEY3": 8,
+        "TEP2": 18,
+        "SAH4": 8,
+        "ELI6": 3,
+        "SAH5": 3,
+        "ARM8": 6,
+        "YAK10": 5,
+        "YAK19": 6,
+        "SUG17": 4,
+        "SUG20": 4,
+        "GOK23": 6
+      },
+      "siteBlockSelections": {
+        "VAD1": [
+          "VAD1-block-A",
+          "VAD1-block-B",
+          "VAD1-block-C",
+          "VAD1-block-D",
+          "VAD1-block-E",
+          "VAD1-block-F",
+          "VAD1-block-G",
+          "VAD1-block-H",
+          "VAD1-block-I",
+          "VAD1-block-J",
+          "VAD1-block-K"
+        ],
+        "BEY3": [
+          "BEY3-block-A",
+          "BEY3-block-B",
+          "BEY3-block-C",
+          "BEY3-block-D",
+          "BEY3-block-E",
+          "BEY3-block-F",
+          "BEY3-block-G",
+          "BEY3-block-H"
+        ],
+        "TEP2": [
+          "TEP2-block-A",
+          "TEP2-block-B",
+          "TEP2-block-C",
+          "TEP2-block-D",
+          "TEP2-block-E",
+          "TEP2-block-F"
+        ],
+        "SAH4": [
+          "SAH4-block-A",
+          "SAH4-block-B",
+          "SAH4-block-C",
+          "SAH4-block-D"
+        ],
+        "ELI6": [
+          "ELI6-block-A",
+          "ELI6-block-B",
+          "ELI6-block-C"
+        ],
+        "SAH5": [
+          "SAH5-block-A",
+          "SAH5-block-B",
+          "SAH5-block-C"
+        ],
+        "ARM8": [
+          "ARM8-block-A",
+          "ARM8-block-B",
+          "ARM8-block-C",
+          "ARM8-block-D",
+          "ARM8-block-E",
+          "ARM8-block-F"
+        ],
+        "YAK10": [
+          "YAK10-block-A",
+          "YAK10-block-B",
+          "YAK10-block-C",
+          "YAK10-block-D",
+          "YAK10-block-E"
+        ],
+        "YAK19": [
+          "YAK19-block-A",
+          "YAK19-block-B",
+          "YAK19-block-C"
+        ],
+        "SUG17": [
+          "SUG17-block-A",
+          "SUG17-block-B"
+        ],
+        "SUG20": [
+          "SUG20-block-A",
+          "SUG20-block-B",
+          "SUG20-block-C",
+          "SUG20-block-D"
+        ],
+        "GOK23": [
+          "GOK23-block-A",
+          "GOK23-block-B",
+          "GOK23-block-C"
+        ]
+      },
+      "sitePanelSelections": {
+        "VAD1": {
+          "VAD1-block-A": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-B": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-C": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-D": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-E": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-F": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-G": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-H": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-I": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-J": [
+            "panel-1",
+            "panel-3"
+          ],
+          "VAD1-block-K": [
+            "panel-1",
+            "panel-3"
+          ]
+        },
+        "BEY3": {
+          "BEY3-block-A": [
+            "panel-1"
+          ],
+          "BEY3-block-B": [
+            "panel-1"
+          ],
+          "BEY3-block-C": [
+            "panel-1"
+          ],
+          "BEY3-block-D": [
+            "panel-1"
+          ],
+          "BEY3-block-E": [
+            "panel-1"
+          ],
+          "BEY3-block-F": [
+            "panel-1"
+          ],
+          "BEY3-block-G": [
+            "panel-1"
+          ],
+          "BEY3-block-H": [
+            "panel-1"
+          ]
+        },
+        "TEP2": {
+          "TEP2-block-A": [
+            "panel-1",
+            "panel-3",
+            "panel-5"
+          ],
+          "TEP2-block-B": [
+            "panel-1",
+            "panel-3",
+            "panel-5"
+          ],
+          "TEP2-block-C": [
+            "panel-1",
+            "panel-3",
+            "panel-5"
+          ],
+          "TEP2-block-D": [
+            "panel-1",
+            "panel-3",
+            "panel-5"
+          ],
+          "TEP2-block-E": [
+            "panel-1",
+            "panel-3",
+            "panel-5"
+          ],
+          "TEP2-block-F": [
+            "panel-1",
+            "panel-3",
+            "panel-5"
+          ]
+        },
+        "SAH4": {
+          "SAH4-block-A": [
+            "panel-1",
+            "panel-3"
+          ],
+          "SAH4-block-B": [
+            "panel-1",
+            "panel-3"
+          ],
+          "SAH4-block-C": [
+            "panel-1",
+            "panel-3"
+          ],
+          "SAH4-block-D": [
+            "panel-1",
+            "panel-3"
+          ]
+        },
+        "ELI6": {
+          "ELI6-block-A": [
+            "panel-1"
+          ],
+          "ELI6-block-B": [
+            "panel-1"
+          ],
+          "ELI6-block-C": [
+            "panel-1"
+          ]
+        },
+        "SAH5": {
+          "SAH5-block-A": [
+            "panel-1"
+          ],
+          "SAH5-block-B": [
+            "panel-1"
+          ],
+          "SAH5-block-C": [
+            "panel-1"
+          ]
+        },
+        "ARM8": {
+          "ARM8-block-A": [
+            "panel-1"
+          ],
+          "ARM8-block-B": [
+            "panel-1"
+          ],
+          "ARM8-block-C": [
+            "panel-1"
+          ],
+          "ARM8-block-D": [
+            "panel-1"
+          ],
+          "ARM8-block-E": [
+            "panel-1"
+          ],
+          "ARM8-block-F": [
+            "panel-1"
+          ]
+        },
+        "YAK10": {
+          "YAK10-block-A": [
+            "panel-1"
+          ],
+          "YAK10-block-B": [
+            "panel-1"
+          ],
+          "YAK10-block-C": [
+            "panel-1"
+          ],
+          "YAK10-block-D": [
+            "panel-1"
+          ],
+          "YAK10-block-E": [
+            "panel-1"
+          ]
+        },
+        "YAK19": {
+          "YAK19-block-A": [
+            "panel-1",
+            "panel-3"
+          ],
+          "YAK19-block-B": [
+            "panel-1",
+            "panel-3"
+          ],
+          "YAK19-block-C": [
+            "panel-1",
+            "panel-3"
+          ]
+        },
+        "SUG17": {
+          "SUG17-block-A": [
+            "panel-1",
+            "panel-3"
+          ],
+          "SUG17-block-B": [
+            "panel-1",
+            "panel-3"
+          ]
+        },
+        "SUG20": {
+          "SUG20-block-A": [
+            "panel-1"
+          ],
+          "SUG20-block-B": [
+            "panel-1"
+          ],
+          "SUG20-block-C": [
+            "panel-1"
+          ],
+          "SUG20-block-D": [
+            "panel-1"
+          ]
+        },
+        "GOK23": {
+          "GOK23-block-A": [
+            "panel-1",
+            "panel-3"
+          ],
+          "GOK23-block-B": [
+            "panel-1",
+            "panel-3"
+          ],
+          "GOK23-block-C": [
+            "panel-1",
+            "panel-3"
+          ]
+        }
+      },
+      "totalWeeks": 1,
+      "totalAmount": 19995,
+      "status": "active",
+      "id": "3101125",
+      "sequenceNumber": 3
+    },
+    {
+      "companyId": "BOS3",
+      "startDate": "2025-11-10",
+      "endDate": "2025-11-16",
+      "weeklyRatePerPanel": "215",
+      "notes": "* FİYATLARA KDV DAHİL DEĞİLDİR.\n* ÖDEMELER EN GEÇ ANLAŞMA TARİHİNDEN ÖNCEKİ CUMA GÜNÜ YAPILMALIDIR. TAHSİLATI ALINMAYAN ANLAŞMALAR GEÇERSİZ SAYILACAKTIR.\n* REKLAM PANELLERİNİN ANLAŞMA SÜRESİ BOYUNCA MUHAFAZA EDİLMESİ, GÖRSELLERİN SERGİLENMESİNİN SAĞLANMASI SORUMLULUĞU TARAFIMIZA AİTTİR\nİŞ BU SÖZLEŞME NİTELİĞİNDE OLUP APARTMECRA İLE ANLAŞMA YAPILAN FİRMA ARASINDA HUKUKİ OLARAK BAĞ KURAR.\n* ",
+      "siteIds": [
+        "VAD1",
+        "TEP2",
+        "SAH4",
+        "BEY3",
+        "ELI6",
+        "SAH5",
+        "ARM8",
+        "YAK10",
+        "YAK19",
+        "SUG17",
+        "SUG20",
+        "GOK23"
+      ],
+      "sitePanelCounts": {
+        "VAD1": 22,
+        "TEP2": 18,
+        "SAH4": 8,
+        "BEY3": 8,
+        "ELI6": 3,
+        "SAH5": 3,
+        "ARM8": 6,
+        "YAK10": 5,
+        "YAK19": 6,
+        "SUG17": 4,
+        "SUG20": 4,
+        "GOK23": 6
+      },
+      "siteBlockSelections": {
+        "VAD1": [
+          "VAD1-block-A",
+          "VAD1-block-B",
+          "VAD1-block-C",
+          "VAD1-block-D",
+          "VAD1-block-E",
+          "VAD1-block-F",
+          "VAD1-block-G",
+          "VAD1-block-H",
+          "VAD1-block-I",
+          "VAD1-block-J",
+          "VAD1-block-K"
+        ],
+        "TEP2": [
+          "TEP2-block-A",
+          "TEP2-block-B",
+          "TEP2-block-C",
+          "TEP2-block-D",
+          "TEP2-block-E",
+          "TEP2-block-F"
+        ],
+        "SAH4": [
+          "SAH4-block-A",
+          "SAH4-block-B",
+          "SAH4-block-C",
+          "SAH4-block-D"
+        ],
+        "BEY3": [
+          "BEY3-block-A",
+          "BEY3-block-B",
+          "BEY3-block-C",
+          "BEY3-block-D",
+          "BEY3-block-E",
+          "BEY3-block-F",
+          "BEY3-block-G",
+          "BEY3-block-H"
+        ],
+        "ELI6": [
+          "ELI6-block-A",
+          "ELI6-block-B",
+          "ELI6-block-C"
+        ],
+        "SAH5": [
+          "SAH5-block-A",
+          "SAH5-block-B",
+          "SAH5-block-C"
+        ],
+        "ARM8": [
+          "ARM8-block-A",
+          "ARM8-block-B",
+          "ARM8-block-C",
+          "ARM8-block-D",
+          "ARM8-block-E",
+          "ARM8-block-F"
+        ],
+        "YAK10": [
+          "YAK10-block-A",
+          "YAK10-block-B",
+          "YAK10-block-C",
+          "YAK10-block-D",
+          "YAK10-block-E"
+        ],
+        "YAK19": [
+          "YAK19-block-A",
+          "YAK19-block-B",
+          "YAK19-block-C"
+        ],
+        "SUG17": [
+          "SUG17-block-A",
+          "SUG17-block-B"
+        ],
+        "SUG20": [
+          "SUG20-block-A",
+          "SUG20-block-B",
+          "SUG20-block-C",
+          "SUG20-block-D"
+        ],
+        "GOK23": [
+          "GOK23-block-A",
+          "GOK23-block-B",
+          "GOK23-block-C"
+        ]
+      },
+      "sitePanelSelections": {
+        "VAD1": {
+          "VAD1-block-A": [
+            "panel-2",
+            "panel-4"
+          ],
+          "VAD1-block-B": [
+            "panel-2",
+            "panel-4"
+          ],
+          "VAD1-block-C": [
+            "panel-2",
+            "panel-4"
+          ],
+          "VAD1-block-D": [
+            "panel-2",
+            "panel-4"
+          ],
+          "VAD1-block-E": [
+            "panel-2",
+            "panel-4"
+          ],
+          "VAD1-block-F": [
+            "panel-2",
+            "panel-4"
+          ],
+          "VAD1-block-G": [
+            "panel-2",
+            "panel-4"
+          ],
+          "VAD1-block-H": [
+            "panel-2",
+            "panel-4"
+          ],
+          "VAD1-block-I": [
+            "panel-2",
+            "panel-4"
+          ],
+          "VAD1-block-J": [
+            "panel-2",
+            "panel-4"
+          ],
+          "VAD1-block-K": [
+            "panel-2",
+            "panel-4"
+          ]
+        },
+        "TEP2": {
+          "TEP2-block-A": [
+            "panel-2",
+            "panel-4",
+            "panel-6"
+          ],
+          "TEP2-block-B": [
+            "panel-2",
+            "panel-4",
+            "panel-6"
+          ],
+          "TEP2-block-C": [
+            "panel-2",
+            "panel-4",
+            "panel-6"
+          ],
+          "TEP2-block-D": [
+            "panel-2",
+            "panel-4",
+            "panel-6"
+          ],
+          "TEP2-block-E": [
+            "panel-2",
+            "panel-4",
+            "panel-6"
+          ],
+          "TEP2-block-F": [
+            "panel-2",
+            "panel-4",
+            "panel-6"
+          ]
+        },
+        "SAH4": {
+          "SAH4-block-A": [
+            "panel-2",
+            "panel-4"
+          ],
+          "SAH4-block-B": [
+            "panel-2",
+            "panel-4"
+          ],
+          "SAH4-block-C": [
+            "panel-2",
+            "panel-4"
+          ],
+          "SAH4-block-D": [
+            "panel-2",
+            "panel-4"
+          ]
+        },
+        "BEY3": {
+          "BEY3-block-A": [
+            "panel-2"
+          ],
+          "BEY3-block-B": [
+            "panel-2"
+          ],
+          "BEY3-block-C": [
+            "panel-2"
+          ],
+          "BEY3-block-D": [
+            "panel-2"
+          ],
+          "BEY3-block-E": [
+            "panel-2"
+          ],
+          "BEY3-block-F": [
+            "panel-2"
+          ],
+          "BEY3-block-G": [
+            "panel-2"
+          ],
+          "BEY3-block-H": [
+            "panel-2"
+          ]
+        },
+        "ELI6": {
+          "ELI6-block-A": [
+            "panel-2"
+          ],
+          "ELI6-block-B": [
+            "panel-2"
+          ],
+          "ELI6-block-C": [
+            "panel-2"
+          ]
+        },
+        "SAH5": {
+          "SAH5-block-A": [
+            "panel-2"
+          ],
+          "SAH5-block-B": [
+            "panel-2"
+          ],
+          "SAH5-block-C": [
+            "panel-2"
+          ]
+        },
+        "ARM8": {
+          "ARM8-block-A": [
+            "panel-2"
+          ],
+          "ARM8-block-B": [
+            "panel-2"
+          ],
+          "ARM8-block-C": [
+            "panel-2"
+          ],
+          "ARM8-block-D": [
+            "panel-2"
+          ],
+          "ARM8-block-E": [
+            "panel-2"
+          ],
+          "ARM8-block-F": [
+            "panel-2"
+          ]
+        },
+        "YAK10": {
+          "YAK10-block-A": [
+            "panel-2"
+          ],
+          "YAK10-block-B": [
+            "panel-2"
+          ],
+          "YAK10-block-C": [
+            "panel-2"
+          ],
+          "YAK10-block-D": [
+            "panel-2"
+          ],
+          "YAK10-block-E": [
+            "panel-2"
+          ]
+        },
+        "YAK19": {
+          "YAK19-block-A": [
+            "panel-2",
+            "panel-4"
+          ],
+          "YAK19-block-B": [
+            "panel-2",
+            "panel-4"
+          ],
+          "YAK19-block-C": [
+            "panel-2",
+            "panel-4"
+          ]
+        },
+        "SUG17": {
+          "SUG17-block-A": [
+            "panel-2",
+            "panel-4"
+          ],
+          "SUG17-block-B": [
+            "panel-2",
+            "panel-4"
+          ]
+        },
+        "SUG20": {
+          "SUG20-block-A": [
+            "panel-2"
+          ],
+          "SUG20-block-B": [
+            "panel-2"
+          ],
+          "SUG20-block-C": [
+            "panel-2"
+          ],
+          "SUG20-block-D": [
+            "panel-2"
+          ]
+        },
+        "GOK23": {
+          "GOK23-block-A": [
+            "panel-2",
+            "panel-4"
+          ],
+          "GOK23-block-B": [
+            "panel-2",
+            "panel-4"
+          ],
+          "GOK23-block-C": [
+            "panel-2",
+            "panel-4"
+          ]
+        }
+      },
+      "totalWeeks": 1,
+      "totalAmount": 19995,
+      "status": "active",
+      "id": "4101125"
+    }
+  ],
+  "transactions": [],
+  "partners": [
+    {
+      "name": "Yavuz Özdemir",
+      "sharePercentage": "25",
+      "balance": 0,
+      "id": 1
+    },
+    {
+      "name": "Murat Kavum",
+      "sharePercentage": "30",
+      "balance": 0,
+      "id": 2
+    },
+    {
+      "name": "Bünyamin Toğmuş",
+      "sharePercentage": "30",
+      "balance": 0,
+      "id": 3
+    },
+    {
+      "name": "Mazeyar",
+      "sharePercentage": "10",
+      "balance": 0,
+      "id": 4
+    },
+    {
+      "name": "Dayhan",
+      "sharePercentage": "5",
+      "balance": 0,
+      "id": 5
+    }
+  ],
+  "archivedSites": [],
+  "archivedCompanies": [
+    {
+      "name": "Arçelik",
+      "contact": "murat",
+      "phone": "aaaa",
+      "email": "",
+      "notes": "",
+      "status": "archived",
+      "id": "ARC1",
+      "sequenceNumber": 1,
+      "credit": 10,
+      "creditHistory": [
+        {
+          "purchaseDate": "2025-10-08",
+          "panelCount": 10,
+          "panelPrice": 300,
+          "totalAmount": 3000
+        }
+      ],
+      "archivedAt": "2025-10-08T12:14:04.130Z"
+    }
+  ],
+  "archivedAgreements": [],
+  "logs": [
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: VADi PARK",
+      "timestamp": "2025-10-08T12:11:30.855Z",
+      "id": 1
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: TEPE PARK KONUTLARI",
+      "timestamp": "2025-10-08T12:11:30.988Z",
+      "id": 2
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: BEYAZiNCİ",
+      "timestamp": "2025-10-08T12:11:31.125Z",
+      "id": 3
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: SAHRA DELÜX",
+      "timestamp": "2025-10-08T12:11:31.268Z",
+      "id": 4
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: SAHRA ELEGANCE",
+      "timestamp": "2025-10-08T12:11:31.417Z",
+      "id": 5
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: ELİF KENT",
+      "timestamp": "2025-10-08T12:11:31.562Z",
+      "id": 6
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: ALTINŞEHİR KONUTLARI",
+      "timestamp": "2025-10-08T12:11:31.705Z",
+      "id": 7
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: ARMADA LiFE",
+      "timestamp": "2025-10-08T12:11:31.848Z",
+      "id": 8
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: SAHRA LiFE",
+      "timestamp": "2025-10-08T12:11:31.996Z",
+      "id": 9
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: YAKAMOZ 5 SiTESi",
+      "timestamp": "2025-10-08T12:11:32.141Z",
+      "id": 10
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: EMEK KENT KONUTLARI",
+      "timestamp": "2025-10-08T12:11:32.285Z",
+      "id": 11
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: POLAT LiFE",
+      "timestamp": "2025-10-08T12:11:32.432Z",
+      "id": 12
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: ERSÖZ RESİDANCE",
+      "timestamp": "2025-10-08T12:11:32.581Z",
+      "id": 13
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: ARMA KENT SİTESİ",
+      "timestamp": "2025-10-08T12:11:32.728Z",
+      "id": 14
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: YAKAMOZ 4 SiTESi",
+      "timestamp": "2025-10-08T12:11:32.877Z",
+      "id": 15
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: ARAMADA KONUTLARI",
+      "timestamp": "2025-10-08T12:11:33.020Z",
+      "id": 16
+    },
+    {
+      "user": "System",
+      "action": "Firma kullanıcısı otomatik oluşturuldu: bbbb",
+      "timestamp": "2025-10-08T12:13:51.731Z",
+      "id": 17
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni firma eklendi: bbbb",
+      "timestamp": "2025-10-08T12:13:51.740Z",
+      "id": 18
+    },
+    {
+      "user": "Admin",
+      "action": "Firma kredisi satın alındı: Arçelik (10 panel, 3000 ₺)",
+      "timestamp": "2025-10-08T12:13:58.383Z",
+      "id": 19
+    },
+    {
+      "user": "Admin",
+      "action": "Firma arşivlendi: Arçelik",
+      "timestamp": "2025-10-08T12:14:04.163Z",
+      "id": 20
+    },
+    {
+      "user": "Admin",
+      "action": "Firma kredisi satın alındı: bbbb (10 panel, 3000 ₺)",
+      "timestamp": "2025-10-08T12:14:10.688Z",
+      "id": 21
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni anlaşma eklendi: bbbb",
+      "timestamp": "2025-10-08T12:14:43.675Z",
+      "id": 22
+    },
+    {
+      "user": "Admin",
+      "action": "Kredi ile anlaşma ödemesi alındı: bbbb (₺600,00)",
+      "timestamp": "2025-10-08T12:14:53.511Z",
+      "id": 23
+    },
+    {
+      "user": "Admin",
+      "action": "Site ödemesi yapıldı: VADi PARK (₺150,00) - bbbb anlaşması",
+      "timestamp": "2025-10-08T12:15:39.492Z",
+      "id": 24
+    },
+    {
+      "user": "Admin",
+      "action": "Firma güncellendi: bbbb",
+      "timestamp": "2025-10-10T21:07:04.871Z",
+      "id": 25
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni site eklendi: hazar iş merkezi",
+      "id": 26
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: HAZAR İŞ MERKEZİ",
+      "id": 27
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: HAZAR İŞ MERKEZİ",
+      "id": 28
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni site eklendi: HAZAR ",
+      "id": 29
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: Test İş Merkezi 2",
+      "id": 30
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: Plaza İş Merkezi",
+      "id": 31
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: HAZAR ",
+      "id": 32
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: Test Site",
+      "id": 33
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: Test İş Merkezi",
+      "id": 34
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi (Excel içe aktarma): TEPE PARK KONUTLARI",
+      "id": 35
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi (Excel içe aktarma): BEYAZiNCİ",
+      "id": 36
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi (Excel içe aktarma): SAHRA DELÜX",
+      "id": 37
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi (Excel içe aktarma): ELİF KENT",
+      "id": 38
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi (Excel içe aktarma): ARMADA LiFE",
+      "id": 39
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: SUGÖZÜ CADDE",
+      "id": 40
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi (Excel içe aktarma): SAHRA LiFE",
+      "id": 41
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi (Excel içe aktarma): YAKAMOZ 5 SiTESi",
+      "id": 42
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi (Excel içe aktarma): EMEK KENT KONUTLARI",
+      "id": 43
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi (Excel içe aktarma): ERSÖZ RESİDANCE",
+      "id": 44
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: HAZAR RESiDANCE",
+      "id": 45
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi (Excel içe aktarma): ARMA KENT SİTESİ",
+      "id": 46
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi (Excel içe aktarma): YAKAMOZ 4 SiTESi",
+      "id": 47
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi (Excel içe aktarma): ARAMADA KONUTLARI",
+      "id": 48
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: YAKAMOZ 7 SİTESİ",
+      "id": 49
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: VADİPARK SİTESİ",
+      "id": 50
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: SAHRA ELEGANCE SİTESİ",
+      "id": 51
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: GÖK SUİT SİTESİ",
+      "id": 52
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: ÖZDAL SİTESİ",
+      "id": 53
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: YAVUZ SİNEM SİTESİ",
+      "id": 54
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: BAHAR SİTESİ",
+      "id": 55
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: MODA VİZYON SİTESİ",
+      "id": 56
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: KARAKAYA SİTESİ",
+      "id": 57
+    },
+    {
+      "user": "Admin",
+      "action": "Site Excel ile içe aktarıldı: NEVA SİTESİ",
+      "id": 58
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: ALTINŞEHİR KONUTLARI",
+      "id": 59
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: SAHRA LiFE",
+      "id": 60
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: EMEK KENT KONUTLARI",
+      "id": 61
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: POLAT LiFE",
+      "id": 62
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni iş merkezi eklendi: AYDINLAR İŞ MERKEZİ",
+      "id": 63
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni iş merkezi eklendi: HAZAR İŞ MERKEZİ",
+      "id": 64
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni iş merkezi eklendi: DAYI İŞ MERKEZİ",
+      "id": 65
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: HAZAR İŞ MERKEZİ",
+      "id": 66
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni iş merkezi eklendi: BVS PLAZA",
+      "id": 67
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: Test İş Merkezi Panel",
+      "id": 68
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: Test Etiket İş Merkezi",
+      "id": 69
+    },
+    {
+      "user": "Admin",
+      "action": "Firma kredisi satın alındı: bbbb (100 panel, 30000 ₺)",
+      "id": 70
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni anlaşma eklendi: bbbb",
+      "id": 71
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni anlaşma eklendi: bbbb",
+      "id": 72
+    },
+    {
+      "user": "Admin",
+      "action": "Site ödemesi yapıldı: DAYI İŞ MERKEZİ (₺375,00) - bbbb anlaşması",
+      "id": 73
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma arşivlendi: bbbb (qBzsf74)",
+      "id": 74
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma arşivlendi: bbbb (FKNf7KB)",
+      "id": 75
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma arşivlendi: bbbb (1061025)",
+      "id": 76
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: Test 5 Panel İş Merkezi",
+      "id": 77
+    },
+    {
+      "user": "Admin",
+      "action": "Firma arşivlendi: bbbb",
+      "id": 78
+    },
+    {
+      "user": "Admin",
+      "action": "Firma arşivlendi: bbbb",
+      "id": 79
+    },
+    {
+      "user": "Admin",
+      "action": "Firma arşivlendi: bbbb",
+      "id": 80
+    },
+    {
+      "user": "System",
+      "action": "Firma kullanıcısı otomatik oluşturuldu: arçelik",
+      "id": 81
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni firma eklendi: arçelik",
+      "id": 82
+    },
+    {
+      "user": "Admin",
+      "action": "Firma kredisi satın alındı: arçelik (100 panel, 30000 ₺)",
+      "id": 83
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni anlaşma eklendi: arçelik",
+      "id": 84
+    },
+    {
+      "user": "Admin",
+      "action": "Kredi ile anlaşma ödemesi alındı: arçelik (₺3.000,00)",
+      "id": 85
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: BVS PLAZA",
+      "id": 86
+    },
+    {
+      "user": "Admin",
+      "action": "Site ödemesi yapıldı: DAYI İŞ MERKEZİ (₺225,00) - arçelik anlaşması",
+      "id": 87
+    },
+    {
+      "user": "Admin",
+      "action": "Site ödemesi yapıldı: DAYI İŞ MERKEZİ (₺225,00) - arçelik anlaşması",
+      "id": 88
+    },
+    {
+      "user": "Admin",
+      "action": "Site ödemesi yapıldı: VADi PARK (₺300,00) - arçelik anlaşması",
+      "id": 89
+    },
+    {
+      "user": "Admin",
+      "action": "Site ödemesi yapıldı: BVS PLAZA (₺225,00) - arçelik anlaşması",
+      "id": 90
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma arşivlendi: arçelik (1)",
+      "id": 91
+    },
+    {
+      "user": "Admin",
+      "action": "Firma arşivlendi: arçelik",
+      "id": 92
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: AYDINLAR İŞ MERKEZİ",
+      "id": 93
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: BVS PLAZA",
+      "id": 94
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni ortak eklendi: Yavuz Özdemir",
+      "id": 95
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni ortak eklendi: Murat Kavum",
+      "id": 96
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni ortak eklendi: Bünyamin Toğmuş",
+      "id": 97
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni ortak eklendi: Mazeyar",
+      "id": 98
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni ortak eklendi: Dayhan",
+      "id": 99
+    },
+    {
+      "user": "System",
+      "action": "Firma kullanıcısı otomatik oluşturuldu: Arçelik",
+      "id": 100
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni firma eklendi: Arçelik",
+      "id": 101
+    },
+    {
+      "user": "Admin",
+      "action": "Firma kredisi satın alındı: Arçelik (100 panel, 30000 ₺)",
+      "id": 102
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni anlaşma eklendi: Arçelik",
+      "id": 103
+    },
+    {
+      "user": "Admin",
+      "action": "Kredi ile anlaşma ödemesi alındı: Arçelik (₺1.200,00)",
+      "id": 104
+    },
+    {
+      "user": "Admin",
+      "action": "Site ödemesi yapıldı: VADi PARK (₺150,00) - Arçelik anlaşması",
+      "id": 105
+    },
+    {
+      "user": "Admin",
+      "action": "Site ödemesi yapıldı: BVS PLAZA (₺150,00) - Arçelik anlaşması",
+      "id": 106
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni anlaşma eklendi: Arçelik",
+      "id": 107
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma ödemesi alındı: Arçelik (₺900,00)",
+      "id": 108
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni anlaşma eklendi: Arçelik",
+      "id": 109
+    },
+    {
+      "user": "System",
+      "action": "Firma kullanıcısı otomatik oluşturuldu: MORRO",
+      "id": 110
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni firma eklendi: MORRO",
+      "id": 111
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni anlaşma eklendi: MORRO",
+      "id": 112
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma ödemesi alındı: MORRO (₺900,00)",
+      "id": 113
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma ödemesi alındı: Arçelik (₺600,00)",
+      "id": 114
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma erken sonlandırıldı: MORRO (4201025)",
+      "id": 115
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma erken sonlandırıldı: Arçelik (3)",
+      "id": 116
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma erken sonlandırıldı: Arçelik (2)",
+      "id": 117
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma erken sonlandırıldı: Arçelik (1)",
+      "id": 118
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: TEPE PARK KONUTLARI",
+      "id": 119
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: TEPE PARK KONUTLARI",
+      "id": 120
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: BVS PLAZA",
+      "id": 121
+    },
+    {
+      "user": "Admin",
+      "action": "Ortak ödemeleri dağıtıldı: ₺30.000,00",
+      "id": 122
+    },
+    {
+      "user": "Admin",
+      "action": "Ortak ödemeleri dağıtıldı: ₺30.000,00",
+      "id": 123
+    },
+    {
+      "user": "Admin",
+      "action": "Ortak ödemeleri dağıtıldı: ₺30.000,00",
+      "id": 124
+    },
+    {
+      "user": "Admin",
+      "action": "Ortak ödemeleri dağıtıldı: ₺30.000,00",
+      "id": 125
+    },
+    {
+      "user": "Admin",
+      "action": "Firma silindi: Arçelik",
+      "id": 126
+    },
+    {
+      "user": "Admin",
+      "action": "Firma silindi: MORRO",
+      "id": 127
+    },
+    {
+      "user": "System",
+      "action": "Firma kullanıcısı otomatik oluşturuldu: ARCELİK",
+      "id": 128
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni firma eklendi: ARCELİK",
+      "id": 129
+    },
+    {
+      "user": "System",
+      "action": "Firma kullanıcısı otomatik oluşturuldu: ARCELİK",
+      "id": 130
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni firma eklendi: ARCELİK",
+      "id": 131
+    },
+    {
+      "user": "Admin",
+      "action": "Firma kredisi satın alındı: ARCELİK (100 panel, 30000 ₺)",
+      "id": 132
+    },
+    {
+      "user": "Admin",
+      "action": "Ortak ödemeleri dağıtıldı: ₺20.000,00",
+      "id": 133
+    },
+    {
+      "user": "Admin",
+      "action": "Ortak ödemeleri dağıtıldı: ₺1.000,00",
+      "id": 134
+    },
+    {
+      "user": "Admin",
+      "action": "Ortak ödemeleri dağıtıldı: ₺1.000,00",
+      "id": 135
+    },
+    {
+      "user": "Admin",
+      "action": "Firma silindi: ARCELİK",
+      "id": 136
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni anlaşma eklendi: ARCELİK",
+      "id": 137
+    },
+    {
+      "user": "Admin",
+      "action": "Ortak ödemeleri dağıtıldı: ₺1.000,00",
+      "id": 138
+    },
+    {
+      "user": "Admin",
+      "action": "Ortak ödemeleri dağıtıldı: ₺1.000,00",
+      "id": 139
+    },
+    {
+      "user": "Admin",
+      "action": "Ortak ödemeleri dağıtıldı: ₺1.000,00",
+      "id": 140
+    },
+    {
+      "user": "Admin",
+      "action": "Ortak ödemeleri dağıtıldı: ₺1.000,00",
+      "id": 141
+    },
+    {
+      "user": "Admin",
+      "action": "Ortak ödemeleri dağıtıldı: ₺1.000,00",
+      "id": 142
+    },
+    {
+      "user": "Admin",
+      "action": "Murat Kavum tarafından ₺1.000,00 avans alındı",
+      "id": 143
+    },
+    {
+      "user": "Admin",
+      "action": "Yavuz Özdemir tarafından ₺250,00 alacak çekildi",
+      "id": 144
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma erken sonlandırıldı: ARCELİK (1201025)",
+      "id": 145
+    },
+    {
+      "user": "Admin",
+      "action": "Firma arşivlendi: ARCELİK",
+      "id": 146
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: VADi PARK",
+      "id": 147
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: BEYAZiNCİ",
+      "id": 148
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: SAHRA DELÜX",
+      "id": 149
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: ELİF KENT",
+      "id": 150
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: ARMADA LiFE",
+      "id": 151
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: YAKAMOZ 5 SiTESi",
+      "id": 152
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: ERSÖZ RESİDANCE",
+      "id": 153
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: ARMA KENT SİTESİ",
+      "id": 154
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: YAKAMOZ 4 SiTESi",
+      "id": 155
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: ARAMADA KONUTLARI",
+      "id": 156
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: SUGÖZÜ CADDE",
+      "id": 157
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: HAZAR RESiDANCE",
+      "id": 158
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: VADİPARK SİTESİ",
+      "id": 159
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: VADİPARK SİTESİ",
+      "id": 160
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: GÖK SUİT SİTESİ",
+      "id": 161
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: ÖZDAL SİTESİ",
+      "id": 162
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: YAVUZ SİNEM SİTESİ",
+      "id": 163
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: BAHAR SİTESİ",
+      "id": 164
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: MODA VİZYON SİTESİ",
+      "id": 165
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: KARAKAYA SİTESİ",
+      "id": 166
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: KARAKAYA SİTESİ",
+      "id": 167
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: NEVA SİTESİ",
+      "id": 168
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: AYDINLAR İŞ MERKEZİ",
+      "id": 169
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: HAZAR İŞ MERKEZİ",
+      "id": 170
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: DAYI İŞ MERKEZİ",
+      "id": 171
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: BVS PLAZA",
+      "id": 172
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: SAHRA ELEGANCE",
+      "id": 173
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: SAHRA ELEGANCE SİTESİ",
+      "id": 174
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: SUGÖZÜ OLİVYA SİTESİ",
+      "id": 175
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: SUGÖZÜ OLİVYA SİTESİ",
+      "id": 176
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: YAKAMOZ 7 SİTESİ",
+      "id": 177
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: SAHRA ELEGANCE",
+      "id": 178
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: YAKAMOZ 7 SİTESİ",
+      "id": 179
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: SUGÖZÜ OLİVYA SİTESİ",
+      "id": 180
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: BVS PLAZA",
+      "id": 181
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: YAKAMOZ 7 SİTESİ",
+      "id": 182
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: SUGÖZÜ OLİVYA SİTESİ",
+      "id": 183
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: GÖK SUİT SİTESİ",
+      "id": 184
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: SAHRA ELEGANCE",
+      "id": 185
+    },
+    {
+      "user": "System",
+      "action": "Firma kullanıcısı otomatik oluşturuldu: Piraye",
+      "id": 186
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni firma eklendi: Piraye",
+      "id": 187
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni anlaşma eklendi: Piraye",
+      "id": 188
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: NEVA SİTESİ",
+      "id": 189
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: KARAKAYA SİTESİ",
+      "id": 190
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: MODA VİZYON SİTESİ",
+      "id": 191
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: BAHAR SİTESİ",
+      "id": 192
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: YAVUZ SİNEM SİTESİ",
+      "id": 193
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: ÖZDAL SİTESİ",
+      "id": 194
+    },
+    {
+      "user": "Admin",
+      "action": "Site kalıcı olarak silindi: BVS PLAZA",
+      "id": 195
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma güncellendi: Piraye",
+      "id": 196
+    },
+    {
+      "user": "System",
+      "action": "Firma kullanıcısı otomatik oluşturuldu: BOSH KARABULUT",
+      "id": 197
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni firma eklendi: BOSH KARABULUT",
+      "id": 198
+    },
+    {
+      "user": "Admin",
+      "action": "Site güncellendi: HAZAR İŞ MERKEZİ",
+      "id": 199
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma arşivlendi: ARCELİK (1201025)",
+      "id": 200
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma güncellendi: Piraye",
+      "id": 201
+    },
+    {
+      "user": "System",
+      "action": "Firma kullanıcısı otomatik oluşturuldu: PİLA LAHMACUN",
+      "id": 202
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni firma eklendi: PİLA LAHMACUN",
+      "id": 203
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni anlaşma eklendi: PİLA LAHMACUN",
+      "id": 204
+    },
+    {
+      "user": "Admin",
+      "action": "Yeni anlaşma eklendi: BOSH KARABULUT",
+      "id": 205
+    },
+    {
+      "user": "Admin",
+      "action": "Anlaşma güncellendi: BOSH KARABULUT",
+      "id": 206
+    },
+    {
+      "user": "Admin",
+      "action": "Site arşivlendi: Bilinmeyen Site",
+      "id": 207
+    },
+    {
+      "user": "Admin",
+      "action": "Site arşivlendi: Bilinmeyen Site",
+      "id": 208
+    },
+    {
+      "user": "Admin",
+      "action": "Site arşivlendi: Bilinmeyen Site",
+      "id": 209
+    },
+    {
+      "user": "Admin",
+      "action": "Site arşivlendi: Bilinmeyen Site",
+      "id": 210
+    },
+    {
+      "user": "Admin",
+      "action": "Site arşivlendi: Bilinmeyen Site",
+      "id": 211
+    },
+    {
+      "user": "Admin",
+      "action": "Site arşivlendi: Bilinmeyen Site",
+      "id": 212
+    },
+    {
+      "user": "Admin",
+      "action": "Site arşivlendi: Bilinmeyen Site",
+      "id": 213
+    }
+  ],
+  "panelImages": [],
+  "accountingRecords": [
+    {
+      "date": "2025-10-23",
+      "type": "partner_credit",
+      "category": "Ortak Alacaklı",
+      "description": "Yavuz Özdemir için ortaklık payı (25%) - İçerde Bırakıldı",
+      "amount": 250,
+      "partnerId": 1,
+      "partnerName": "Yavuz Özdemir",
+      "status": "pending",
+      "id": 1
+    },
+    {
+      "date": "2025-10-23",
+      "type": "partner_credit",
+      "category": "Ortak Alacaklı",
+      "description": "Yavuz Özdemir için ortaklık payı (25%) - İçerde Bırakıldı",
+      "amount": 250,
+      "partnerId": 1,
+      "partnerName": "Yavuz Özdemir",
+      "status": "pending",
+      "id": 2
+    },
+    {
+      "date": "2025-10-23",
+      "type": "partner_credit",
+      "category": "Ortak Alacaklı",
+      "description": "Yavuz Özdemir için ortaklık payı (25%) - İçerde Bırakıldı",
+      "amount": 250,
+      "partnerId": 1,
+      "partnerName": "Yavuz Özdemir",
+      "status": "pending",
+      "id": 3
+    },
+    {
+      "date": "2025-10-23",
+      "type": "partner_credit",
+      "category": "Ortak Alacaklı",
+      "description": "Yavuz Özdemir için ortaklık payı (25%) - İçerde Bırakıldı",
+      "amount": 250,
+      "partnerId": 1,
+      "partnerName": "Yavuz Özdemir",
+      "status": "pending",
+      "id": 4
+    }
+  ]
+}

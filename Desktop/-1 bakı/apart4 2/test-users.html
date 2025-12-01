@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Kullanıcıları - Lokal Mod</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 { text-align: center; margin-bottom: 30px; }
+        .user-type {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border-left: 5px solid #28a745;
+        }
+        .user-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .username { font-weight: bold; color: #ffc107; }
+        .password { color: #17a2b8; }
+        .role { color: #28a745; }
+        .site-id { color: #fd7e14; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover { background: #0056b3; }
+        .copy-btn {
+            background: #28a745;
+            font-size: 12px;
+            padding: 5px 10px;
+        }
+        .copy-btn:hover { background: #1e7e34; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Test Kullanıcıları - Lokal Mod</h1>
+        
+        <div class="user-type">
+            <h2>👑 Yönetici Kullanıcısı</h2>
+            <div class="user-card">
+                <div class="username">Kullanıcı Adı: admin</div>
+                <div class="password">Şifre: 1491aaa1491</div>
+                <div class="role">Rol: Administrator</div>
+                <button class="copy-btn" onclick="copyToClipboard('admin')">Kullanıcı Adını Kopyala</button>
+                <button class="copy-btn" onclick="copyToClipboard('1491aaa1491')">Şifreyi Kopyala</button>
+            </div>
+        </div>
+        
+        <div class="user-type">
+            <h2>🏢 Site Kullanıcıları</h2>
+            <div class="user-card">
+                <div class="username">Kullanıcı Adı: VAD1</div>
+                <div class="password">Şifre: 0543 624 79 25</div>
+                <div class="role">Rol: Site User</div>
+                <div class="site-id">Site ID: VAD1</div>
+            </div>
+            <div class="user-card">
+                <div class="username">Kullanıcı Adı: TEP2</div>
+                <div class="password">Şifre: 0535 347 00 33</div>
+                <div class="role">Rol: Site User</div>
+                <div class="site-id">Site ID: TEP2</div>
+            </div>
+            <div class="user-card">
+                <div class="username">Kullanıcı Adı: BEY3</div>
+                <div class="password">Şifre: 0532 130 58 64</div>
+                <div class="role">Rol: Site User</div>
+                <div class="site-id">Site ID: BEY3</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <button onclick="goToApp()">🚀 Ana Uygulamaya Git</button>
+            <button onclick="goToLogin()">🔐 Giriş Sayfasına Git</button>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 10px;">
+            <h3>📋 Giriş Talimatları:</h3>
+            <ol>
+                <li><strong>Yönetici Girişi:</strong> "admin" kullanıcı adı ve "1491aaa1491" şifresi ile giriş yapın</li>
+                <li><strong>Site Girişi:</strong> Site ID (örn: VAD1) ve telefon numarası ile giriş yapın</li>
+                <li><strong>Firma Girişi:</strong> Firma ID ve telefon numarası ile giriş yapın</li>
+                <li><strong>Personel Girişi:</strong> Kullanıcı adı ve şifre ile giriş yapın</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('Kopyalandı: ' + text);
+            }, function(err) {
+                console.error('Kopyalama hatası: ', err);
+            });
+        }
+
+        function goToApp() {
+            window.location.href = 'http://localhost:5173/';
+        }
+
+        function goToLogin() {
+            window.location.href = 'http://localhost:5173/#/login';
+        }
+    </script>
+</body>
+</html>
+
+

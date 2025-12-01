@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Devre Dışı - Lokal Mod</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .success { 
+            background: rgba(40, 167, 69, 0.3); 
+            border: 2px solid #28a745; 
+        }
+        .info { 
+            background: rgba(23, 162, 184, 0.3); 
+            border: 2px solid #17a2b8; 
+        }
+        button {
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        h1 { margin-bottom: 30px; }
+        .step {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            text-align: left;
+        }
+        .checklist {
+            text-align: left;
+            margin: 20px 0;
+        }
+        .checklist li {
+            margin: 10px 0;
+            padding: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚫 Firebase Devre Dışı - Lokal Mod</h1>
+        
+        <div id="status" class="status info">
+            Firebase devre dışı bırakılıyor...
+        </div>
+        
+        <div class="step">
+            <h3>✅ Yapılan Değişiklikler:</h3>
+            <ul class="checklist">
+                <li>✅ Firebase bağlantıları tamamen devre dışı bırakıldı</li>
+                <li>✅ Sistem lokal modda çalışacak şekilde yapılandırıldı</li>
+                <li>✅ localStorage temizlendi</li>
+                <li>✅ Tüm API çağrıları lokal veritabanına yönlendirildi</li>
+            </ul>
+        </div>
+        
+        <div class="step">
+            <h3>🔧 Lokal Mod Özellikleri:</h3>
+            <ul class="checklist">
+                <li>📁 Veriler db.json dosyasında saklanır</li>
+                <li>🔐 Giriş işlemleri lokal olarak yapılır</li>
+                <li>⚡ Daha hızlı performans</li>
+                <li>🔒 İnternet bağlantısı gerektirmez</li>
+            </ul>
+        </div>
+        
+        <button class="btn-success" onclick="disableFirebase()">Firebase'i Devre Dışı Bırak</button>
+        <button class="btn-primary" onclick="goToApp()">Ana Uygulamaya Git</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function disableFirebase() {
+            try {
+                // localStorage'ı temizle
+                localStorage.removeItem('firebaseEnabled');
+                localStorage.setItem('firebaseEnabled', 'false');
+                
+                // Diğer Firebase ile ilgili ayarları temizle
+                localStorage.removeItem('firebaseConfig');
+                localStorage.removeItem('firebaseUser');
+                
+                updateStatus(`
+                    <strong>✅ Firebase Başarıyla Devre Dışı Bırakıldı!</strong><br>
+                    <strong>Zaman:</strong> ${new Date().toLocaleString('tr-TR')}<br>
+                    <em>Sistem artık tamamen lokal modda çalışıyor.</em>
+                `, 'success');
+                
+                // 2 saniye sonra otomatik olarak ana uygulamaya yönlendir
+                setTimeout(() => {
+                    goToApp();
+                }, 2000);
+            } catch (error) {
+                updateStatus(`
+                    <strong>❌ Hata:</strong> ${error.message}<br>
+                    <em>Lütfen tarayıcı ayarlarını kontrol edin.</em>
+                `, 'error');
+            }
+        }
+
+        function goToApp() {
+            window.location.href = 'http://localhost:5173/';
+        }
+
+        // Sayfa yüklendiğinde otomatik olarak Firebase'i devre dışı bırak
+        window.onload = function() {
+            disableFirebase();
+        };
+    </script>
+</body>
+</html>
+
+

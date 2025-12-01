@@ -11,6 +11,20 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: VITE_FIREBASE_API_KEY
+        value: AIzaSyDRYJ8wJpjIi4qF1jzLe14xtmb7iTT4jsc
+      - key: VITE_FIREBASE_AUTH_DOMAIN
+        value: apartmecra-elz.firebaseapp.com
+      - key: VITE_FIREBASE_PROJECT_ID
+        value: apartmecra-elz
+      - key: VITE_FIREBASE_STORAGE_BUCKET
+        value: apartmecra-elz.firebasestorage.app
+      - key: VITE_FIREBASE_MESSAGING_SENDER_ID
+        value: 669151390046
+      - key: VITE_FIREBASE_APP_ID
+        value: 1:669151390046:web:30590b4e09a529d17d47cf
+      - key: VITE_FIREBASE_MEASUREMENT_ID
+        value: G-4J8KGT8KJ5
     healthCheckPath: /api/sites
     autoDeploy: true
 
