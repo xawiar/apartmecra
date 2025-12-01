@@ -5,61 +5,33 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 
-// Firebase configuration from environment variables
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  apiKey: "AIzaSyDRYJ8wJpjIi4qF1jzLe14xtmb7iTT4jsc",
+  authDomain: "apartmecra-elz.firebaseapp.com",
+  projectId: "apartmecra-elz",
+  storageBucket: "apartmecra-elz.firebasestorage.app",
+  messagingSenderId: "669151390046",
+  appId: "1:669151390046:web:30590b4e09a529d17d47cf",
+  measurementId: "G-4J8KGT8KJ5"
 };
 
-// Check if Firebase is enabled (all required config values must be present)
-const isFirebaseEnabled = () => {
-  return !!(
-    firebaseConfig.apiKey &&
-    firebaseConfig.authDomain &&
-    firebaseConfig.projectId &&
-    firebaseConfig.storageBucket &&
-    firebaseConfig.messagingSenderId &&
-    firebaseConfig.appId
-  );
-};
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase services
-let app = null;
-let auth = null;
-let db = null;
-let storage = null;
-let analytics = null;
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
-if (isFirebaseEnabled()) {
-  try {
-    // Initialize Firebase app
-    app = initializeApp(firebaseConfig);
-    
-    // Initialize Firebase services
-    auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-    
-    // Initialize Analytics only in browser environment
-    if (typeof window !== 'undefined') {
-      analytics = getAnalytics(app);
-    }
-    
-    console.log('✅ Firebase initialized successfully');
-    console.log('📊 Project:', firebaseConfig.projectId);
-  } catch (error) {
-    console.error('❌ Firebase initialization error:', error);
-    console.log('🚫 Falling back to local mode');
-  }
-} else {
-  console.log('🚫 Firebase is disabled - Missing environment variables');
-  console.log('📁 Data source: db.json (Local JSON Server on port 3001)');
+// Initialize Analytics only in browser environment
+let analytics = null;
+if (typeof window !== 'undefined') {
+  analytics = getAnalytics(app);
 }
+
+console.log('✅ Firebase initialized successfully');
+console.log('📊 Project:', firebaseConfig.projectId);
 
 // Export Firebase services
 export { auth, db, storage, analytics };
