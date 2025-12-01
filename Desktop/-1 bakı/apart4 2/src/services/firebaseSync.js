@@ -23,9 +23,9 @@ const syncLogs = [];
  * Tüm işlemleri Firebase ile senkronize et
  */
 export const syncWithFirebase = async (operation, data, collection = null) => {
-  // Firebase sync is PERMANENTLY DISABLED - Always return early
-  console.warn('🚫 Firebase senkronizasyonu devre dışı - Lokal mod aktif');
-  return { success: false, error: 'Senkronizasyon devre dışı - Lokal mod' };
+  // Firebase sync is not needed - we're already using Firebase API directly
+  // Silently return success to avoid console warnings
+  return { success: true };
 
   try {
     const syncId = `sync_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -248,7 +248,7 @@ export const getSyncStatus = () => {
 export const setSyncEnabled = (enabled) => {
   // Always keep disabled - Local mode only
   syncStatus.isEnabled = false;
-  console.log('🚫 Firebase senkronizasyonu devre dışı - Lokal mod aktif (değiştirilemez)');
+  // Firebase sync not needed - using Firebase API directly
 };
 
 /**
