@@ -142,27 +142,35 @@ const SitesMain = () => {
 
   // Memoize handler objects to prevent infinite loops
   // Use refs to avoid recreating handlers on every render
+  // BUT: Update handlers when formData changes to avoid closure issues
   const handlersRef = useRef(null);
-  if (!handlersRef.current) {
-    handlersRef.current = SiteHandlers({
-      sites, setSites,
-      transactions, setTransactions,
-      agreements, setAgreements,
-      companies, setCompanies,
-      formData, setFormData,
-      selectedSiteForPayment, setSelectedSiteForPayment,
-      pendingPayments, setPendingPayments,
-      showPaymentSelection, setShowPaymentSelection,
-      currentSiteForAgreements, setCurrentSiteForAgreements,
-      currentSite, setCurrentSite,
-      setShowAddForm,
-      calculateTotalElevators: helpers.calculateTotalElevators,
-      calculatePanels: helpers.calculatePanels,
-      formatCurrency: helpers.formatCurrency,
-      refreshData, // Pass the refreshData function to handlers
-      processedPayments, setProcessedPayments,
-      helpers
-    });
+  const formDataRef = useRef(formData);
+  formDataRef.current = formData; // Keep ref in sync with current formData
+  
+  if (!handlersRef.current || handlersRef.current.formDataVersion !== formDataRef.current) {
+    handlersRef.current = {
+      ...SiteHandlers({
+        sites, setSites,
+        transactions, setTransactions,
+        agreements, setAgreements,
+        companies, setCompanies,
+        formData: formDataRef.current, // Use ref to get current value
+        setFormData,
+        selectedSiteForPayment, setSelectedSiteForPayment,
+        pendingPayments, setPendingPayments,
+        showPaymentSelection, setShowPaymentSelection,
+        currentSiteForAgreements, setCurrentSiteForAgreements,
+        currentSite, setCurrentSite,
+        setShowAddForm,
+        calculateTotalElevators: helpers.calculateTotalElevators,
+        calculatePanels: helpers.calculatePanels,
+        formatCurrency: helpers.formatCurrency,
+        refreshData, // Pass the refreshData function to handlers
+        processedPayments, setProcessedPayments,
+        helpers
+      }),
+      formDataVersion: formDataRef.current
+    };
   }
   const handlers = handlersRef.current;
 

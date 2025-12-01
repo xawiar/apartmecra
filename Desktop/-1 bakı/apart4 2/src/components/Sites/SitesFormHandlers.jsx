@@ -16,10 +16,17 @@ const SitesFormHandlers = ({
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('Form submitted with data:', formData);
+    // Get current formData from the event target if available, otherwise use prop
+    const currentFormData = formData || {};
+    console.log('Form submitted with data:', currentFormData);
+    console.log('FormData keys:', Object.keys(currentFormData));
+    console.log('FormData values:', Object.values(currentFormData));
+    
+    // Use currentFormData for validation
+    const data = currentFormData;
     
     // Form validation - Temel alanlar
-    if (!formData.name || !formData.manager) {
+    if (!data.name || !data.manager) {
       // Check if window.showAlert is available, if not use a fallback
       if (typeof window.showAlert === 'function') {
         await window.showAlert(
@@ -34,9 +41,9 @@ const SitesFormHandlers = ({
     }
 
     // Site tipine göre özel validasyonlar
-    if (formData.siteType === 'site') {
+    if (data.siteType === 'site') {
       // Site için daire sayısı zorunlu
-      if (!formData.apartmentCount || parseInt(formData.apartmentCount) <= 0) {
+      if (!data.apartmentCount || parseInt(data.apartmentCount) <= 0) {
         if (typeof window.showAlert === 'function') {
           await window.showAlert(
             'Eksik Bilgi',
@@ -48,9 +55,9 @@ const SitesFormHandlers = ({
         }
         return;
       }
-    } else if (formData.siteType === 'business_center') {
+    } else if (data.siteType === 'business_center') {
       // İş merkezi için manuel panel sayısı validasyonu
-      if (!formData.manualPanels || parseInt(formData.manualPanels) <= 0) {
+      if (!data.manualPanels || parseInt(data.manualPanels) <= 0) {
         if (typeof window.showAlert === 'function') {
           await window.showAlert(
             'Eksik Bilgi',
@@ -64,7 +71,7 @@ const SitesFormHandlers = ({
       }
       
       // İş merkezi için işyeri sayısı zorunlu
-      if (!formData.businessCount || parseInt(formData.businessCount) <= 0) {
+      if (!data.businessCount || parseInt(data.businessCount) <= 0) {
         if (typeof window.showAlert === 'function') {
           await window.showAlert(
             'Eksik Bilgi',
@@ -78,7 +85,7 @@ const SitesFormHandlers = ({
       }
       
       // İş merkezi için kişi sayısı zorunlu
-      if (!formData.peopleCount || parseInt(formData.peopleCount) <= 0) {
+      if (!data.peopleCount || parseInt(data.peopleCount) <= 0) {
         if (typeof window.showAlert === 'function') {
           await window.showAlert(
             'Eksik Bilgi',
@@ -94,15 +101,15 @@ const SitesFormHandlers = ({
     
     // Prepare data with calculated fields
     const siteData = {
-      ...formData,
-      elevators: calculateTotalElevators(formData.blocks, formData.elevatorsPerBlock),
-      panels: formData.siteType === 'business_center' 
-        ? parseInt(formData.manualPanels) || 0
-        : calculatePanels(formData.blocks, formData.elevatorsPerBlock),
+      ...data,
+      elevators: calculateTotalElevators(data.blocks, data.elevatorsPerBlock),
+      panels: data.siteType === 'business_center' 
+        ? parseInt(data.manualPanels) || 0
+        : calculatePanels(data.blocks, data.elevatorsPerBlock),
       // Site için ortalama insan sayısını hesapla
-      averagePeople: formData.siteType === 'site' 
-        ? calculateAveragePeople(formData.apartmentCount)
-        : formData.averagePeople || 0
+      averagePeople: data.siteType === 'site' 
+        ? calculateAveragePeople(data.apartmentCount)
+        : data.averagePeople || 0
     };
     
     console.log('Site data to be saved:', siteData);
@@ -163,14 +170,14 @@ const SitesFormHandlers = ({
           // Log the action
           await createLog({
             user: 'Admin',
-            action: `Yeni ${formData.siteType === 'business_center' ? 'iş merkezi' : 'site'} eklendi: ${siteData.name}`
+            action: `Yeni ${data.siteType === 'business_center' ? 'iş merkezi' : 'site'} eklendi: ${siteData.name}`
           });
           
           // Check if window.showAlert is available, if not use a fallback
           if (typeof window.showAlert === 'function') {
             await window.showAlert(
               'Başarılı',
-              `Yeni ${formData.siteType === 'business_center' ? 'iş merkezi' : 'site'} başarıyla eklendi.`,
+              `Yeni ${data.siteType === 'business_center' ? 'iş merkezi' : 'site'} başarıyla eklendi.`,
               'success'
             );
           } else {

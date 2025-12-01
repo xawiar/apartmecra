@@ -28,6 +28,7 @@ const SiteHandlers = ({
   processedPayments, setProcessedPayments,
   helpers
 }) => {
+  // Note: formHandlers is recreated on each render to ensure formData is current
   // Handle showing site details
   const handleShowSite = (site) => {
     // Call the UI handler to show the modal
@@ -71,13 +72,13 @@ const SiteHandlers = ({
     refreshData
   });
 
-  // Initialize form handlers
+  // Initialize form handlers - recreate on formData change to avoid closure issues
   const formHandlers = SitesFormHandlers({
     sites, setSites,
     currentSite, setCurrentSite,
     setShowAddForm,
     setFormData,
-    formData,
+    formData, // Pass current formData
     calculateTotalElevators,
     calculatePanels,
     calculateAveragePeople: helpers.calculateAveragePeople,
