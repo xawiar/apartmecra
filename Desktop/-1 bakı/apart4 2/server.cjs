@@ -5,7 +5,10 @@ const path = require('path');
 const multer = require('multer');
 
 const server = jsonServer.create();
-const router = jsonServer.router('db.json');
+// Create router with rewrites to handle /api prefix
+const router = jsonServer.router('db.json', {
+  foreignKeySuffix: '_id'
+});
 const middlewares = jsonServer.defaults();
 
 // Security middleware
@@ -409,7 +412,12 @@ if (fs.existsSync(distPath)) {
 }
 
 // Mount the router on a specific path to avoid conflicts
-server.use('/api', router);
+// json-server router needs to be mounted with rewrites
+server.use('/api', (req, res, next) => {
+  // Rewrite /api/* to /* for json-server router
+  req.url = req.url.replace(/^\/api/, '');
+  router(req, res, next);
+});
 
 // Use PORT from environment variable (Render provides this) or default to 3001
 const PORT = process.env.PORT || 3001;
