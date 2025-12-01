@@ -14,12 +14,17 @@ const middlewares = jsonServer.defaults();
 // Security middleware
 const rateLimitMap = new Map();
 
-// Rate limiting middleware
+// Rate limiting middleware - More lenient for production
 const rateLimit = (req, res, next) => {
-  const clientIP = req.ip || req.connection.remoteAddress;
+  // Skip rate limiting for static files and favicon
+  if (req.path === '/favicon.ico' || req.path.startsWith('/assets/') || req.path.startsWith('/uploads/')) {
+    return next();
+  }
+  
+  const clientIP = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for']?.split(',')[0] || 'unknown';
   const now = Date.now();
-  const windowMs = 15 * 60 * 1000; // 15 minutes
-  const maxRequests = 100; // Max requests per window
+  const windowMs = 1 * 60 * 1000; // 1 minute (reduced from 15)
+  const maxRequests = 200; // Max requests per window (increased from 100)
   
   if (!rateLimitMap.has(clientIP)) {
     rateLimitMap.set(clientIP, { count: 1, resetTime: now + windowMs });
@@ -31,6 +36,7 @@ const rateLimit = (req, res, next) => {
     } else {
       clientData.count++;
       if (clientData.count > maxRequests) {
+        console.log(`Rate limit exceeded for IP: ${clientIP}, requests: ${clientData.count}`);
         return res.status(429).json({ error: 'Too many requests, please try again later.' });
       }
     }
