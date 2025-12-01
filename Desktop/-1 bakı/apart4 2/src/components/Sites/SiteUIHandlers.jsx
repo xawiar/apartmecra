@@ -17,7 +17,13 @@ const SiteUIHandlers = ({
       elevatorsPerBlock: '',
       agreementPercentage: '',
       notes: '',
-      neighborhood: ''
+      neighborhood: '',
+      siteType: 'site',
+      manualPanels: '',
+      apartmentCount: '',
+      averagePeople: '',
+      businessCount: '',
+      peopleCount: ''
     });
     setCurrentSite(null);
     setShowAddForm(true);
@@ -32,7 +38,13 @@ const SiteUIHandlers = ({
       elevatorsPerBlock: site.elevatorsPerBlock || '',
       agreementPercentage: site.agreementPercentage || '',
       notes: site.notes || '',
-      neighborhood: site.neighborhood || ''
+      neighborhood: site.neighborhood || '',
+      siteType: site.siteType || 'site',
+      manualPanels: site.manualPanels || '',
+      apartmentCount: site.apartmentCount || '',
+      averagePeople: site.averagePeople || '',
+      businessCount: site.businessCount || '',
+      peopleCount: site.peopleCount || ''
     });
     setCurrentSite(site);
     setShowAddForm(true);
