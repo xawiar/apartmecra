@@ -13,7 +13,8 @@ const getApiService = async () => {
     console.log('🔥 Using Firebase API service');
     return await import('./firebaseApi.js');
   } else {
-    console.log('🏠 Using Local API service (Local mode only)');
+    // Firebase not available - this should not happen in production
+    console.error('❌ Firebase is not available - application may not work correctly');
     return await import('./localApi.js');
   }
 };
