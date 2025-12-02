@@ -176,31 +176,37 @@ exports.createAdminUser = onCall(async (request) => {
   }
 });
 
-// Email'e göre kullanıcıyı sil (Auth + Firestore)
-exports.deleteUserByEmail = onCall(async (request) => {
-  try {
-    const { email } = request.data || {};
-    
-    if (!email) {
-      return { success: false, error: 'Email is required' };
+// Email'e göre kullanıcıyı sil (Auth + Firestore) - CORS enabled
+exports.deleteUserByEmail = onCall(
+  {
+    cors: true,
+    region: 'us-central1'
+  },
+  async (request) => {
+    try {
+      const { email } = request.data || {};
+      
+      if (!email) {
+        return { success: false, error: 'Email is required' };
+      }
+      
+      console.log('Deleting user by email:', email);
+      
+      // Find user in Auth
+      const userRecord = await admin.auth().getUserByEmail(email);
+      
+      // Delete from Auth
+      await admin.auth().deleteUser(userRecord.uid);
+      
+      // Delete from Firestore users collection (if exists)
+      await db.collection('users').doc(userRecord.uid).delete().catch(() => null);
+      
+      console.log('User deleted successfully:', userRecord.uid);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting user by email:', error);
+      return { success: false, error: error.message };
     }
-    
-    console.log('Deleting user by email:', email);
-    
-    // Find user in Auth
-    const userRecord = await admin.auth().getUserByEmail(email);
-    
-    // Delete from Auth
-    await admin.auth().deleteUser(userRecord.uid);
-    
-    // Delete from Firestore users collection (if exists)
-    await db.collection('users').doc(userRecord.uid).delete().catch(() => null);
-    
-    console.log('User deleted successfully:', userRecord.uid);
-    
-    return { success: true };
-  } catch (error) {
-    console.error('Error deleting user by email:', error);
-    return { success: false, error: error.message };
   }
-});
+);

@@ -1,3 +1,5 @@
+import { deleteAgreement } from '../../services/api.js';
+
 const AgreementHandlers = ({
   agreements, setAgreements,
   sites, setSites,
