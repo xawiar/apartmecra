@@ -23,11 +23,12 @@ export const uploadPanelImage = async (file, metadata) => {
   try {
     const { agreementId, siteId, blockId, panelId, companyId } = metadata;
     
-    // Generate unique filename
-    const timestamp = Date.now();
-    const randomSuffix = Math.round(Math.random() * 1E9);
+    // Generate deterministic filename per agreement + panel
+    // Aynı agreementId + siteId + blockId + panelId kombinasyonu için
+    // her yüklemede aynı isim kullanılır; böylece Storage'da dosyanın
+    // üzerine yazılır, gereksiz birikme olmaz.
     const fileExtension = file.name.split('.').pop();
-    const filename = `panel-${agreementId}-${siteId}-${blockId}-${panelId}-${timestamp}-${randomSuffix}.${fileExtension}`;
+    const filename = `panel-${agreementId}-${siteId}-${blockId}-${panelId}.${fileExtension}`;
     
     // Create storage reference
     const storageRef = ref(storage, `${STORAGE_PATHS.PANEL_IMAGES}/${filename}`);
