@@ -149,7 +149,7 @@ export const deletePanelImage = async (imageId) => {
 
 export const cleanupExpiredImages = async () => {
   try {
-    const { getAgreements } = await import('./firebaseDb');
+    const { getAgreements } = await import('./firebaseDb.js');
     
     // Get all agreements to check expiration
     const agreements = await getAgreements();

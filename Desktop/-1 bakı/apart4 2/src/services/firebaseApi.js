@@ -742,7 +742,22 @@ export const getPanelImages = async () => {
 export const uploadPanelImage = async (formData) => {
   try {
     const { uploadPanelImage: firebaseUploadPanelImage } = await import('./firebaseStorage.js');
-    const result = await firebaseUploadPanelImage(formData);
+    
+    // Extract metadata from FormData (same shape as localApi)
+    const agreementId = formData.get('agreementId');
+    const siteId = formData.get('siteId');
+    const blockId = formData.get('blockId');
+    const panelId = formData.get('panelId');
+    const companyId = formData.get('companyId');
+    const file = formData.get('image');
+    
+    if (!file) {
+      throw new Error('Image file is missing');
+    }
+    
+    const metadata = { agreementId, siteId, blockId, panelId, companyId };
+    
+    const result = await firebaseUploadPanelImage(file, metadata);
     console.log('uploadPanelImage called - returning result:', result);
     return result;
   } catch (error) {
@@ -752,11 +767,18 @@ export const uploadPanelImage = async (formData) => {
 };
 
 export const cleanupExpiredImages = async () => {
-  console.log('cleanupExpiredImages called - returning mock response');
-  return {
-    message: 'Cleanup completed. Deleted 0 expired images.',
-    deletedCount: 0
-  };
+  try {
+    const { cleanupExpiredImages: firebaseCleanupExpiredImages } = await import('./firebaseStorage.js');
+    const result = await firebaseCleanupExpiredImages();
+    console.log('cleanupExpiredImages called - result:', result);
+    return result;
+  } catch (error) {
+    console.error('Error cleaning up expired images:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 };
 
 // Export Firebase-specific functions
