@@ -60,9 +60,27 @@ exports.createSiteUser = onDocumentCreated(
   async (event) => {
     try {
       const siteData = event.data.data();
-      const siteId = event.params.siteId;
+      const documentId = event.params.siteId; // Firestore document ID
       
-      console.log('New site created:', siteId, siteData);
+      // Use custom ID from siteData if available, otherwise use document ID
+      const siteId = siteData.id || documentId;
+      
+      console.log('New site created - Document ID:', documentId, 'Custom ID:', siteId, 'Data:', siteData);
+      
+      // Check if user already exists (to prevent duplicate creation)
+      // This can happen if both Cloud Function and manual creation run
+      try {
+        const existingUser = await admin.auth().getUserByEmail(`${siteId}@site.local`);
+        if (existingUser) {
+          console.log('Site user already exists, skipping creation:', `${siteId}@site.local`);
+          return;
+        }
+      } catch (error) {
+        // User doesn't exist, continue with creation
+        if (error.code !== 'auth/user-not-found') {
+          console.error('Error checking existing user:', error);
+        }
+      }
       
       // Site kullanıcısı için email ve şifre oluştur
       const email = `${siteId}@site.local`;
@@ -105,9 +123,27 @@ exports.createCompanyUser = onDocumentCreated(
   async (event) => {
     try {
       const companyData = event.data.data();
-      const companyId = event.params.companyId;
+      const documentId = event.params.companyId; // Firestore document ID
       
-      console.log('New company created:', companyId, companyData);
+      // Use custom ID from companyData if available, otherwise use document ID
+      const companyId = companyData.id || documentId;
+      
+      console.log('New company created - Document ID:', documentId, 'Custom ID:', companyId, 'Data:', companyData);
+      
+      // Check if user already exists (to prevent duplicate creation)
+      // This can happen if both Cloud Function and manual creation run
+      try {
+        const existingUser = await admin.auth().getUserByEmail(`${companyId}@company.local`);
+        if (existingUser) {
+          console.log('Company user already exists, skipping creation:', `${companyId}@company.local`);
+          return;
+        }
+      } catch (error) {
+        // User doesn't exist, continue with creation
+        if (error.code !== 'auth/user-not-found') {
+          console.error('Error checking existing user:', error);
+        }
+      }
       
       // Company kullanıcısı için email ve şifre oluştur
       const email = `${companyId}@company.local`;
