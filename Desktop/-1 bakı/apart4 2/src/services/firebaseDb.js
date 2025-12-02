@@ -103,9 +103,12 @@ export const updateDocument = async (collectionName, docId, data) => {
     // First check if document exists
     const docSnap = await getDoc(docRef);
     if (!docSnap.exists()) {
-      console.warn(`Document ${docId} not found in ${collectionName}, creating new document`);
-      // If document doesn't exist, create it instead
-      return await createDocument(collectionName, { ...data, id: docId });
+      // Document not found - don't create new one, return error
+      console.error(`Document ${docId} not found in ${collectionName}, cannot update`);
+      return {
+        success: false,
+        error: `Document ${docId} not found in ${collectionName}`
+      };
     }
     
     await updateDoc(docRef, {
@@ -247,19 +250,41 @@ export const createSite = async (siteData) => {
 };
 
 export const updateSite = async (siteId, siteData) => {
-  // Calculate elevators and panels
-  const blocks = parseInt(siteData.blocks) || 0;
-  const elevatorsPerBlock = parseInt(siteData.elevatorsPerBlock) || 0;
-  const elevators = blocks * elevatorsPerBlock;
-  const panels = elevators * 2;
-  
-  const updatedSiteData = {
-    ...siteData,
-    elevators: elevators,
-    panels: panels
-  };
-  
-  return await updateDocument(COLLECTIONS.SITES, siteId, updatedSiteData);
+  try {
+    // First try to get by document ID
+    let docId = siteId;
+    const siteResult = await getDocument(COLLECTIONS.SITES, siteId);
+    
+    if (!siteResult.success || !siteResult.data) {
+      // Fallback: search by custom 'id' field
+      const queryRef = collection(db, COLLECTIONS.SITES);
+      const q = query(queryRef, where('id', '==', siteId));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const docSnap = querySnapshot.docs[0];
+        docId = docSnap.id; // This is the actual Firestore document ID
+      } else {
+        return { success: false, error: 'Site not found' };
+      }
+    }
+    
+    // Calculate elevators and panels
+    const blocks = parseInt(siteData.blocks) || 0;
+    const elevatorsPerBlock = parseInt(siteData.elevatorsPerBlock) || 0;
+    const elevators = blocks * elevatorsPerBlock;
+    const panels = elevators * 2;
+    
+    const updatedSiteData = {
+      ...siteData,
+      elevators: elevators,
+      panels: panels
+    };
+    
+    return await updateDocument(COLLECTIONS.SITES, docId, updatedSiteData);
+  } catch (error) {
+    console.error('Error updating site:', error);
+    return { success: false, error: error.message };
+  }
 };
 
 export const deleteSite = async (siteId) => {
@@ -406,7 +431,29 @@ export const createCompany = async (companyData) => {
 };
 
 export const updateCompany = async (companyId, companyData) => {
-  return await updateDocument(COLLECTIONS.COMPANIES, companyId, companyData);
+  try {
+    // First try to get by document ID
+    let docId = companyId;
+    const companyResult = await getDocument(COLLECTIONS.COMPANIES, companyId);
+    
+    if (!companyResult.success || !companyResult.data) {
+      // Fallback: search by custom 'id' field
+      const queryRef = collection(db, COLLECTIONS.COMPANIES);
+      const q = query(queryRef, where('id', '==', companyId));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const docSnap = querySnapshot.docs[0];
+        docId = docSnap.id; // This is the actual Firestore document ID
+      } else {
+        return { success: false, error: 'Company not found' };
+      }
+    }
+    
+    return await updateDocument(COLLECTIONS.COMPANIES, docId, companyData);
+  } catch (error) {
+    console.error('Error updating company:', error);
+    return { success: false, error: error.message };
+  }
 };
 
 export const deleteCompany = async (companyId) => {
@@ -527,7 +574,29 @@ export const createAgreement = async (agreementData) => {
 };
 
 export const updateAgreement = async (agreementId, agreementData) => {
-  return await updateDocument(COLLECTIONS.AGREEMENTS, agreementId, agreementData);
+  try {
+    // First try to get by document ID
+    let docId = agreementId;
+    const agreementResult = await getDocument(COLLECTIONS.AGREEMENTS, agreementId);
+    
+    if (!agreementResult.success || !agreementResult.data) {
+      // Fallback: search by custom 'id' field
+      const queryRef = collection(db, COLLECTIONS.AGREEMENTS);
+      const q = query(queryRef, where('id', '==', agreementId));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const docSnap = querySnapshot.docs[0];
+        docId = docSnap.id; // This is the actual Firestore document ID
+      } else {
+        return { success: false, error: 'Agreement not found' };
+      }
+    }
+    
+    return await updateDocument(COLLECTIONS.AGREEMENTS, docId, agreementData);
+  } catch (error) {
+    console.error('Error updating agreement:', error);
+    return { success: false, error: error.message };
+  }
 };
 
 export const deleteAgreement = async (agreementId) => {
