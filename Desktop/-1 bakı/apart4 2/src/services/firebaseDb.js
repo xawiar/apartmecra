@@ -283,7 +283,6 @@ export const deleteSite = async (siteId) => {
       
       // Delete associated Auth user using fetch (onRequest endpoint)
       try {
-        const functions = getFunctions(app);
         const functionUrl = `https://us-central1-apartmecra-elz.cloudfunctions.net/deleteUserByEmail`;
         const response = await fetch(functionUrl, {
           method: 'POST',
