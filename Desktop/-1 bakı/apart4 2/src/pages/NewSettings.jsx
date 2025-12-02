@@ -237,6 +237,24 @@ const Settings = () => {
     let currentPage = 0;
     let labelIndex = 0;
 
+    // Helper function to fix Turkish characters for PDF (jsPDF doesn't support Turkish chars well)
+    const fixTurkishChars = (text) => {
+      if (!text) return '';
+      return text
+        .replace(/ı/g, 'i')
+        .replace(/İ/g, 'I')
+        .replace(/ğ/g, 'g')
+        .replace(/Ğ/g, 'G')
+        .replace(/ü/g, 'u')
+        .replace(/Ü/g, 'U')
+        .replace(/ş/g, 's')
+        .replace(/Ş/g, 'S')
+        .replace(/ö/g, 'o')
+        .replace(/Ö/g, 'O')
+        .replace(/ç/g, 'c')
+        .replace(/Ç/g, 'C');
+    };
+
     while (labelIndex < allLabels.length) {
       if (labelIndex > 0 && labelIndex % 42 === 0) {
         pdf.addPage();
@@ -266,11 +284,7 @@ const Settings = () => {
       pdf.setFont('helvetica', 'bold');
       pdf.text(label.panelId, x + 2, y + 12);
 
-      // Contact info (center-right area, bold, smaller, 4 fixed lines)
-      pdf.setFontSize(5);
-      pdf.setFont('helvetica', 'bold');
-      
-      // Helper function to fix Turkish characters for PDF
+      // Helper function to fix Turkish characters for PDF (jsPDF doesn't support Turkish chars well)
       const fixTurkishChars = (text) => {
         if (!text) return '';
         return text
@@ -288,6 +302,10 @@ const Settings = () => {
           .replace(/Ç/g, 'C');
       };
       
+      // Contact info (center-right area, bold, smaller, 4 fixed lines)
+      pdf.setFontSize(4.8);
+      pdf.setFont('helvetica', 'bold');
+      
       const contactLines = [
         'Bu Alana',
         'Reklam Vermek Icin',
@@ -295,30 +313,23 @@ const Settings = () => {
         'Apart MECRA'
       ];
 
-      // Center-right area: Start from 35mm (leaving ~25mm for panel ID on left)
-      const contactXStart = x + 35;
+      // Center-right area: Start from 32mm (leaving ~28mm for panel ID on left)
+      const contactXStart = x + 32;
       const contactXEnd = x + labelWidth - 2; // 2mm margin from right edge
       const contactAreaWidth = contactXEnd - contactXStart;
       
-      let contactY = y + 4.5;
-      const lineHeight = 3.5;
+      let contactY = y + 4;
+      const lineHeight = 3.6;
       
-      contactLines.forEach((line, index) => {
+      contactLines.forEach((line) => {
         // Fix Turkish characters
         const fixedLine = fixTurkishChars(line);
         
         // Calculate text width
         const textWidth = pdf.getTextWidth(fixedLine);
         
-        // Center the text in the contact area, but ensure it doesn't overflow
-        let textX;
-        if (textWidth <= contactAreaWidth) {
-          // Center in contact area
-          textX = contactXStart + (contactAreaWidth - textWidth) / 2;
-        } else {
-          // If text is too long, align to left of contact area
-          textX = contactXStart;
-        }
+        // Center the text in the contact area
+        let textX = contactXStart + (contactAreaWidth - textWidth) / 2;
         
         // Ensure text doesn't go outside label bounds
         if (textX + textWidth > contactXEnd) {
