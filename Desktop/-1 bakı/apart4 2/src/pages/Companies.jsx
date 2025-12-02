@@ -287,10 +287,27 @@ const Companies = () => {
         throw new Error('Company update failed');
       }
       
-      // Update companies list
-      setCompanies(companies.map(c => 
-        c.id === currentCompany.id ? updatedCompany : c
-      ));
+      // Update companies list - use functional update to prevent duplicates
+      setCompanies(prevCompanies => {
+        // Check if company already exists (prevent duplicates)
+        const exists = prevCompanies.some(c => 
+          (c.id === updatedCompany.id && c._docId === updatedCompany._docId) ||
+          (c.id && updatedCompany.id && c.id === updatedCompany.id) ||
+          (c._docId && updatedCompany._docId && c._docId === updatedCompany._docId)
+        );
+        if (exists) {
+          // Update existing company
+          return prevCompanies.map(c => 
+            (c.id === updatedCompany.id || c._docId === updatedCompany._docId || 
+             (c.id && updatedCompany.id && c.id === updatedCompany.id) ||
+             (c._docId && updatedCompany._docId && c._docId === updatedCompany._docId))
+              ? updatedCompany : c
+          );
+        } else {
+          // This shouldn't happen, but just in case
+          return prevCompanies;
+        }
+      });
       
       // Close modal and reset state
       setShowCreditModal(false);

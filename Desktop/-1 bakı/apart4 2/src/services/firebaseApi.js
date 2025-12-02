@@ -313,7 +313,8 @@ export const updateCompany = async (companyId, companyData) => {
   if (result.success) {
     return result.data;
   } else {
-    return null;
+    console.error('updateCompany failed:', result.error);
+    throw new Error(result.error || 'Company update failed');
   }
 };
 
