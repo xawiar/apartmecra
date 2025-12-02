@@ -15,6 +15,14 @@ exports.createUserDocument = beforeUserCreated(async (event) => {
   try {
     console.log('New user created:', user.uid, user.email);
     
+    // Skip if this is a site or company user - createSiteUser/createCompanyUser will handle it
+    if (user.email) {
+      if (user.email.includes('@site.local') || user.email.includes('@company.local')) {
+        console.log('Skipping createUserDocument for site/company user - will be handled by createSiteUser/createCompanyUser:', user.email);
+        return; // Don't create document here, let createSiteUser/createCompanyUser handle it
+      }
+    }
+    
     // Check if user document already exists (might be created by createSiteUser or createCompanyUser)
     const userDocRef = db.collection('users').doc(user.uid);
     const userDoc = await userDocRef.get();
@@ -33,15 +41,7 @@ exports.createUserDocument = beforeUserCreated(async (event) => {
         const username = email.split('@')[0];
         
         // Check if role needs to be updated
-        if (email.includes('@site.local') && existingData.role !== 'site_user') {
-          updateData.role = 'site_user';
-          updateData.siteId = username;
-          shouldUpdate = true;
-        } else if (email.includes('@company.local') && existingData.role !== 'company_user') {
-          updateData.role = 'company_user';
-          updateData.companyId = username;
-          shouldUpdate = true;
-        } else if (email.includes('@personnel.local') && existingData.role !== 'personnel') {
+        if (email.includes('@personnel.local') && existingData.role !== 'personnel') {
           updateData.role = 'personnel';
           updateData.username = username;
           shouldUpdate = true;
@@ -73,18 +73,12 @@ exports.createUserDocument = beforeUserCreated(async (event) => {
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     };
 
-    // Email'den rol belirleme
+    // Email'den rol belirleme (only for non-site/company users)
     if (user.email) {
       const email = user.email;
       const username = email.split('@')[0];
       
-      if (email.includes('@site.local')) {
-        userData.role = 'site_user';
-        userData.siteId = username;
-      } else if (email.includes('@company.local')) {
-        userData.role = 'company_user';
-        userData.companyId = username;
-      } else if (email.includes('@personnel.local')) {
+      if (email.includes('@personnel.local')) {
         userData.role = 'personnel';
         userData.username = username;
       } else if (email === 'admin@apartmecra.com' || email.includes('admin@example.com')) {
