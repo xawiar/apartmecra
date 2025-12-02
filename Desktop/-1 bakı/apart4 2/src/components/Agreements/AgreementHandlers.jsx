@@ -772,7 +772,21 @@ const AgreementHandlers = ({
         const createdAgreement = await createAgreement(agreementData);
         console.log('Created agreement response:', createdAgreement);
         if (createdAgreement) {
-          setAgreements([...agreements, createdAgreement]);
+          // Use functional update to prevent duplicate additions
+          setAgreements(prevAgreements => {
+            // Check if agreement already exists (prevent duplicates)
+            const exists = prevAgreements.some(a => 
+              a.id === createdAgreement.id || 
+              a._docId === createdAgreement.id || 
+              a.id === createdAgreement._docId ||
+              (a.id === createdAgreement.id && a._docId === createdAgreement._docId)
+            );
+            if (exists) {
+              console.warn('Agreement already exists in state, skipping duplicate:', createdAgreement.id);
+              return prevAgreements;
+            }
+            return [...prevAgreements, createdAgreement];
+          });
           setShowAddForm(false);
           newAgreement = createdAgreement;
           

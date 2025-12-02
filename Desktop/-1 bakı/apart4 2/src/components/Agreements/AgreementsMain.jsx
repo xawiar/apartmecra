@@ -223,8 +223,26 @@ const AgreementsMain = () => {
           hasPendingPayment: (site.pendingPayments && site.pendingPayments.length > 0) || false
         }));
         
-        setAgreements(agreementsData);
-        setSites(initializedSites);
+        // Remove duplicates from agreements data (by id or _docId)
+        const uniqueAgreements = agreementsData.filter((agreement, index, self) => 
+          index === self.findIndex(a => 
+            (a.id === agreement.id && a._docId === agreement._docId) ||
+            (a.id && agreement.id && a.id === agreement.id) ||
+            (a._docId && agreement._docId && a._docId === agreement._docId)
+          )
+        );
+        
+        // Remove duplicates from sites data (by id or _docId)
+        const uniqueSites = initializedSites.filter((site, index, self) => 
+          index === self.findIndex(s => 
+            (s.id === site.id && s._docId === site._docId) ||
+            (s.id && site.id && s.id === site.id) ||
+            (s._docId && site._docId && s._docId === site._docId)
+          )
+        );
+        
+        setAgreements(uniqueAgreements);
+        setSites(uniqueSites);
         setCompanies(companiesData);
       } catch (error) {
         console.error('Error fetching data:', error);
