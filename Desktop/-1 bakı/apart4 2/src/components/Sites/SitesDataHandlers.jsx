@@ -107,12 +107,18 @@ const SitesDataHandlers = ({
     console.log('handleDeleteSite called with siteId:', siteId);
     console.log('Current sites:', sites.map(s => ({ id: s.id, _docId: s._docId, name: s.name })));
     
-    // Try to find site by custom ID or document ID
-    const siteToDelete = sites.find(s => 
-      s.id === siteId || 
-      s._docId === siteId ||
-      (s.id && s.id.toString() === siteId.toString())
-    );
+    // Try to find site by custom ID or document ID (flexible matching)
+    const siteToDelete = sites.find(s => {
+      // Exact match
+      if (s.id === siteId || s._docId === siteId) return true;
+      // String comparison
+      if (s.id && s.id.toString() === siteId.toString()) return true;
+      if (s._docId && s._docId.toString() === siteId.toString()) return true;
+      // Also check if siteId might be the document ID (for old sites without _docId)
+      if (!s._docId && s.id === siteId) return true;
+      return false;
+    });
+    
     const siteName = siteToDelete?.name || 'Bilinmeyen Site';
     
     if (!siteToDelete) {
@@ -126,7 +132,8 @@ const SitesDataHandlers = ({
       return false;
     }
     
-    // Use the site's custom ID for deletion (deleteSite handles both custom ID and document ID)
+    // Try both custom ID and document ID for deletion
+    // deleteSite function handles both, but we'll try custom ID first, then document ID
     const idToDelete = siteToDelete.id || siteToDelete._docId || siteId;
     
     const result = await window.showConfirm(

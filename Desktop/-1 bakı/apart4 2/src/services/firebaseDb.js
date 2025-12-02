@@ -276,25 +276,19 @@ export const deleteSite = async (siteId) => {
       docId = siteId; // siteId is the document ID in this case
     } else {
       // Fallback: search by custom 'id' field
-      const fallback = await getCollection(COLLECTIONS.SITES, [
-        { field: 'id', operator: '==', value: siteId }
-      ]);
-      if (fallback.success && fallback.data && fallback.data.length > 0) {
-        siteRecord = fallback.data[0];
-        // In getCollection, the first 'id' is doc.id (document ID), but it might be overridden by custom id field
-        // We need to get the actual document ID by querying again with the document reference
-        // Actually, getCollection returns { id: doc.id, ...doc.data() }, so if doc.data() has 'id', it overrides
-        // Let's use a different approach: query by custom id, then get the document ID from the query result
-        const queryRef = collection(db, COLLECTIONS.SITES);
-        const q = query(queryRef, where('id', '==', siteId));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const docSnap = querySnapshot.docs[0];
-          docId = docSnap.id; // This is the actual Firestore document ID
-          siteRecord = { id: docSnap.id, ...docSnap.data() };
-        } else {
-          return { success: false, error: 'Site not found' };
-        }
+      const queryRef = collection(db, COLLECTIONS.SITES);
+      const q = query(queryRef, where('id', '==', siteId));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const docSnap = querySnapshot.docs[0];
+        docId = docSnap.id; // This is the actual Firestore document ID
+        const data = docSnap.data();
+        // Preserve custom id and document ID separately
+        siteRecord = {
+          _docId: docSnap.id,
+          ...data,
+          id: data.id || docSnap.id // Custom ID if exists, otherwise document ID
+        };
       } else {
         return { success: false, error: 'Site not found' };
       }
