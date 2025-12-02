@@ -627,17 +627,31 @@ export const getSiteData = async (siteId) => {
       return { site: null, agreements: [], transactions: [] };
     }
     
-    const { getDocument } = await import('./firebaseDb.js');
+    const { getDocument, getCollection } = await import('./firebaseDb.js');
     
-    const [site, agreements, transactions] = await Promise.all([
+    const [siteDocResult, agreements, transactions] = await Promise.all([
       getDocument('sites', siteId),
       getAgreementsFromDb(),
       getTransactionsFromDb()
     ]);
-    
-    if (!site.success) {
-      console.error('getSiteData: Site not found for siteId:', siteId);
-      return { site: null, agreements: [], transactions: [] };
+
+    let siteRecord = null;
+
+    if (siteDocResult.success && siteDocResult.data) {
+      // Found by document ID
+      siteRecord = siteDocResult.data;
+    } else {
+      // Fallback: some records may have custom ID stored in 'id' field instead of document ID
+      const fallback = await getCollection('sites', [
+        { field: 'id', operator: '==', value: siteId }
+      ]);
+
+      if (fallback.success && fallback.data && fallback.data.length > 0) {
+        siteRecord = fallback.data[0];
+      } else {
+        console.error('getSiteData: Site not found for siteId (docId or field id):', siteId);
+        return { site: null, agreements: [], transactions: [] };
+      }
     }
     
     const siteAgreements = agreements.filter(agreement => 
@@ -645,13 +659,13 @@ export const getSiteData = async (siteId) => {
     );
     
     const siteTransactions = transactions.filter(transaction => 
-      (transaction.type === 'expense' && transaction.source?.includes('Site Ödemesi') && transaction.source?.includes(site.data.name)) ||
+      (transaction.type === 'expense' && transaction.source?.includes('Site Ödemesi') && transaction.source?.includes(siteRecord.name)) ||
       (transaction.type === 'income' && transaction.source?.includes('Anlaşma Ödemesi') && 
        siteAgreements.some(agreement => transaction.source?.includes(agreement.id)))
     );
     
     return {
-      site: site.data,
+      site: siteRecord,
       agreements: siteAgreements,
       transactions: siteTransactions
     };
