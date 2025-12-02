@@ -148,7 +148,16 @@ const SitesFormHandlers = ({
         const newSite = await createSite(siteData);
         console.log('Create result:', newSite);
         if (newSite) {
-          setSites([...sites, newSite]);
+          // Use functional update to prevent duplicate additions
+          setSites(prevSites => {
+            // Check if site already exists (prevent duplicates)
+            const exists = prevSites.some(s => s.id === newSite.id || s._docId === newSite.id || s.id === newSite._docId);
+            if (exists) {
+              console.warn('Site already exists in state, skipping duplicate:', newSite.id);
+              return prevSites;
+            }
+            return [...prevSites, newSite];
+          });
           setShowAddForm(false);
           // Reset form data
           setFormData({

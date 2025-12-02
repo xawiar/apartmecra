@@ -182,9 +182,13 @@ export const getCollection = async (collectionName, filters = [], orderByField =
     const documents = [];
     
     querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      // Preserve custom id if exists, otherwise use document ID
+      // Always store document ID as _docId
       documents.push({
-        id: doc.id,
-        ...doc.data()
+        _docId: doc.id, // Firestore document ID
+        ...data,
+        id: data.id || doc.id // Custom ID if exists, otherwise document ID
       });
     });
     

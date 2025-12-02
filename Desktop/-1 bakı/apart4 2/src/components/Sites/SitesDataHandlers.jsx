@@ -105,20 +105,29 @@ const SitesDataHandlers = ({
   // Gerçek silme fonksiyonu
   const handleDeleteSite = async (siteId) => {
     console.log('handleDeleteSite called with siteId:', siteId);
-    console.log('Current sites:', sites.map(s => ({ id: s.id, name: s.name })));
+    console.log('Current sites:', sites.map(s => ({ id: s.id, _docId: s._docId, name: s.name })));
     
-    const siteToDelete = sites.find(s => s.id === siteId);
+    // Try to find site by custom ID or document ID
+    const siteToDelete = sites.find(s => 
+      s.id === siteId || 
+      s._docId === siteId ||
+      (s.id && s.id.toString() === siteId.toString())
+    );
     const siteName = siteToDelete?.name || 'Bilinmeyen Site';
     
     if (!siteToDelete) {
       console.error('Site not found in state:', siteId);
+      console.error('Available site IDs:', sites.map(s => ({ id: s.id, _docId: s._docId, name: s.name })));
       await window.showAlert(
         'Hata',
-        'Site state\'te bulunamadı.',
+        'Site state\'te bulunamadı. Lütfen sayfayı yenileyip tekrar deneyin.',
         'error'
       );
       return false;
     }
+    
+    // Use the site's custom ID for deletion (deleteSite handles both custom ID and document ID)
+    const idToDelete = siteToDelete.id || siteToDelete._docId || siteId;
     
     const result = await window.showConfirm(
       'Site Sil',
@@ -128,18 +137,22 @@ const SitesDataHandlers = ({
     
     if (result) {
       try {
-        const success = await deleteSite(siteId);
-        console.log('deleteSite result:', success);
+        const success = await deleteSite(idToDelete);
+        console.log('deleteSite result:', success, 'idToDelete:', idToDelete);
         
         if (success) {
           // Use functional update to ensure we have the latest state
           setSites(prevSites => {
             const filtered = prevSites.filter(site => {
-              const matches = site.id !== siteId;
-              if (!matches) {
-                console.log('Removing site from state:', site.id, site.name);
+              // Remove if it matches by custom ID, document ID, or both
+              const shouldRemove = site.id === idToDelete || 
+                                   site._docId === idToDelete ||
+                                   site.id === siteToDelete.id ||
+                                   site._docId === siteToDelete._docId;
+              if (shouldRemove) {
+                console.log('Removing site from state:', site.id, site._docId, site.name);
               }
-              return matches;
+              return !shouldRemove;
             });
             console.log('Sites after filter:', filtered.length, 'remaining');
             return filtered;
