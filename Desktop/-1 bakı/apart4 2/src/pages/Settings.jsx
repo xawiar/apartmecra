@@ -31,25 +31,44 @@ const Settings = () => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showUserInfo, setShowUserInfo] = useState({}); // State to track which user info to show
 
+  const fetchData = async () => {
+    try {
+      const [usersData, logsData, companiesData] = await Promise.all([
+        getUsers(),
+        getLogs(),
+        getCompanies()
+      ]);
+      setUsers(usersData);
+      setLogs(logsData);
+      setCompanies(companiesData); // Set companies data
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [usersData, logsData, companiesData] = await Promise.all([
-          getUsers(),
-          getLogs(),
-          getCompanies()
-        ]);
-        setUsers(usersData);
-        setLogs(logsData);
-        setCompanies(companiesData); // Set companies data
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
+    fetchData();
+    
+    // Refresh users when page becomes visible (user might have deleted site/company from another tab)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchData();
       }
     };
-
-    fetchData();
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Also refresh periodically (every 30 seconds)
+    const interval = setInterval(() => {
+      fetchData();
+    }, 30000);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(interval);
+    };
   }, []);
 
   const handleAddUser = () => {

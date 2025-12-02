@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getUsers, createUser, updateUser, deleteUser, getLogs, getSites } from '../services/api';
 import Archive from './Archive';
+import jsPDF from 'jspdf';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('users');
@@ -175,6 +176,126 @@ const Settings = () => {
       default:
         return 'Kullanıcı';
     }
+  };
+
+  // Function to download labels as PDF
+  const handleDownloadLabelsPDF = () => {
+    // Get filtered sites
+    const filteredSites = sites.filter(site => {
+      if (selectedSiteForLabels !== 'all' && site.id !== selectedSiteForLabels) return false;
+      if (labelType !== 'all' && site.siteType !== labelType) return false;
+      return true;
+    });
+
+    // Collect all labels
+    const allLabels = [];
+    filteredSites.forEach(site => {
+      const blockLabels = site.siteType === 'business_center' ? ['A'] : 
+        Array.from({ length: parseInt(site.blocks) || 0 }, (_, i) => String.fromCharCode(65 + i));
+      
+      blockLabels.forEach(blockLabel => {
+        const panelCount = site.siteType === 'business_center' ? 
+          (parseInt(site.panels) || 0) : 
+          (parseInt(site.elevatorsPerBlock) || 0) * 2;
+        
+        for (let i = 1; i <= panelCount; i++) {
+          const panelId = `${site.id}${blockLabel}${i}`;
+          allLabels.push({
+            panelId,
+            siteName: site.name
+          });
+        }
+      });
+    });
+
+    if (allLabels.length === 0) {
+      window.showAlert('Bilgi', 'Yazdırılacak etiket bulunamadı.', 'info');
+      return;
+    }
+
+    // A4 dimensions in mm: 210mm x 297mm
+    // Label dimensions: 60mm (6cm) x 20mm (2cm)
+    // Labels per row: 3 (18cm used, 1.5cm margin each side)
+    // Labels per column: 14 (28cm used, 0.85cm margin top/bottom)
+    // Total: 3 x 14 = 42 labels per page
+
+    const labelWidth = 60; // 6cm in mm
+    const labelHeight = 20; // 2cm in mm
+    const labelsPerRow = 3;
+    const labelsPerCol = 14;
+    const pageWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
+    const marginLeft = (pageWidth - (labelWidth * labelsPerRow)) / 2; // Center horizontally
+    const marginTop = (pageHeight - (labelHeight * labelsPerCol)) / 2; // Center vertically
+
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    let currentPage = 0;
+    let labelIndex = 0;
+
+    while (labelIndex < allLabels.length) {
+      if (labelIndex > 0 && labelIndex % 42 === 0) {
+        pdf.addPage();
+        currentPage++;
+      }
+
+      const pageLabelIndex = labelIndex % 42;
+      const row = Math.floor(pageLabelIndex / labelsPerRow);
+      const col = pageLabelIndex % labelsPerRow;
+
+      const x = marginLeft + (col * labelWidth);
+      const y = marginTop + (row * labelHeight);
+
+      const label = allLabels[labelIndex];
+
+      // Draw label border
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(0.1);
+      pdf.rect(x, y, labelWidth, labelHeight);
+
+      // Set font
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'bold');
+
+      // Panel ID (left side)
+      pdf.text('Panel', x + 2, y + 6);
+      pdf.setFontSize(10);
+      pdf.text(label.panelId, x + 2, y + 12);
+
+      // Contact info (right side)
+      pdf.setFontSize(6);
+      pdf.setFont('helvetica', 'normal');
+      const contactText = 'Bu alana reklam vermek için iletişim: 05473652323 APART Mecra';
+      // Split text to fit in label
+      const maxWidth = labelWidth - 35; // Leave space for panel ID
+      const contactLines = pdf.splitTextToSize(contactText, maxWidth);
+      let contactY = y + 6;
+      contactLines.forEach((line, idx) => {
+        pdf.text(line, x + 35, contactY);
+        contactY += 4;
+      });
+
+      // Site name (bottom, smaller)
+      pdf.setFontSize(5);
+      pdf.setFont('helvetica', 'italic');
+      const siteNameLines = pdf.splitTextToSize(label.siteName, labelWidth - 4);
+      let siteY = y + labelHeight - 2;
+      siteNameLines.forEach((line, idx) => {
+        pdf.text(line, x + 2, siteY);
+        siteY -= 3;
+      });
+
+      labelIndex++;
+    }
+
+    // Save PDF
+    pdf.save(`panel-etiketleri-${new Date().toISOString().split('T')[0]}.pdf`);
+    
+    window.showAlert('Başarılı', `${allLabels.length} etiket PDF olarak indirildi.`, 'success');
   };
 
   const handleUserFormChange = (e) => {
@@ -749,10 +870,44 @@ const Settings = () => {
                         <td>
                           <div className="d-flex flex-column">
                             <span className="fw-medium">
-                              {new Date(log.timestamp).toLocaleDateString('tr-TR')}
+                              {(() => {
+                                try {
+                                  // Handle Firestore Timestamp object
+                                  let date;
+                                  if (log.timestamp && typeof log.timestamp.toDate === 'function') {
+                                    date = log.timestamp.toDate();
+                                  } else if (log.timestamp && log.timestamp.seconds) {
+                                    date = new Date(log.timestamp.seconds * 1000);
+                                  } else if (log.timestamp) {
+                                    date = new Date(log.timestamp);
+                                  } else {
+                                    return 'Tarih yok';
+                                  }
+                                  return date.toLocaleDateString('tr-TR');
+                                } catch (e) {
+                                  return 'Geçersiz tarih';
+                                }
+                              })()}
                             </span>
                             <small className="text-muted">
-                              {new Date(log.timestamp).toLocaleTimeString('tr-TR')}
+                              {(() => {
+                                try {
+                                  // Handle Firestore Timestamp object
+                                  let date;
+                                  if (log.timestamp && typeof log.timestamp.toDate === 'function') {
+                                    date = log.timestamp.toDate();
+                                  } else if (log.timestamp && log.timestamp.seconds) {
+                                    date = new Date(log.timestamp.seconds * 1000);
+                                  } else if (log.timestamp) {
+                                    date = new Date(log.timestamp);
+                                  } else {
+                                    return 'Saat yok';
+                                  }
+                                  return date.toLocaleTimeString('tr-TR');
+                                } catch (e) {
+                                  return 'Geçersiz saat';
+                                }
+                              })()}
                             </small>
                           </div>
                         </td>
@@ -918,10 +1073,10 @@ const Settings = () => {
               </h5>
               <button 
                 className="btn btn-primary"
-                onClick={() => window.print()}
+                onClick={handleDownloadLabelsPDF}
               >
-                <i className="bi bi-printer me-1"></i>
-                Yazdır
+                <i className="bi bi-download me-1"></i>
+                PDF İndir
               </button>
             </div>
 
