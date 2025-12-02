@@ -252,42 +252,44 @@ const Settings = () => {
 
       const label = allLabels[labelIndex];
 
-      // Draw label border
+      // Draw label border with modern style
       pdf.setDrawColor(0, 0, 0);
-      pdf.setLineWidth(0.1);
+      pdf.setLineWidth(0.2);
       pdf.rect(x, y, labelWidth, labelHeight);
 
-      // Set font
-      pdf.setFontSize(8);
+      // Panel ID (left side - bold and large)
+      pdf.setFontSize(7);
       pdf.setFont('helvetica', 'bold');
-
-      // Panel ID (left side)
-      pdf.text('Panel', x + 2, y + 6);
-      pdf.setFontSize(10);
+      pdf.text('PANEL', x + 2, y + 5);
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
       pdf.text(label.panelId, x + 2, y + 12);
 
-      // Contact info (right side)
-      pdf.setFontSize(6);
-      pdf.setFont('helvetica', 'normal');
+      // Contact info (right side - bold, smaller, right-aligned)
+      pdf.setFontSize(5.5);
+      pdf.setFont('helvetica', 'bold');
       const contactText = 'Bu alana reklam vermek için iletişim: 05473652323 APART Mecra';
-      // Split text to fit in label
-      const maxWidth = labelWidth - 35; // Leave space for panel ID
-      const contactLines = pdf.splitTextToSize(contactText, maxWidth);
-      let contactY = y + 6;
+      // Calculate right-aligned position
+      const contactMaxWidth = labelWidth - 38; // Leave space for panel ID (35mm) + margin (3mm)
+      const contactLines = pdf.splitTextToSize(contactText, contactMaxWidth);
+      
+      // Right-align each line
+      let contactY = y + 4;
       contactLines.forEach((line, idx) => {
-        pdf.text(line, x + 35, contactY);
-        contactY += 4;
+        const textWidth = pdf.getTextWidth(line);
+        const rightX = x + labelWidth - 2 - textWidth; // Right margin 2mm
+        pdf.text(line, rightX, contactY);
+        contactY += 3.5;
       });
 
-      // Site name (bottom, smaller)
-      pdf.setFontSize(5);
+      // Site name (bottom center, small and italic)
+      pdf.setFontSize(4.5);
       pdf.setFont('helvetica', 'italic');
-      const siteNameLines = pdf.splitTextToSize(label.siteName, labelWidth - 4);
-      let siteY = y + labelHeight - 2;
-      siteNameLines.forEach((line, idx) => {
-        pdf.text(line, x + 2, siteY);
-        siteY -= 3;
-      });
+      const siteNameText = label.siteName;
+      const siteNameWidth = pdf.getTextWidth(siteNameText);
+      const siteNameX = x + (labelWidth - siteNameWidth) / 2; // Center horizontally
+      pdf.text(siteNameText, siteNameX, y + labelHeight - 2);
 
       labelIndex++;
     }
