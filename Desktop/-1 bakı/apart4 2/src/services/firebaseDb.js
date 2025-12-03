@@ -367,26 +367,39 @@ export const deleteSite = async (siteId) => {
 
 export const archiveSite = async (siteId) => {
   try {
-    // Get site data
-    const siteResult = await getDocument(COLLECTIONS.SITES, siteId);
-    if (!siteResult.success) {
-      return { success: false, error: 'Site not found' };
+    // Önce dokümanı doğrudan ID ile almaya çalış
+    let docId = siteId;
+    let siteResult = await getDocument(COLLECTIONS.SITES, siteId);
+
+    if (!siteResult.success || !siteResult.data) {
+      // Eğer bulunamazsa, custom 'id' alanına göre ara
+      const queryRef = collection(db, COLLECTIONS.SITES);
+      const q = query(queryRef, where('id', '==', siteId));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        console.error('archiveSite: Site not found for id:', siteId);
+        return { success: false, error: 'Site not found' };
+      }
+
+      const docSnap = querySnapshot.docs[0];
+      docId = docSnap.id;
+      siteResult = { success: true, data: { id: docSnap.id, ...docSnap.data() } };
     }
     
-    const site = siteResult.data;
-    
-    // Update site status to archived (don't delete, just change status)
-    const updateResult = await updateDocument(COLLECTIONS.SITES, siteId, {
+    // Artık doğru Firestore doküman ID'si elimizde: docId
+    const updateResult = await updateDocument(COLLECTIONS.SITES, docId, {
       status: 'archived',
       archivedAt: serverTimestamp()
     });
     
     if (updateResult.success) {
-      console.log(`✅ Site ${siteId} archived successfully`);
+      console.log(`✅ Site ${siteId} (doc: ${docId}) archived successfully`);
       console.log(`⚠️ Site user ${siteId}@site.local login is now disabled`);
       return { success: true, message: `Site archived. User login disabled.` };
     }
     
+    console.error('archiveSite: Failed to update document for site:', siteId, 'docId:', docId);
     return { success: false, error: 'Failed to archive site' };
   } catch (error) {
     console.error('Error archiving site:', error);
