@@ -897,7 +897,7 @@ const AgreementHelpers = ({
       y += 8;
       pdf.setFont('helvetica', 'normal');
       pdf.text('DAT DİJİTAL', margin + 10, y);
-      pdf.text(getValue(companyName), centerX + 10, y);
+      pdf.text(fixTurkishChars(companyName || ''), centerX + 10, y);
       y += 20;
 
       // EK-1: Site ve paneller listesi
