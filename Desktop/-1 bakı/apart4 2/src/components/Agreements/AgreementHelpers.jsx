@@ -283,7 +283,7 @@ const AgreementHelpers = ({
     return null;
   };
 
-  // Format date for display (with Turkish character fix)
+  // Format date for display (Turkish character support)
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -292,20 +292,8 @@ const AgreementHelpers = ({
       month: 'long', 
       day: 'numeric' 
     });
-    // Fix Turkish characters for PDF
-    return formatted
-      .replace(/ı/g, 'i')
-      .replace(/İ/g, 'I')
-      .replace(/ğ/g, 'g')
-      .replace(/Ğ/g, 'G')
-      .replace(/ü/g, 'u')
-      .replace(/Ü/g, 'U')
-      .replace(/ş/g, 's')
-      .replace(/Ş/g, 'S')
-      .replace(/ö/g, 'o')
-      .replace(/Ö/g, 'O')
-      .replace(/ç/g, 'c')
-      .replace(/Ç/g, 'C');
+    // Türkçe karakterleri koru
+    return formatted;
   };
 
   // Generate detailed "Anlaşma Özeti" PDF (mevcut fonksiyon)
@@ -642,29 +630,17 @@ const AgreementHelpers = ({
       const margin = 15;
       let y = margin;
 
-      // Helper function to fix Turkish characters
-      const fixTurkishChars = (text) => {
-        if (!text) return '';
-        return String(text)
-          .replace(/ı/g, 'i')
-          .replace(/İ/g, 'I')
-          .replace(/ğ/g, 'g')
-          .replace(/Ğ/g, 'G')
-          .replace(/ü/g, 'u')
-          .replace(/Ü/g, 'U')
-          .replace(/ş/g, 's')
-          .replace(/Ş/g, 'S')
-          .replace(/ö/g, 'o')
-          .replace(/Ö/g, 'O')
-          .replace(/ç/g, 'c')
-          .replace(/Ç/g, 'C');
+      // Helper function to handle empty values (don't show placeholder text)
+      const getValue = (value, defaultValue = '') => {
+        return value || defaultValue;
       };
 
       const addText = (text, x, yPos, maxWidth, fontSize = 11, fontStyle = 'normal') => {
+        if (!text) return yPos;
         pdf.setFontSize(fontSize);
         pdf.setFont('helvetica', fontStyle);
-        const fixed = fixTurkishChars(text);
-        const lines = pdf.splitTextToSize(fixed, maxWidth);
+        // Türkçe karakter desteği için text'i olduğu gibi kullan
+        const lines = pdf.splitTextToSize(String(text), maxWidth);
         pdf.text(lines, x, yPos);
         return yPos + lines.length * (fontSize * 0.45);
       };
@@ -688,7 +664,7 @@ const AgreementHelpers = ({
       // Header
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(fixTurkishChars('ASANSOR ICI REKLAM PANELI YAYIN SOZLESMESI'), pageWidth / 2, y, { align: 'center' });
+      pdf.text('ASANSÖR İÇİ REKLAM PANELİ YAYIN SÖZLEŞMESİ', pageWidth / 2, y, { align: 'center' });
       y += 10;
 
       // Madde 1 – Taraflar
@@ -698,70 +674,78 @@ const AgreementHelpers = ({
       y += 2;
 
       pdf.setFont('helvetica', 'normal');
-      y = addText('Isbu sozlesme;', margin, y, pageWidth - 2 * margin);
+      y = addText('İşbu sözleşme;', margin, y, pageWidth - 2 * margin);
       y += 2;
 
-      // Hizmet Saglayici
+      // Hizmet Sağlayıcı
       y = addText('Reklam Hizmeti Veren:', margin, y, pageWidth - 2 * margin, 11, 'bold');
-      y = addText('Firma Unvani: DAT DIJITAL', margin + 4, y, pageWidth - 2 * margin);
-      y = addText('Adres: CARSI MAHALLESI BOSNA HERSEK BULVARI ELAZIG IS MERKEZI NO:11 KAT:5 DAIRE:20 MERKEZ/ELAZIG', margin + 4, y, pageWidth - 2 * margin);
-      y = addText('Vergi Dairesi / No: [BILGI]', margin + 4, y, pageWidth - 2 * margin);
+      y = addText('Firma Unvanı: DAT DİJİTAL', margin + 4, y, pageWidth - 2 * margin);
+      y = addText('Adres: ÇARŞI MAHALLESİ BOSNA HERSEK BULVARI ELAZIĞ İŞ MERKEZİ NO:11 KAT:5 DAİRE:20 MERKEZ/ELAZIĞ', margin + 4, y, pageWidth - 2 * margin);
+      y = addText('Vergi Dairesi / No:', margin + 4, y, pageWidth - 2 * margin);
       y = addText('Telefon: 0540 365 23 23', margin + 4, y, pageWidth - 2 * margin);
       y += 2;
 
       // Reklam Veren (company)
       y = addText('Reklam Veren:', margin, y, pageWidth - 2 * margin, 11, 'bold');
-      y = addText(`Firma Unvani: ${companyName || '[REKLAM VEREN ADI]'}`, margin + 4, y, pageWidth - 2 * margin);
-      y = addText(`Adres: ${company?.address || '[ADRES]'}`, margin + 4, y, pageWidth - 2 * margin);
-      y = addText(`Vergi Dairesi / No: ${company?.taxInfo || '[BILGI]'}`, margin + 4, y, pageWidth - 2 * margin);
-      y = addText(`Telefon: ${company?.phone || '[TELEFON]'}`, margin + 4, y, pageWidth - 2 * margin);
+      y = addText(`Firma Unvanı: ${getValue(companyName)}`, margin + 4, y, pageWidth - 2 * margin);
+      y = addText(`Adres: ${getValue(company?.address)}`, margin + 4, y, pageWidth - 2 * margin);
+      y = addText(`Vergi Dairesi / No: ${getValue(company?.taxInfo)}`, margin + 4, y, pageWidth - 2 * margin);
+      y = addText(`Telefon: ${getValue(company?.phone)}`, margin + 4, y, pageWidth - 2 * margin);
       y += 4;
 
-      y = addText('Arasinda asagidaki sartlarla akdedilmistir.', margin, y, pageWidth - 2 * margin);
+      y = addText('Arasında aşağıdaki şartlarla akdedilmiştir.', margin, y, pageWidth - 2 * margin);
       y += 4;
 
-      // Madde 2 – Sozlesmenin Konusu
+      // Madde 2 – Sözleşmenin Konusu
       checkNewPage(40);
-      y = addText('Madde 2 – Sozlesmenin Konusu', margin, y, pageWidth - 2 * margin, 12, 'bold');
+      y = addText('Madde 2 – Sözleşmenin Konusu', margin, y, pageWidth - 2 * margin, 12, 'bold');
       y += 2;
       y = addText(
-        'Bu sozlesmenin konusu; HIZMET SAGLAYICI’ya ait ve/veya kullanim hakki kendisinde bulunan apartman ve site asansorleri icerisine yerlestirilen reklam panolarinda, REKLAM VEREN’e ait reklam gorsellerinin belirtilen sure boyunca asIlmasi, muhafaza edilmesi ve yayinda tutulmasina iliskin sartlarin belirlenmesidir.',
+        'Bu sözleşmenin konusu; HİZMET SAĞLAYICI'ya ait ve/veya kullanım hakkı kendisinde bulunan apartman ve site asansörleri içerisine yerleştirilen reklam panolarında, REKLAM VEREN'e ait reklam görsellerinin belirtilen süre boyunca asılması, muhafaza edilmesi ve yayında tutulmasına ilişkin şartların belirlenmesidir.',
         margin,
         y,
         pageWidth - 2 * margin
       );
       y += 4;
 
-      // Madde 3 – Reklam Alanlari ve Panel Sayisi
+      // Madde 3 – Reklam Alanları ve Panel Sayısı
       checkNewPage(40);
-      y = addText('Madde 3 – Reklam Alanlari ve Panel Sayisi', margin, y, pageWidth - 2 * margin, 12, 'bold');
+      y = addText('Madde 3 – Reklam Alanları ve Panel Sayısı', margin, y, pageWidth - 2 * margin, 12, 'bold');
       y += 2;
       y = addText(
-        'Reklam yayini yapilacak site ve paneller isbu sozlesmenin ayrilmaz parcasi olan EK-1 Liste’de belirtilmistir.',
+        'Reklam yayını yapılacak site ve paneller işbu sözleşmenin ayrılmaz parçası olan EK-1 Liste'de belirtilmiştir.',
         margin,
         y,
         pageWidth - 2 * margin
       );
       y += 3;
 
-      y = addText(`Toplam Panel Sayisi: ${totalPanels} adet`, margin, y, pageWidth - 2 * margin);
+      y = addText(`Toplam Panel Sayısı: ${totalPanels} adet`, margin, y, pageWidth - 2 * margin);
       y = addText(
-        `1 Panel 1 Haftalik Birim Ucreti: ${formatCurrency(agreement.weeklyRatePerPanel)} + KDV`,
+        `1 Panel 1 Haftalık Birim Ücreti: ${formatCurrency(agreement.weeklyRatePerPanel)} + KDV`,
         margin,
         y,
         pageWidth - 2 * margin
       );
-      y = addText(
-        `Toplam Sozlesme Bedeli: ${formatCurrency(agreement.totalAmount)} + KDV`,
-        margin,
-        y,
-        pageWidth - 2 * margin
-      );
+      y += 2;
+      
+      // Fiyatlar bölümü - manuel doldurulacak alanlar
+      y = addText('Anlaşma Tutarı:', margin, y, pageWidth - 2 * margin, 11, 'bold');
+      y = addText(`${formatCurrency(agreement.totalAmount)}`, margin + 4, y, pageWidth - 2 * margin);
+      y += 3;
+      y = addText('KDV Oranı:', margin, y, pageWidth - 2 * margin, 11, 'bold');
+      y = addText('', margin + 4, y, pageWidth - 2 * margin); // Boş bırak
+      y += 3;
+      y = addText('KDV Tutarı:', margin, y, pageWidth - 2 * margin, 11, 'bold');
+      y = addText('', margin + 4, y, pageWidth - 2 * margin); // Boş bırak
+      y += 3;
+      y = addText('Toplam Tutar:', margin, y, pageWidth - 2 * margin, 11, 'bold');
+      y = addText('', margin + 4, y, pageWidth - 2 * margin); // Boş bırak
       y += 4;
 
-      // Madde 4 – Sozlesme Suresi
+      // Madde 4 – Sözleşme Süresi
       checkNewPage(40);
-      y = addText('Madde 4 – Sozlesme Suresi', margin, y, pageWidth - 2 * margin, 12, 'bold');
+      y = addText('Madde 4 – Sözleşme Süresi', margin, y, pageWidth - 2 * margin, 12, 'bold');
       y += 2;
       
       // Get date ranges (support both old and new format)
@@ -772,7 +756,7 @@ const AgreementHelpers = ({
       
       if (dateRanges.length > 0) {
         y = addText(
-          'Sozlesme asagida belirtilen tarih araliklarinda gecerlidir:',
+          'Sözleşme aşağıda belirtilen tarih aralıklarında geçerlidir:',
           margin,
           y,
           pageWidth - 2 * margin
@@ -795,7 +779,7 @@ const AgreementHelpers = ({
         
         y += 2;
         y = addText(
-          'Belirtilen sureler disinda reklam yayini yapilmaz. Sure bitiminde sozlesme kendiliginden sona erer.',
+          'Belirtilen süreler dışında reklam yayını yapılmaz. Süre bitiminde sözleşme kendiliğinden sona erer.',
           margin,
           y,
           pageWidth - 2 * margin
@@ -805,7 +789,7 @@ const AgreementHelpers = ({
         const startStr = formatDate(agreement.startDate);
         const endStr = formatDate(agreement.endDate);
         y = addText(
-          `Sozlesme ${startStr} – ${endStr} tarihleri arasinda gecerlidir. Belirtilen sureler disinda reklam yayini yapilmaz. Sure bitiminde sozlesme kendiliginden sona erer.`,
+          `Sözleşme ${startStr} – ${endStr} tarihleri arasında geçerlidir. Belirtilen süreler dışında reklam yayını yapılmaz. Süre bitiminde sözleşme kendiliğinden sona erer.`,
           margin,
           y,
           pageWidth - 2 * margin
@@ -816,49 +800,49 @@ const AgreementHelpers = ({
       // Devam eden maddeler - sabit metin
       const maddeTexts = [
         {
-          title: 'Madde 5 – Odeme Sartlari',
+          title: 'Madde 5 – Ödeme Şartları',
           body:
-            'REKLAM VEREN, toplam sozlesme bedelini reklam yayininin baslayacagi haftadan onceki CUMA gunu saat 17:00’ye kadar HIZMET SAGLAYICI’nin bildirecegi banka hesabina veya nakit / cek / kredi karti ile eksiksiz odemekle yukumludur. Odeme yapilmadigi surece reklam asimi yapilmaz, yayin suresi baslamaz ve gecikmeden HIZMET SAGLAYICI sorumlu tutulamaz. Odeme gunu gecirilirse HIZMET SAGLAYICI’nin sozlesmeyi tek tarafli ve tazminatsiz fesih hakki dogar.'
+            'REKLAM VEREN, toplam sözleşme bedelini reklam yayınının başlayacağı haftadan önceki CUMA günü saat 17:00'ye kadar HİZMET SAĞLAYICI'nın bildireceği banka hesabına veya nakit / çek / kredi kartı ile eksiksiz ödemekle yükümlüdür. Ödeme yapılmadığı sürece reklam asımı yapılmaz, yayın süresi başlamaz ve gecikmeden HİZMET SAĞLAYICI sorumlu tutulamaz. Ödeme günü geçirilirse HİZMET SAĞLAYICI'nın sözleşmeyi tek taraflı ve tazminatsız fesih hakkı doğar.'
         },
         {
-          title: 'Madde 6 – Reklam Asimi ve Muhafaza',
+          title: 'Madde 6 – Reklam Asımı ve Muhafaza',
           body:
-            'HIZMET SAGLAYICI; reklam asimini Pazar gunu gerceklestirmeyi, reklam gorsellerini sozlesme suresi boyunca panolarda muhafaza etmeyi ve kasit veya agir ihmal disinda dogabilecek zararlar haricinde yayini surdurmeyi taahhut eder. Apartman yonetimi, ucuncu sahislar, vandalizm, dogal afet, yangin, su baskini, sabotaj ve benzeri mucbir sebeplerden kaynaklanan sokulme, zarar ve kayiplardan HIZMET SAGLAYICI sorumlu degildir.'
+            'HİZMET SAĞLAYICI; reklam asımını Pazar günü gerçekleştirmeyi, reklam görsellerini sözleşme süresi boyunca panolarda muhafaza etmeyi ve kasıt veya ağır ihmal dışında doğabilecek zararlar haricinde yayını sürdürmeyi taahhüt eder. Apartman yönetimi, üçüncü şahıslar, vandalizm, doğal afet, yangın, su baskını, sabotaj ve benzeri mücbir sebeplerden kaynaklanan sökülme, zarar ve kayıplardan HİZMET SAĞLAYICI sorumlu değildir.'
         },
         {
-          title: 'Madde 7 – Reklam Icerigi Sorumlulugu',
+          title: 'Madde 7 – Reklam İçeriği Sorumluluğu',
           body:
-            'Reklam iceriginin mevzuata, genel ahlaka ve ilgili reklam yonetmeliklerine uygunlugundan tamamen REKLAM VEREN sorumludur. Dogabilecek her turlu idari para cezasi, dava, tazminat ve yaptirimdan REKLAM VEREN sorumludur; HIZMET SAGLAYICI’ya rucu edilemez.'
+            'Reklam içeriğinin mevzuata, genel ahlaka ve ilgili reklam yönetmeliklerine uygunluğundan tamamen REKLAM VEREN sorumludur. Doğabilecek her türlü idari para cezası, dava, tazminat ve yaptırımdan REKLAM VEREN sorumludur; HİZMET SAĞLAYICI'ya rücu edilemez.'
         },
         {
-          title: 'Madde 8 – Gorsel Teslimi',
+          title: 'Madde 8 – Görsel Teslimi',
           body:
-            'Reklam baskilari en gec Persembe gunu saat 17:00’ye kadar HIZMET SAGLAYICI’ya teslim edilmek zorundadir. Gec teslimden dogacak gecikmeler yayin suresinden dusulmez, ucret iadesi yapilmaz.'
+            'Reklam baskıları en geç Perşembe günü saat 17:00'ye kadar HİZMET SAĞLAYICI'ya teslim edilmek zorundadır. Geç teslimden doğacak gecikmeler yayın süresinden düşülmez, ücret iadesi yapılmaz.'
         },
         {
           title: 'Madde 9 – Fesih',
           body:
-            'Taraflar, sozlesme suresi icinde tek tarafli, gerekcesiz ve ucret iadesi talep ederek fesih haklarina sahip degildir. Mucbir sebep halleri bu hukmun istisnasidir.'
+            'Taraflar, sözleşme süresi içinde tek taraflı, gerekçesiz ve ücret iadesi talep ederek fesih haklarına sahip değildir. Mücbir sebep halleri bu hükmün istisnasıdır.'
         },
         {
           title: 'Madde 10 – Gizlilik',
           body:
-            'Taraflar, bu sozlesme kapsaminda ogrendikleri ticari sirlarI ve mali bilgileri ucuncu kisilerle paylasamaz.'
+            'Taraflar, bu sözleşme kapsamında öğrendikleri ticari sırları ve mali bilgileri üçüncü kişilerle paylaşamaz.'
         },
         {
-          title: 'Madde 11 – Devir Yasagi',
+          title: 'Madde 11 – Devir Yasağı',
           body:
-            'REKLAM VEREN, bu sozlesmeden dogan hak ve yukumluluklerini HIZMET SAGLAYICI’nin yazili izni olmadan ucuncu kisilere devredemez.'
+            'REKLAM VEREN, bu sözleşmeden doğan hak ve yükümlülüklerini HİZMET SAĞLAYICI'nın yazılı izni olmadan üçüncü kişilere devredemez.'
         },
         {
           title: 'Madde 12 – Tebligat',
           body:
-            'Taraflarin isbu sozlesmede belirtilen adresleri yasal tebligat adresleridir. Adres degisiklikleri yazili bildirilmedikce eski adrese yapilan tebligatlar gecerli sayilir.'
+            'Tarafların işbu sözleşmede belirtilen adresleri yasal tebligat adresleridir. Adres değişiklikleri yazılı bildirilmedikçe eski adrese yapılan tebligatlar geçerli sayılır.'
         },
         {
           title: 'Madde 13 – Yetkili Mahkeme',
           body:
-            'Isbu sozlesmeden dogacak uyusmazliklarda ELAZIG MERKEZ Mahkemeleri ve Icra Daireleri yetkilidir.'
+            'İşbu sözleşmeden doğacak uyuşmazlıklarda ELAZIĞ MERKEZ Mahkemeleri ve İcra Daireleri yetkilidir.'
         }
       ];
 
@@ -870,30 +854,30 @@ const AgreementHelpers = ({
         y += 4;
       });
 
-      // Madde 14 – Yururluk
+      // Madde 14 – Yürürlük
       checkNewPage(30);
       const todayStr = new Date().toLocaleDateString('tr-TR');
-      y = addText('Madde 14 – Yururluk', margin, y, pageWidth - 2 * margin, 12, 'bold');
+      y = addText('Madde 14 – Yürürlük', margin, y, pageWidth - 2 * margin, 12, 'bold');
       y += 2;
       y = addText(
-        `14 (ondort) maddeden ibaret isbu sozlesme ${todayStr} tarihinde 2 (iki) nusha olarak imzalanmis olup yururluge girmistir.`,
+        `14 (ondört) maddeden ibaret işbu sözleşme ${todayStr} tarihinde 2 (iki) nüsha olarak imzalanmış olup yürürlüğe girmiştir.`,
         margin,
         y,
         pageWidth - 2 * margin
       );
       y += 10;
 
-      // Imza bolumu
+      // İmza bölümü
       checkNewPage(40);
       const centerX = pageWidth / 2;
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(11);
-      pdf.text(fixTurkishChars('HIZMET SAGLAYICI'), margin + 10, y);
-      pdf.text(fixTurkishChars('REKLAM VEREN'), centerX + 10, y);
+      pdf.text('HİZMET SAĞLAYICI', margin + 10, y);
+      pdf.text('REKLAM VEREN', centerX + 10, y);
       y += 8;
       pdf.setFont('helvetica', 'normal');
-      pdf.text(fixTurkishChars('DAT DIJITAL'), margin + 10, y);
-      pdf.text(fixTurkishChars(companyName || ''), centerX + 10, y);
+      pdf.text('DAT DİJİTAL', margin + 10, y);
+      pdf.text(getValue(companyName), centerX + 10, y);
       y += 20;
 
       // EK-1: Site ve paneller listesi
@@ -901,7 +885,7 @@ const AgreementHelpers = ({
       y = margin;
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(13);
-      pdf.text(fixTurkishChars('EK-1: REKLAM ALANLARI VE PANEL LISTESI'), pageWidth / 2, y, { align: 'center' });
+      pdf.text('EK-1: REKLAM ALANLARI VE PANEL LİSTESİ', pageWidth / 2, y, { align: 'center' });
       y += 8;
 
       if (agreement.siteIds && agreement.siteIds.length > 0) {
