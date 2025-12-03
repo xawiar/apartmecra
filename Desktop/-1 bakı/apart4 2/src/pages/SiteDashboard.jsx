@@ -167,19 +167,26 @@ const SiteDashboard = () => {
   const getPanelBlockInfo = () => {
     if (!siteData.site) return [];
     
-    const blocks = parseInt(siteData.site.blocks) || 0;
-    const elevatorsPerBlock = parseInt(siteData.site.elevatorsPerBlock) || 0;
-    const panelsPerElevator = 2; // Assuming 2 panels per elevator
-    const panelsPerBlock = elevatorsPerBlock * panelsPerElevator;
+    const isBusinessCenter = siteData.site.siteType === 'business_center';
+
+    // İş merkezleri için blok/panel hesabı farklı:
+    // - Her iş merkezi tek blok gibi düşünülür (A)
+    // - Panel sayısı doğrudan site.panels alanından alınır
+    const blocks = isBusinessCenter ? 1 : (parseInt(siteData.site.blocks) || 0);
+    const elevatorsPerBlock = isBusinessCenter ? 0 : (parseInt(siteData.site.elevatorsPerBlock) || 0);
+    const panelsPerElevator = 2; // Siteler için her asansörde 2 panel
+    const panelsPerBlock = isBusinessCenter
+      ? (parseInt(siteData.site.panels) || 0)
+      : elevatorsPerBlock * panelsPerElevator;
     
     const blockInfo = [];
     let panelCounter = 1;
     
-    const blockLabels = generateBlockLabels(blocks);
+    const blockLabels = isBusinessCenter ? ['A'] : generateBlockLabels(blocks);
     
     for (let blockIndex = 0; blockIndex < blocks; blockIndex++) {
       const blockNumber = blockIndex + 1;
-      const blockLabel = blockLabels[blockIndex];
+      const blockLabel = blockLabels[blockIndex] || 'A';
       const blockPanels = [];
       
       for (let panelInBlock = 0; panelInBlock < panelsPerBlock; panelInBlock++) {

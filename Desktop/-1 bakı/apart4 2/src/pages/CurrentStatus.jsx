@@ -124,10 +124,13 @@ const CurrentStatus = () => {
     
     let usedPanels = 0;
     sites.forEach(site => {
-      const blockCount = parseInt(site.blocks) || 0;
-      const elevatorsPerBlock = parseInt(site.elevatorsPerBlock) || 0;
-      const panelsPerBlock = elevatorsPerBlock * 2;
-      const blockLabels = generateBlockLabels(blockCount);
+      const isBusinessCenter = site.siteType === 'business_center';
+      const blockCount = isBusinessCenter ? 1 : (parseInt(site.blocks) || 0);
+      const elevatorsPerBlock = isBusinessCenter ? 0 : (parseInt(site.elevatorsPerBlock) || 0);
+      const panelsPerBlock = isBusinessCenter
+        ? (parseInt(site.panels) || 0)
+        : (elevatorsPerBlock * 2);
+      const blockLabels = isBusinessCenter ? ['A'] : generateBlockLabels(blockCount);
       
       for (let blockIndex = 0; blockIndex < blockCount; blockIndex++) {
         const blockLabel = blockLabels[blockIndex];
@@ -292,10 +295,13 @@ const CurrentStatus = () => {
 
       // Process each site in a more compact format
       for (const site of sites) {
-        const blockCount = parseInt(site.blocks) || 0;
-        const elevatorsPerBlock = parseInt(site.elevatorsPerBlock) || 0;
-        const panelsPerBlock = elevatorsPerBlock * 2;
-        const blockLabels = generateBlockLabels(blockCount);
+        const isBusinessCenter = site.siteType === 'business_center';
+        const blockCount = isBusinessCenter ? 1 : (parseInt(site.blocks) || 0);
+        const elevatorsPerBlock = isBusinessCenter ? 0 : (parseInt(site.elevatorsPerBlock) || 0);
+        const panelsPerBlock = isBusinessCenter
+          ? (parseInt(site.panels) || 0)
+          : (elevatorsPerBlock * 2);
+        const blockLabels = isBusinessCenter ? ['A'] : generateBlockLabels(blockCount);
 
         // Check if we need a new page
         if (yPosition > pageHeight - 60) {
@@ -629,10 +635,13 @@ const CurrentStatus = () => {
       {/* Sites Grid */}
       <div className="row g-4">
         {sites.map(site => {
-          const blockCount = parseInt(site.blocks) || 0;
-          const elevatorsPerBlock = parseInt(site.elevatorsPerBlock) || 0;
-          const panelsPerBlock = elevatorsPerBlock * 2;
-          const blockLabels = generateBlockLabels(blockCount);
+          const isBusinessCenter = site.siteType === 'business_center';
+          const blockCount = isBusinessCenter ? 1 : (parseInt(site.blocks) || 0);
+          const elevatorsPerBlock = isBusinessCenter ? 0 : (parseInt(site.elevatorsPerBlock) || 0);
+          const panelsPerBlock = isBusinessCenter
+            ? (parseInt(site.panels) || 0)
+            : (elevatorsPerBlock * 2);
+          const blockLabels = isBusinessCenter ? ['A'] : generateBlockLabels(blockCount);
 
           return (
             <div key={site.id} className="col-12">
@@ -673,7 +682,7 @@ const CurrentStatus = () => {
                         return (
                           <div key={blockId} className="col-md-6 col-lg-4 col-xl-3">
                             <div className="card border-success h-100">
-                              <div className="card-header bg-success-subtle text-center">
+                            <div className="card-header bg-success-subtle text-center">
                                 <h6 className="mb-0 fw-bold">
                                   <i className="bi bi-grid-3x3-gap me-1"></i>
                                   {blockLabel} Blok
