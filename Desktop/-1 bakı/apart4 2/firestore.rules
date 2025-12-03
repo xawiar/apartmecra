@@ -122,9 +122,8 @@ service cloud.firestore {
     
     // Logs collection
     match /logs/{logId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow delete: if isAdmin();
+      // Şu an için loglar tüm istemciler için açık; gerekirse ileride tekrar sıkılaştırılabilir.
+      allow read, create, update, delete: if true;
     }
     
     // Panel images metadata
