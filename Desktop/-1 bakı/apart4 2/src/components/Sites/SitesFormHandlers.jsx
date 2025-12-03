@@ -1,6 +1,9 @@
 import { createSite, updateSite } from '../../services/api';
 import { createLog } from '../../services/api';
 
+// Basit bir gönderim kilidi (çoklu tıklamayı önlemek için)
+let isSubmittingSiteForm = false;
+
 const SitesFormHandlers = ({
   sites, setSites,
   currentSite, setCurrentSite,
@@ -15,6 +18,13 @@ const SitesFormHandlers = ({
   // Handle form submit
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+
+    // Eğer şu anda zaten bir kayıt işlemi devam ediyorsa, yeni tıklamayı yok say
+    if (isSubmittingSiteForm) {
+      console.warn('Site form submit already in progress, ignoring duplicate submit.');
+      return;
+    }
+    isSubmittingSiteForm = true;
     
     // Get current formData from the event target if available, otherwise use prop
     const currentFormData = formData || {};
@@ -208,6 +218,9 @@ const SitesFormHandlers = ({
       } else {
         alert(`Site kaydedilirken bir hata oluştu: ${error.message}`);
       }
+    } finally {
+      // İşlem bittiğinde kilidi kaldır
+      isSubmittingSiteForm = false;
     }
   };
 
