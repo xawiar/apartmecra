@@ -630,17 +630,29 @@ const AgreementHelpers = ({
       const margin = 15;
       let y = margin;
 
-      // Helper function to handle empty values (don't show placeholder text)
-      const getValue = (value, defaultValue = '') => {
-        return value || defaultValue;
+      // Helper function to fix Turkish characters
+      const fixTurkishChars = (text) => {
+        if (!text) return '';
+        return String(text)
+          .replace(/ı/g, 'i')
+          .replace(/İ/g, 'I')
+          .replace(/ğ/g, 'g')
+          .replace(/Ğ/g, 'G')
+          .replace(/ü/g, 'u')
+          .replace(/Ü/g, 'U')
+          .replace(/ş/g, 's')
+          .replace(/Ş/g, 'S')
+          .replace(/ö/g, 'o')
+          .replace(/Ö/g, 'O')
+          .replace(/ç/g, 'c')
+          .replace(/Ç/g, 'C');
       };
 
       const addText = (text, x, yPos, maxWidth, fontSize = 11, fontStyle = 'normal') => {
-        if (!text) return yPos;
         pdf.setFontSize(fontSize);
         pdf.setFont('helvetica', fontStyle);
-        // Türkçe karakter desteği için text'i olduğu gibi kullan
-        const lines = pdf.splitTextToSize(String(text), maxWidth);
+        const fixed = fixTurkishChars(text);
+        const lines = pdf.splitTextToSize(fixed, maxWidth);
         pdf.text(lines, x, yPos);
         return yPos + lines.length * (fontSize * 0.45);
       };
@@ -664,7 +676,7 @@ const AgreementHelpers = ({
       // Header
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('ASANSÖR İÇİ REKLAM PANELİ YAYIN SÖZLEŞMESİ', pageWidth / 2, y, { align: 'center' });
+      pdf.text(fixTurkishChars('ASANSOR ICI REKLAM PANELI YAYIN SOZLESMESI'), pageWidth / 2, y, { align: 'center' });
       y += 10;
 
       // Madde 1 – Taraflar
@@ -674,26 +686,26 @@ const AgreementHelpers = ({
       y += 2;
 
       pdf.setFont('helvetica', 'normal');
-      y = addText('İşbu sözleşme;', margin, y, pageWidth - 2 * margin);
+      y = addText('Isbu sozlesme;', margin, y, pageWidth - 2 * margin);
       y += 2;
 
-      // Hizmet Sağlayıcı
+      // Hizmet Saglayici
       y = addText('Reklam Hizmeti Veren:', margin, y, pageWidth - 2 * margin, 11, 'bold');
-      y = addText('Firma Unvanı: DAT DİJİTAL', margin + 4, y, pageWidth - 2 * margin);
-      y = addText('Adres: ÇARŞI MAHALLESİ BOSNA HERSEK BULVARI ELAZIĞ İŞ MERKEZİ NO:11 KAT:5 DAİRE:20 MERKEZ/ELAZIĞ', margin + 4, y, pageWidth - 2 * margin);
+      y = addText('Firma Unvani: DAT DIJITAL', margin + 4, y, pageWidth - 2 * margin);
+      y = addText('Adres: CARSI MAHALLESI BOSNA HERSEK BULVARI ELAZIG IS MERKEZI NO:11 KAT:5 DAIRE:20 MERKEZ/ELAZIG', margin + 4, y, pageWidth - 2 * margin);
       y = addText('Vergi Dairesi / No:', margin + 4, y, pageWidth - 2 * margin);
       y = addText('Telefon: 0540 365 23 23', margin + 4, y, pageWidth - 2 * margin);
       y += 2;
 
       // Reklam Veren (company)
       y = addText('Reklam Veren:', margin, y, pageWidth - 2 * margin, 11, 'bold');
-      y = addText(`Firma Unvanı: ${getValue(companyName)}`, margin + 4, y, pageWidth - 2 * margin);
-      y = addText(`Adres: ${getValue(company?.address)}`, margin + 4, y, pageWidth - 2 * margin);
-      y = addText(`Vergi Dairesi / No: ${getValue(company?.taxInfo)}`, margin + 4, y, pageWidth - 2 * margin);
-      y = addText(`Telefon: ${getValue(company?.phone)}`, margin + 4, y, pageWidth - 2 * margin);
+      y = addText(`Firma Unvani: ${companyName || ''}`, margin + 4, y, pageWidth - 2 * margin);
+      y = addText(`Adres: ${company?.address || ''}`, margin + 4, y, pageWidth - 2 * margin);
+      y = addText(`Vergi Dairesi / No: ${company?.taxInfo || ''}`, margin + 4, y, pageWidth - 2 * margin);
+      y = addText(`Telefon: ${company?.phone || ''}`, margin + 4, y, pageWidth - 2 * margin);
       y += 4;
 
-      y = addText('Arasında aşağıdaki şartlarla akdedilmiştir.', margin, y, pageWidth - 2 * margin);
+      y = addText('Arasinda asagidaki sartlarla akdedilmistir.', margin, y, pageWidth - 2 * margin);
       y += 4;
 
       // Madde 2 – Sözleşmenin Konusu
@@ -720,27 +732,35 @@ const AgreementHelpers = ({
         );
       y += 3;
 
-      y = addText(`Toplam Panel Sayısı: ${totalPanels} adet`, margin, y, pageWidth - 2 * margin);
+      y = addText(`Toplam Panel Sayisi: ${totalPanels} adet`, margin, y, pageWidth - 2 * margin);
       y = addText(
-        `1 Panel 1 Haftalık Birim Ücreti: ${formatCurrency(agreement.weeklyRatePerPanel)} + KDV`,
+        `1 Panel 1 Haftalik Birim Ucreti: ${formatCurrency(agreement.weeklyRatePerPanel)} + KDV`,
         margin,
         y,
         pageWidth - 2 * margin
       );
-      y += 2;
+      y += 4;
       
-      // Fiyatlar bölümü - manuel doldurulacak alanlar
-      y = addText('Anlaşma Tutarı:', margin, y, pageWidth - 2 * margin, 11, 'bold');
+      // Fiyatlar bolumu - manuel doldurulacak alanlar
+      pdf.setFont('helvetica', 'bold');
+      y = addText('Anlasma Tutari:', margin, y, pageWidth - 2 * margin, 11, 'bold');
+      pdf.setFont('helvetica', 'normal');
       y = addText(`${formatCurrency(agreement.totalAmount)}`, margin + 4, y, pageWidth - 2 * margin);
       y += 3;
-      y = addText('KDV Oranı:', margin, y, pageWidth - 2 * margin, 11, 'bold');
-      y = addText('', margin + 4, y, pageWidth - 2 * margin); // Boş bırak
+      pdf.setFont('helvetica', 'bold');
+      y = addText('KDV Orani:', margin, y, pageWidth - 2 * margin, 11, 'bold');
+      pdf.setFont('helvetica', 'normal');
+      y = addText('', margin + 4, y, pageWidth - 2 * margin); // Bos birak
       y += 3;
-      y = addText('KDV Tutarı:', margin, y, pageWidth - 2 * margin, 11, 'bold');
-      y = addText('', margin + 4, y, pageWidth - 2 * margin); // Boş bırak
+      pdf.setFont('helvetica', 'bold');
+      y = addText('KDV Tutari:', margin, y, pageWidth - 2 * margin, 11, 'bold');
+      pdf.setFont('helvetica', 'normal');
+      y = addText('', margin + 4, y, pageWidth - 2 * margin); // Bos birak
       y += 3;
+      pdf.setFont('helvetica', 'bold');
       y = addText('Toplam Tutar:', margin, y, pageWidth - 2 * margin, 11, 'bold');
-      y = addText('', margin + 4, y, pageWidth - 2 * margin); // Boş bırak
+      pdf.setFont('helvetica', 'normal');
+      y = addText('', margin + 4, y, pageWidth - 2 * margin); // Bos birak
       y += 4;
 
       // Madde 4 – Sözleşme Süresi
