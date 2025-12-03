@@ -887,16 +887,16 @@ const AgreementHelpers = ({
       );
       y += 10;
 
-      // İmza bölümü
+      // Imza bolumu
       checkNewPage(40);
       const centerX = pageWidth / 2;
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(11);
-      pdf.text('HİZMET SAĞLAYICI', margin + 10, y);
-      pdf.text('REKLAM VEREN', centerX + 10, y);
+      pdf.text(fixTurkishChars('HIZMET SAGLAYICI'), margin + 10, y);
+      pdf.text(fixTurkishChars('REKLAM VEREN'), centerX + 10, y);
       y += 8;
       pdf.setFont('helvetica', 'normal');
-      pdf.text('DAT DİJİTAL', margin + 10, y);
+      pdf.text(fixTurkishChars('DAT DIJITAL'), margin + 10, y);
       pdf.text(fixTurkishChars(companyName || ''), centerX + 10, y);
       y += 20;
 
