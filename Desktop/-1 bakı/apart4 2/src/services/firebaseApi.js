@@ -130,26 +130,26 @@ export const login = async (username, password) => {
         });
         loginAttempts.push({
           email: 'admin@example.com',
-          role: 'admin'
-        });
-      } else {
-        // Try site login first
-        loginAttempts.push({
-          email: `${username}@site.local`,
-          role: 'site_user'
-        });
-        
-        // Try company login
-        loginAttempts.push({
-          email: `${username}@company.local`,
-          role: 'company'
-        });
-        
-        // Try personnel login
-        loginAttempts.push({
-          email: `${username}@personnel.local`,
-          role: 'personnel'
-        });
+        role: 'admin'
+      });
+    } else {
+      // Try site login first
+      loginAttempts.push({
+        email: `${username}@site.local`,
+        role: 'site_user'
+      });
+      
+      // Try company login
+      loginAttempts.push({
+        email: `${username}@company.local`,
+        role: 'company'
+      });
+      
+      // Try personnel login
+      loginAttempts.push({
+        email: `${username}@personnel.local`,
+        role: 'personnel'
+      });
       }
     }
     
@@ -637,7 +637,7 @@ export const getSiteData = async (siteId) => {
       getAgreementsFromDb(),
       getTransactionsFromDb()
     ]);
-
+    
     let siteRecord = null;
 
     if (siteDocResult.success && siteDocResult.data) {
@@ -653,7 +653,7 @@ export const getSiteData = async (siteId) => {
         siteRecord = fallback.data[0];
       } else {
         console.error('getSiteData: Site not found for siteId (docId or field id):', siteId);
-        return { site: null, agreements: [], transactions: [] };
+      return { site: null, agreements: [], transactions: [] };
       }
     }
     
@@ -744,10 +744,10 @@ export const deleteLog = async (logId) => {
 };
 
 // Panel Image Functions
-export const getPanelImages = async () => {
+export const getPanelImages = async (filters = {}) => {
   try {
     const { getPanelImages: firebaseGetPanelImages } = await import('./firebaseStorage.js');
-    const result = await firebaseGetPanelImages();
+    const result = await firebaseGetPanelImages(filters);
     console.log('getPanelImages called - returning images:', result.data);
     return result.data || [];
   } catch (error) {
@@ -807,7 +807,7 @@ export const resetPanelImages = async () => {
     return result;
   } catch (error) {
     console.error('Error resetting panel images:', error);
-    return {
+  return {
       success: false,
       error: error.message
     };
