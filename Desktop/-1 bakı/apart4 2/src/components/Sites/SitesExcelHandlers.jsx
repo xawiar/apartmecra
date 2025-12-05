@@ -50,11 +50,11 @@ const SitesExcelHandlers = ({
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         
-        // Convert to JSON with proper header handling
-        const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        // Convert to JSON with proper header handling (header: 1 means array of arrays)
+        const data = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
         
         // Check if file has data
-        if (!data || data.length <= 1) {
+        if (!data || data.length === 0) {
           // Check if window.showAlert is available, if not use a fallback
           if (typeof window.showAlert === 'function') {
             await window.showAlert(
@@ -68,11 +68,38 @@ const SitesExcelHandlers = ({
           return;
         }
         
-        // Process the data (skip header row)
+        // Check if first row is header (contains expected header text)
+        let startRow = 0;
+        const firstRow = data[0] || [];
+        const firstRowText = firstRow.map(cell => String(cell || '').toLowerCase().trim()).join(' ');
+        
+        // Check if first row looks like a header (contains keywords)
+        if (firstRowText.includes('site adı') || 
+            firstRowText.includes('mahalle') || 
+            firstRowText.includes('yönetici') ||
+            firstRowText.includes('site türü')) {
+          startRow = 1; // Skip header row
+        }
+        
+        // Check if we have data rows after header
+        if (data.length <= startRow) {
+          if (typeof window.showAlert === 'function') {
+            await window.showAlert(
+              'Uyarı',
+              'Excel dosyasında içe aktarılacak veri bulunamadı. Lütfen şablonu kullandığınızdan emin olun.',
+              'warning'
+            );
+          } else {
+            alert('Excel dosyasında içe aktarılacak veri bulunamadı. Lütfen şablonu kullandığınızdan emin olun.');
+          }
+          return;
+        }
+        
+        // Process the data (skip header row if present)
         const sitesToImport = [];
         const skippedRows = [];
         
-        for (let i = 1; i < data.length; i++) {
+        for (let i = startRow; i < data.length; i++) {
           const row = data[i];
           
           // Skip completely empty rows
@@ -80,8 +107,8 @@ const SitesExcelHandlers = ({
             continue;
           }
           
-          // Ensure we have at least 15 columns by padding with empty strings if needed
-          while (row.length < 15) {
+          // Ensure we have at least 13 columns (A-M) by padding with empty strings if needed
+          while (row.length < 13) {
             row.push('');
           }
           
@@ -93,21 +120,27 @@ const SitesExcelHandlers = ({
             return String(cell).trim();
           });
           
+          // Debug: Log the row being processed
+          console.log(`Processing row ${i + 1}:`, cleanRow);
+          
+          // Map Excel columns to site data (A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11, M=12)
           const siteData = {
-            name: cleanRow[0],
-            neighborhood: cleanRow[1],
-            manager: cleanRow[2],
-            phone: cleanRow[3],
-            siteType: cleanRow[4] === 'İş Merkezi' ? 'business_center' : 'site',
-            blocks: cleanRow[5],
-            elevatorsPerBlock: cleanRow[6],
-            agreementPercentage: cleanRow[7],
-            apartmentCount: cleanRow[8],
-            averagePeople: cleanRow[9],
-            businessCount: cleanRow[10],
-            peopleCount: cleanRow[11],
-            notes: cleanRow[12]
+            name: cleanRow[0] || '',                    // A: Site Adı
+            neighborhood: cleanRow[1] || '',             // B: Mahalle
+            manager: cleanRow[2] || '',                 // C: Yönetici Adı
+            phone: cleanRow[3] || '',                   // D: Yönetici İletişim
+            siteType: (cleanRow[4] || '').toLowerCase().includes('iş merkezi') ? 'business_center' : 'site', // E: Site Türü
+            blocks: cleanRow[5] || '',                   // F: Blok Sayısı
+            elevatorsPerBlock: cleanRow[6] || '',        // G: 1 Blok için Asansör Sayısı
+            agreementPercentage: cleanRow[7] || '',     // H: Anlaşma Yüzdesi
+            apartmentCount: cleanRow[8] || '',          // I: Daire Sayısı (Site için)
+            averagePeople: cleanRow[9] || '',           // J: Ortalama İnsan Sayısı (Site için - otomatik)
+            businessCount: cleanRow[10] || '',          // K: İşyeri Sayısı (İş Merkezi için)
+            peopleCount: cleanRow[11] || '',           // L: İş Merkezine Giren Kişi Sayısı (İş Merkezi için)
+            notes: cleanRow[12] || ''                   // M: Not
           };
+          
+          console.log(`Parsed site data for row ${i + 1}:`, siteData);
           
           // Validate required fields
           if (!siteData.name) {
