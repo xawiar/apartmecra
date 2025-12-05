@@ -254,6 +254,7 @@ export const updateSite = async (siteId, siteData) => {
   try {
     // First try to get by document ID
     let docId = siteId;
+    let oldSiteData = null;
     const siteResult = await getDocument(COLLECTIONS.SITES, siteId);
     
     if (!siteResult.success || !siteResult.data) {
@@ -264,10 +265,18 @@ export const updateSite = async (siteId, siteData) => {
       if (!querySnapshot.empty) {
         const docSnap = querySnapshot.docs[0];
         docId = docSnap.id; // This is the actual Firestore document ID
+        oldSiteData = docSnap.data();
       } else {
         return { success: false, error: 'Site not found' };
       }
+    } else {
+      oldSiteData = siteResult.data;
     }
+    
+    // Check if phone number changed
+    const oldPhone = oldSiteData?.phone || '';
+    const newPhone = siteData.phone || '';
+    const phoneChanged = oldPhone !== newPhone && newPhone;
     
     // Calculate elevators and panels
     const blocks = parseInt(siteData.blocks) || 0;
@@ -281,7 +290,42 @@ export const updateSite = async (siteId, siteData) => {
       panels: panels
     };
     
-    return await updateDocument(COLLECTIONS.SITES, docId, updatedSiteData);
+    const updateResult = await updateDocument(COLLECTIONS.SITES, docId, updatedSiteData);
+    
+    // If phone changed, update user password in Auth and users collection
+    if (phoneChanged && updateResult.success) {
+      try {
+        const email = `${siteId}@site.local`;
+        
+        // Update user in users collection
+        const usersRef = collection(db, COLLECTIONS.USERS);
+        const userQuery = query(usersRef, where('email', '==', email));
+        const userSnapshot = await getDocs(userQuery);
+        
+        if (!userSnapshot.empty) {
+          const userDoc = userSnapshot.docs[0];
+          await userDoc.ref.update({
+            password: newPhone,
+            updatedAt: new Date()
+          });
+          
+          // Update password in Firebase Auth via Cloud Function
+          const { getFunctions, httpsCallable } = await import('firebase/functions');
+          const { auth } = await import('../config/firebase.js');
+          const functions = getFunctions();
+          const updateUserPassword = httpsCallable(functions, 'updateUserPasswordByEmail');
+          
+          await updateUserPassword({ email, newPassword: newPhone });
+          
+          console.log(`Site user password updated: ${email}`);
+        }
+      } catch (error) {
+        console.error('Error updating site user password:', error);
+        // Don't fail the site update if password update fails
+      }
+    }
+    
+    return updateResult;
   } catch (error) {
     console.error('Error updating site:', error);
     return { success: false, error: error.message };
@@ -446,6 +490,7 @@ export const updateCompany = async (companyId, companyData) => {
   try {
     // First try to get by document ID
     let docId = companyId;
+    let oldCompanyData = null;
     const companyResult = await getDocument(COLLECTIONS.COMPANIES, companyId);
     
     if (!companyResult.success || !companyResult.data) {
@@ -456,12 +501,55 @@ export const updateCompany = async (companyId, companyData) => {
       if (!querySnapshot.empty) {
         const docSnap = querySnapshot.docs[0];
         docId = docSnap.id; // This is the actual Firestore document ID
+        oldCompanyData = docSnap.data();
       } else {
         return { success: false, error: 'Company not found' };
       }
+    } else {
+      oldCompanyData = companyResult.data;
     }
     
-    return await updateDocument(COLLECTIONS.COMPANIES, docId, companyData);
+    // Check if phone number changed
+    const oldPhone = oldCompanyData?.phone || '';
+    const newPhone = companyData.phone || '';
+    const phoneChanged = oldPhone !== newPhone && newPhone;
+    
+    const updateResult = await updateDocument(COLLECTIONS.COMPANIES, docId, companyData);
+    
+    // If phone changed, update user password in Auth and users collection
+    if (phoneChanged && updateResult.success) {
+      try {
+        const email = `${companyId}@company.local`;
+        
+        // Update user in users collection
+        const usersRef = collection(db, COLLECTIONS.USERS);
+        const userQuery = query(usersRef, where('email', '==', email));
+        const userSnapshot = await getDocs(userQuery);
+        
+        if (!userSnapshot.empty) {
+          const userDoc = userSnapshot.docs[0];
+          await userDoc.ref.update({
+            password: newPhone,
+            updatedAt: new Date()
+          });
+          
+          // Update password in Firebase Auth via Cloud Function
+          const { getFunctions, httpsCallable } = await import('firebase/functions');
+          const { auth } = await import('../config/firebase.js');
+          const functions = getFunctions();
+          const updateUserPassword = httpsCallable(functions, 'updateUserPasswordByEmail');
+          
+          await updateUserPassword({ email, newPassword: newPhone });
+          
+          console.log(`Company user password updated: ${email}`);
+        }
+      } catch (error) {
+        console.error('Error updating company user password:', error);
+        // Don't fail the company update if password update fails
+      }
+    }
+    
+    return updateResult;
   } catch (error) {
     console.error('Error updating company:', error);
     return { success: false, error: error.message };

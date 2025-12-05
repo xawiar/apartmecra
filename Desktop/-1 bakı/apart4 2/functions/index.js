@@ -275,6 +275,30 @@ exports.createCompanyUser = onDocumentCreated(
   }
 );
 
+// Kullanıcı şifresini email ile güncelle (site/firma telefonu değiştiğinde)
+exports.updateUserPasswordByEmail = onCall(async (request) => {
+  try {
+    const { email, newPassword } = request.data;
+    
+    if (!email || !newPassword) {
+      return { success: false, error: 'Email and newPassword are required' };
+    }
+    
+    // Firebase Authentication'da kullanıcıyı bul ve şifresini güncelle
+    const userRecord = await admin.auth().getUserByEmail(email);
+    await admin.auth().updateUser(userRecord.uid, {
+      password: newPassword
+    });
+    
+    console.log(`Password updated for user: ${email}`);
+    
+    return { success: true, message: 'Password updated successfully' };
+  } catch (error) {
+    console.error('Error updating user password:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 // Admin kullanıcısını oluştur (manuel tetikleme için)
 exports.createAdminUser = onCall(async (request) => {
   try {
