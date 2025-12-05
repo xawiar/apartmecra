@@ -190,14 +190,20 @@ const SitesMain = () => {
   }
   const handlers = handlersRef.current;
 
-  // Memoize data handler objects - use ref to avoid recreating
+  // Memoize data handler objects - recreate when sites change to ensure fresh state
   const dataHandlersRef = useRef(null);
-  if (!dataHandlersRef.current) {
+  const prevSitesRef = useRef(sites);
+  
+  // Only recreate if sites actually changed (by reference or length)
+  if (!dataHandlersRef.current || 
+      (prevSitesRef.current && prevSitesRef.current.length !== (sites?.length || 0)) ||
+      prevSitesRef.current !== sites) {
+    prevSitesRef.current = sites;
     dataHandlersRef.current = SitesDataHandlers({
-      sites, setSites,
-      transactions, setTransactions,
-      agreements, setAgreements,
-      companies, setCompanies,
+      sites: sites || [], setSites,
+      transactions: transactions || [], setTransactions,
+      agreements: agreements || [], setAgreements,
+      companies: companies || [], setCompanies,
       refreshData
     });
   }

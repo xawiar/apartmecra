@@ -105,10 +105,22 @@ const SitesDataHandlers = ({
   // Gerçek silme fonksiyonu
   const handleDeleteSite = async (siteId) => {
     console.log('handleDeleteSite called with siteId:', siteId);
-    console.log('Current sites:', sites.map(s => ({ id: s.id, _docId: s._docId, name: s.name })));
+    
+    // Get current sites - use state first, then fetch if empty
+    let currentSites = sites && sites.length > 0 ? sites : [];
+    if (currentSites.length === 0) {
+      try {
+        currentSites = await getSitesHandler();
+      } catch (error) {
+        console.error('Error fetching sites:', error);
+        currentSites = [];
+      }
+    }
+    
+    console.log('Current sites:', currentSites.map(s => ({ id: s.id, _docId: s._docId, name: s.name })));
     
     // Try to find site by custom ID or document ID (flexible matching)
-    const siteToDelete = sites.find(s => {
+    const siteToDelete = currentSites.find(s => {
       // Exact match
       if (s.id === siteId || s._docId === siteId) return true;
       // String comparison
@@ -123,8 +135,8 @@ const SitesDataHandlers = ({
     
     // If site not found in state, try to delete directly (deleteSite handles ID lookup)
     if (!siteToDelete) {
-      console.warn('Site not found in state, but attempting deletion anyway:', siteId);
-      console.warn('Available site IDs:', sites.map(s => ({ id: s.id, _docId: s._docId, name: s.name })));
+      console.log('Site not found in state, but attempting deletion anyway:', siteId);
+      console.log('Available site IDs:', currentSites.map(s => ({ id: s.id, _docId: s._docId, name: s.name })));
       
       // Still ask for confirmation
       const result = await window.showConfirm(
@@ -230,9 +242,23 @@ const SitesDataHandlers = ({
     return false;
   };
 
-  // New function to delete all sites and archive them
+  // New function to delete all sites permanently
   const handleDeleteAllSites = async () => {
-    if (sites.length === 0) {
+    // Get fresh sites data to ensure we have the latest state
+    let currentSites = sites && sites.length > 0 ? sites : [];
+    
+    // If state is empty, try to fetch fresh data
+    if (currentSites.length === 0) {
+      try {
+        const fetchedSites = await getSitesHandler();
+        currentSites = fetchedSites || [];
+      } catch (error) {
+        console.error('Error fetching sites:', error);
+        currentSites = [];
+      }
+    }
+    
+    if (!currentSites || currentSites.length === 0) {
       await window.showAlert(
         'Bilgi',
         'Silinecek site bulunmamaktadır.',
@@ -242,9 +268,9 @@ const SitesDataHandlers = ({
     }
 
     const result = await window.showConfirm(
-      'Tüm Siteleri Sil',
-      `Tüm ${sites.length} siteyi arşivlemek istediğinize emin misiniz? Bu işlem geri alınamaz.`,
-      'warning'
+      'Tüm Siteleri Kalıcı Olarak Sil',
+      `Tüm ${currentSites.length} siteyi kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz!`,
+      'error'
     );
     
     if (result) {
@@ -252,31 +278,39 @@ const SitesDataHandlers = ({
         let successCount = 0;
         let errorCount = 0;
         
-        // Create an array of promises for archiving all sites
-        const archivePromises = sites.map(async (site) => {
+        // Create an array of promises for deleting all sites
+        const deletePromises = currentSites.map(async (site) => {
           try {
-            const success = await archiveSite(site.id);
+            // Use site.id or site._docId, whichever is available
+            const siteIdToDelete = site.id || site._docId;
+            if (!siteIdToDelete) {
+              console.error('Site has no ID:', site);
+              errorCount++;
+              return { success: false, siteId: null, error: 'Site has no ID' };
+            }
+            
+            const success = await deleteSite(siteIdToDelete);
             if (success) {
               successCount++;
               // Log the action
               await createLog({
                 user: 'Admin',
-                action: `Site arşivlendi: ${site.name}`
+                action: `Site kalıcı olarak silindi: ${site.name || siteIdToDelete}`
               });
-              return { success: true, siteId: site.id };
+              return { success: true, siteId: siteIdToDelete };
             } else {
               errorCount++;
-              return { success: false, siteId: site.id };
+              return { success: false, siteId: siteIdToDelete };
             }
           } catch (error) {
-            console.error('Error archiving site:', site.id, error);
+            console.error('Error deleting site:', site.id, error);
             errorCount++;
             return { success: false, siteId: site.id, error: error.message };
           }
         });
         
-        // Wait for all archive operations to complete
-        await Promise.all(archivePromises);
+        // Wait for all delete operations to complete
+        await Promise.all(deletePromises);
         
         // Update state to remove all sites
         setSites([]);
@@ -288,14 +322,14 @@ const SitesDataHandlers = ({
         
         await window.showAlert(
           'İşlem Tamamlandı',
-          `${successCount} site başarıyla arşivlendi. ${errorCount} site arşivlenirken hata oluştu.`,
+          `${successCount} site başarıyla silindi. ${errorCount} site silinirken hata oluştu.`,
           'info'
         );
       } catch (error) {
         console.error('Error deleting all sites:', error);
         await window.showAlert(
           'Hata',
-          'Siteler arşivlenirken bir hata oluştu: ' + error.message,
+          'Siteler silinirken bir hata oluştu: ' + error.message,
           'error'
         );
       }
