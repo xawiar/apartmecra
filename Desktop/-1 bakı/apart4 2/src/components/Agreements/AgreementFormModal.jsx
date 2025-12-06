@@ -391,15 +391,15 @@ const AgreementFormModal = ({
                           )}
                         </div>
                       </div>
-                      <div className="card-body">
-                        {selectedSites.length > 0 ? (
-                          {(selectedSites || []).map(siteId => {
-                            const site = (sites || []).find(s => s.id === siteId);
-                            if (!site) return null;
-                            const blockLabels = site.siteType === 'business_center' 
-                              ? ['A'] 
-                              : (helpers.generateBlockLabels(site.blocks) || []);
-                            const selectedBlocks = (siteBlockSelections[siteId] || []);
+                        <div className="card-body">
+                          {selectedSites.length > 0 ? (
+                            (selectedSites || []).map(siteId => {
+                              const site = (sites || []).find(s => s.id === siteId);
+                              if (!site) return null;
+                              const blockLabels = site.siteType === 'business_center' 
+                                ? ['A'] 
+                                : (helpers.generateBlockLabels(site.blocks) || []);
+                              const selectedBlocks = (siteBlockSelections[siteId] || []);
                             
                             return (
                               <div key={siteId} className="mb-4 pb-3 border-bottom">
