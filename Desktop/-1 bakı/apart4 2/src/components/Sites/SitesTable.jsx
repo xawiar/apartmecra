@@ -60,7 +60,10 @@ const SitesTable = ({
                     {site.elevators}
                   </td>
                   <td className="py-2 px-2 text-center small">
-                    {site.panels}
+                    {site.siteType === 'business_center' 
+                      ? (parseInt(site.manualPanels) || parseInt(site.panels) || 0)
+                      : (parseInt(site.panels) || 0)
+                    }
                   </td>
                   <td className="py-2 px-2 text-center small">
                     {site.siteType === 'business_center' ? (

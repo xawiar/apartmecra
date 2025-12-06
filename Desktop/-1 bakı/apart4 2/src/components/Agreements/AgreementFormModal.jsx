@@ -301,7 +301,7 @@ const AgreementFormModal = ({
                                       <span className="badge bg-warning text-dark ms-2">{businessCenters.length}</span>
                                     </h6>
                                     <div className="row g-3">
-                                      {businessCenters.map(site => (
+                                      {(businessCenters || []).map(site => (
                                         <div key={site.id} className="col-md-6 col-sm-12">
                                           <div className="form-check-card h-100 border-warning">
                                             <input
