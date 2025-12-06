@@ -234,11 +234,11 @@ const AgreementFormModal = ({
                           {/* Group sites by neighborhood and separate business centers */}
                           {(() => {
                             // Separate sites and business centers
-                            const regularSites = sites.filter(site => site.siteType !== 'business_center');
-                            const businessCenters = sites.filter(site => site.siteType === 'business_center');
+                            const regularSites = (sites || []).filter(site => site.siteType !== 'business_center');
+                            const businessCenters = (sites || []).filter(site => site.siteType === 'business_center');
                             
                             // Group regular sites by neighborhood
-                            const sitesByNeighborhood = regularSites.reduce((acc, site) => {
+                            const sitesByNeighborhood = (regularSites || []).reduce((acc, site) => {
                               const neighborhood = site.neighborhood || 'Diğer';
                               if (!acc[neighborhood]) {
                                 acc[neighborhood] = [];
@@ -248,7 +248,7 @@ const AgreementFormModal = ({
                             }, {});
                             
                             // Sort neighborhoods alphabetically
-                            const sortedNeighborhoods = Object.keys(sitesByNeighborhood).sort();
+                            const sortedNeighborhoods = Object.keys(sitesByNeighborhood || {}).sort();
                             
                             return (
                               <>

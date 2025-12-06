@@ -148,7 +148,7 @@ const CurrentStatus = () => {
       const blockCount = isBusinessCenter ? 1 : (parseInt(site.blocks) || 0);
       const elevatorsPerBlock = isBusinessCenter ? 0 : (parseInt(site.elevatorsPerBlock) || 0);
       const panelsPerBlock = isBusinessCenter
-        ? (parseInt(site.panels) || 0)
+        ? (parseInt(site.manualPanels) || parseInt(site.panels) || 0)
         : (elevatorsPerBlock * 2);
       const blockLabels = isBusinessCenter ? ['A'] : generateBlockLabels(blockCount);
       
