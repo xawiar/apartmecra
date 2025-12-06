@@ -321,7 +321,10 @@ const AgreementFormModal = ({
                                                 <span className="fw-medium">{site.name}</span>
                                                 <div className="small text-muted mt-1">
                                                   <i className="bi bi-grid me-1"></i>
-                                                  {site.blocks} Blok, {site.panels} Panel
+                                                  {site.siteType === 'business_center' 
+                                                    ? `${parseInt(site.manualPanels) || parseInt(site.panels) || 0} Panel`
+                                                    : `${site.blocks} Blok, ${site.panels} Panel`
+                                                  }
                                                   {site.neighborhood && (
                                                     <span className="ms-2">
                                                       <i className="bi bi-geo-alt me-1"></i>
@@ -387,10 +390,13 @@ const AgreementFormModal = ({
                       </div>
                       <div className="card-body">
                         {selectedSites.length > 0 ? (
-                          selectedSites.map(siteId => {
-                            const site = sites.find(s => s.id === siteId);
-                            const blockLabels = helpers.generateBlockLabels(site.blocks);
-                            const selectedBlocks = siteBlockSelections[siteId] || [];
+                          {(selectedSites || []).map(siteId => {
+                            const site = (sites || []).find(s => s.id === siteId);
+                            if (!site) return null;
+                            const blockLabels = site.siteType === 'business_center' 
+                              ? ['A'] 
+                              : (helpers.generateBlockLabels(site.blocks) || []);
+                            const selectedBlocks = (siteBlockSelections[siteId] || []);
                             
                             return (
                               <div key={siteId} className="mb-4 pb-3 border-bottom">
@@ -433,7 +439,7 @@ const AgreementFormModal = ({
                                       })()
                                     ) : (
                                       // Normal site için blok seçimi
-                                      blockLabels.map((label, index) => {
+                                      (blockLabels || []).map((label, index) => {
                                         const blockKey = `${siteId}-block-${label}`; // Unique key for each block
                                         const isSelected = selectedBlocks.includes(blockKey);
                                         
@@ -490,7 +496,7 @@ const AgreementFormModal = ({
                                               className="btn btn-primary btn-sm fw-bold"
                                               onClick={() => {
                                                 const totalPanels = site.siteType === 'business_center' 
-                                                  ? (parseInt(site.panels) || 0) 
+                                                  ? (parseInt(site.manualPanels) || parseInt(site.panels) || 0) 
                                                   : (parseInt(site.elevatorsPerBlock) || 0) * 2;
                                                 uiHandlers.handleSelectHalf(siteId, blockKey, sitePanelSelections, totalPanels);
                                               }}
@@ -502,7 +508,7 @@ const AgreementFormModal = ({
                                             </button>
                                           </div>
                                           <div className="row g-2">
-                                            {Array.from({ length: site.siteType === 'business_center' ? (parseInt(site.panels) || 0) : (parseInt(site.elevatorsPerBlock) || 0) * 2 }, (_, i) => {
+                                            {Array.from({ length: site.siteType === 'business_center' ? (parseInt(site.manualPanels) || parseInt(site.panels) || 0) : (parseInt(site.elevatorsPerBlock) || 0) * 2 }, (_, i) => {
                                               const panelId = i + 1;
                                               const panelKey = `panel-${panelId}`;
                                               const isPanelSelected = selectedPanels.includes(panelKey);
