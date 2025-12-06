@@ -20,6 +20,9 @@ const Companies = () => {
     contact: '',
     phone: '',
     email: '',
+    address: '',
+    taxOffice: '',
+    taxNumber: '',
     notes: '',
     status: 'active'
   });
@@ -179,6 +182,9 @@ const Companies = () => {
       contact: '',
       phone: '',
       email: '',
+      address: '',
+      taxOffice: '',
+      taxNumber: '',
       notes: '',
       status: 'active'
     });
@@ -192,6 +198,9 @@ const Companies = () => {
       contact: company.contact || '',
       phone: company.phone || '',
       email: company.email || '',
+      address: company.address || '',
+      taxOffice: company.taxOffice || '',
+      taxNumber: company.taxNumber || '',
       notes: company.notes || '',
       status: company.status || 'active'
     });
@@ -1508,6 +1517,41 @@ const Companies = () => {
                       value={formData.email}
                       onChange={handleFormChange}
                     />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label fw-bold">Açık Adres</label>
+                    <textarea
+                      className="form-control form-control-custom"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleFormChange}
+                      rows="2"
+                      placeholder="Firma açık adresi (sözleşmede kullanılır)"
+                    ></textarea>
+                  </div>
+                  <div className="row">
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-bold">Vergi Dairesi</label>
+                      <input
+                        type="text"
+                        className="form-control form-control-custom"
+                        name="taxOffice"
+                        value={formData.taxOffice}
+                        onChange={handleFormChange}
+                        placeholder="Örn: Merkez Vergi Dairesi"
+                      />
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-bold">Vergi No</label>
+                      <input
+                        type="text"
+                        className="form-control form-control-custom"
+                        name="taxNumber"
+                        value={formData.taxNumber}
+                        onChange={handleFormChange}
+                        placeholder="Vergi numarası"
+                      />
+                    </div>
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-bold">Notlar</label>

@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getPartners, updatePartner } from '../services/api';
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getPartners, updatePartner, getAgreements, getSites, getCompanies } from '../services/api';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 const Cashier = () => {
   const [transactions, setTransactions] = useState([]);
   const [partners, setPartners] = useState([]);
+  const [agreements, setAgreements] = useState([]);
+  const [sites, setSites] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showIncomeForm, setShowIncomeForm] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
@@ -31,6 +34,14 @@ const Cashier = () => {
     dateTo: ''
   });
   
+  // Site payment calculation state
+  const [showSitePaymentCalc, setShowSitePaymentCalc] = useState(false);
+  const [sitePaymentFilter, setSitePaymentFilter] = useState({
+    dateFrom: '',
+    dateTo: ''
+  });
+  const [sitePaymentResults, setSitePaymentResults] = useState([]);
+  
   // Custom confirmation modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   
@@ -40,12 +51,18 @@ const Cashier = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [transactionsData, partnersData] = await Promise.all([
+        const [transactionsData, partnersData, agreementsData, sitesData, companiesData] = await Promise.all([
           getTransactions(),
-          getPartners()
+          getPartners(),
+          getAgreements(),
+          getSites(),
+          getCompanies()
         ]);
         setTransactions(transactionsData);
         setPartners(partnersData);
+        setAgreements(agreementsData);
+        setSites(sitesData);
+        setCompanies(companiesData);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -296,6 +313,140 @@ const Cashier = () => {
       style: 'currency',
       currency: 'TRY'
     }).format(amount);
+  };
+
+  // Handle site payment filter change
+  const handleSitePaymentFilterChange = (e) => {
+    const { name, value } = e.target;
+    setSitePaymentFilter({
+      ...sitePaymentFilter,
+      [name]: value
+    });
+  };
+
+  // Calculate site payments for selected date range
+  const calculateSitePayments = () => {
+    if (!sitePaymentFilter.dateFrom || !sitePaymentFilter.dateTo) {
+      window.showAlert?.(
+        'Eksik Bilgi',
+        'Lütfen başlangıç ve bitiş tarihlerini seçiniz.',
+        'warning'
+      );
+      return;
+    }
+
+    const startDate = new Date(sitePaymentFilter.dateFrom);
+    const endDate = new Date(sitePaymentFilter.dateTo);
+
+    // Find active agreements that overlap with the selected date range
+    const relevantAgreements = agreements.filter(agreement => {
+      if (agreement.status !== 'active') return false;
+      
+      // Check if agreement has dateRanges or use startDate/endDate
+      if (agreement.dateRanges && agreement.dateRanges.length > 0) {
+        // Check if any date range overlaps with selected range
+        return agreement.dateRanges.some(range => {
+          const rangeStart = new Date(range.startDate);
+          const rangeEnd = new Date(range.endDate);
+          return (rangeStart <= endDate && rangeEnd >= startDate);
+        });
+      } else {
+        // Use startDate/endDate
+        const agreementStart = new Date(agreement.startDate);
+        const agreementEnd = new Date(agreement.endDate);
+        return (agreementStart <= endDate && agreementEnd >= startDate);
+      }
+    });
+
+    // Calculate payments for each site
+    const sitePaymentsMap = {};
+
+    relevantAgreements.forEach(agreement => {
+      // Determine which weeks of the agreement fall within the selected date range
+      let weeksInRange = 0;
+      
+      if (agreement.dateRanges && agreement.dateRanges.length > 0) {
+        // Calculate weeks for each date range that overlaps
+        agreement.dateRanges.forEach(range => {
+          const rangeStart = new Date(range.startDate);
+          const rangeEnd = new Date(range.endDate);
+          
+          if (rangeStart <= endDate && rangeEnd >= startDate) {
+            // Calculate overlap
+            const overlapStart = rangeStart > startDate ? rangeStart : startDate;
+            const overlapEnd = rangeEnd < endDate ? rangeEnd : endDate;
+            const overlapDays = Math.ceil((overlapEnd - overlapStart) / (1000 * 60 * 60 * 24));
+            weeksInRange += Math.ceil(overlapDays / 7);
+          }
+        });
+      } else {
+        // Use startDate/endDate
+        const agreementStart = new Date(agreement.startDate);
+        const agreementEnd = new Date(agreement.endDate);
+        
+        if (agreementStart <= endDate && agreementEnd >= startDate) {
+          const overlapStart = agreementStart > startDate ? agreementStart : startDate;
+          const overlapEnd = agreementEnd < endDate ? agreementEnd : endDate;
+          const overlapDays = Math.ceil((overlapEnd - overlapStart) / (1000 * 60 * 60 * 24));
+          weeksInRange = Math.ceil(overlapDays / 7);
+        }
+      }
+
+      if (weeksInRange === 0) return;
+
+      // Get weekly rate per panel
+      const weeklyRatePerPanel = parseFloat(agreement.weeklyRatePerPanel) || 0;
+
+      // Process each site in the agreement
+      if (agreement.siteIds && agreement.siteIds.length > 0) {
+        agreement.siteIds.forEach(siteId => {
+          const site = sites.find(s => String(s.id) === String(siteId));
+          if (!site) return;
+
+          // Get panel count for this site in the agreement
+          const panelCount = agreement.sitePanelCounts?.[siteId] 
+            ? parseInt(agreement.sitePanelCounts[siteId]) 
+            : 0;
+
+          if (panelCount === 0) return;
+
+          // Get site agreement percentage
+          const agreementPercentage = parseFloat(site.agreementPercentage) || 0;
+
+          // Calculate payment: panelCount * weeklyRatePerPanel * weeksInRange * (agreementPercentage / 100)
+          const paymentAmount = panelCount * weeklyRatePerPanel * weeksInRange * (agreementPercentage / 100);
+
+          if (paymentAmount > 0) {
+            if (!sitePaymentsMap[siteId]) {
+              sitePaymentsMap[siteId] = {
+                siteId: site.id,
+                siteName: site.name,
+                totalAmount: 0,
+                payments: []
+              };
+            }
+
+            sitePaymentsMap[siteId].totalAmount += paymentAmount;
+            sitePaymentsMap[siteId].payments.push({
+              agreementId: agreement.id,
+              companyId: agreement.companyId,
+              panelCount,
+              weeksInRange,
+              weeklyRatePerPanel,
+              agreementPercentage,
+              amount: paymentAmount
+            });
+          }
+        });
+      }
+    });
+
+    // Convert map to array and sort by site name
+    const results = Object.values(sitePaymentsMap).sort((a, b) => 
+      a.siteName.localeCompare(b.siteName, 'tr')
+    );
+
+    setSitePaymentResults(results);
   };
 
   // Handle report filter change
@@ -614,7 +765,20 @@ const Cashier = () => {
           </div>
           <div className="d-flex gap-2 flex-wrap">
             <button 
-              onClick={() => setShowReport(!showReport)}
+              onClick={() => {
+                setShowReport(false);
+                setShowSitePaymentCalc(!showSitePaymentCalc);
+              }}
+              className={`btn ${showSitePaymentCalc ? 'btn-page-outline' : 'btn-page-primary'} d-flex align-items-center`}
+            >
+              <i className="bi bi-calculator me-2"></i>
+              {showSitePaymentCalc ? 'Site Ödemeleri Kapat' : 'Site Ödemeleri Hesapla'}
+            </button>
+            <button 
+              onClick={() => {
+                setShowSitePaymentCalc(false);
+                setShowReport(!showReport);
+              }}
               className={`btn ${showReport ? 'btn-page-outline' : 'btn-page-primary'} d-flex align-items-center`}
             >
               <i className={`bi ${showReport ? 'bi-currency-dollar' : 'bi-file-earmark-bar-graph'} me-2`}></i>
@@ -679,6 +843,146 @@ const Cashier = () => {
               </button>
             </li>
           </ul>
+        </div>
+      )}
+
+      {/* Site Payment Calculation View */}
+      {showSitePaymentCalc && (
+        <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+          <div className="card-body">
+            <h3 className="fw-bold text-dark mb-4">Site Ödemeleri Hesaplama</h3>
+            
+            {/* Date Range Selection */}
+            <div className="row mb-4 g-3">
+              <div className="col-md-5">
+                <label htmlFor="sitePaymentDateFrom" className="form-label fw-medium">Başlangıç Tarihi</label>
+                <input
+                  type="date"
+                  id="sitePaymentDateFrom"
+                  name="dateFrom"
+                  value={sitePaymentFilter.dateFrom}
+                  onChange={handleSitePaymentFilterChange}
+                  className="form-control form-control-custom rounded-pill px-3"
+                />
+              </div>
+              <div className="col-md-5">
+                <label htmlFor="sitePaymentDateTo" className="form-label fw-medium">Bitiş Tarihi</label>
+                <input
+                  type="date"
+                  id="sitePaymentDateTo"
+                  name="dateTo"
+                  value={sitePaymentFilter.dateTo}
+                  onChange={handleSitePaymentFilterChange}
+                  className="form-control form-control-custom rounded-pill px-3"
+                />
+              </div>
+              <div className="col-md-2 d-flex align-items-end">
+                <button
+                  onClick={calculateSitePayments}
+                  className="btn btn-primary w-100 rounded-pill"
+                >
+                  <i className="bi bi-calculator me-2"></i>
+                  Hesapla
+                </button>
+              </div>
+            </div>
+
+            {/* Results */}
+            {sitePaymentResults.length > 0 && (
+              <div className="mt-4">
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5 className="fw-bold mb-0">Hesaplanan Ödemeler</h5>
+                  <div className="text-end">
+                    <p className="mb-0 text-muted small">Toplam Ödenecek Tutar</p>
+                    <h4 className="mb-0 fw-bold text-primary">
+                      {formatCurrency(sitePaymentResults.reduce((sum, result) => sum + result.totalAmount, 0))}
+                    </h4>
+                  </div>
+                </div>
+                
+                <div className="table-responsive">
+                  <table className="table table-hover">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Site Adı</th>
+                        <th className="text-end">Toplam Tutar</th>
+                        <th>Detaylar</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sitePaymentResults.map((result) => (
+                        <tr key={result.siteId}>
+                          <td className="fw-medium">{result.siteName}</td>
+                          <td className="text-end fw-bold text-primary">
+                            {formatCurrency(result.totalAmount)}
+                          </td>
+                          <td>
+                            <button
+                              className="btn btn-sm btn-outline-primary"
+                              type="button"
+                              data-bs-toggle="collapse"
+                              data-bs-target={`#sitePaymentDetails-${result.siteId}`}
+                            >
+                              <i className="bi bi-chevron-down me-1"></i>
+                              Detaylar ({result.payments.length})
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Payment Details (Collapsible) */}
+                {sitePaymentResults.map((result) => (
+                  <div key={`details-${result.siteId}`} className="collapse mb-3" id={`sitePaymentDetails-${result.siteId}`}>
+                    <div className="card card-body bg-light">
+                      <h6 className="fw-bold mb-3">{result.siteName} - Ödeme Detayları</h6>
+                      <div className="table-responsive">
+                        <table className="table table-sm">
+                          <thead>
+                            <tr>
+                              <th>Anlaşma</th>
+                              <th className="text-end">Panel</th>
+                              <th className="text-end">Hafta</th>
+                              <th className="text-end">Haftalık Oran</th>
+                              <th className="text-end">Anlaşma %</th>
+                              <th className="text-end">Tutar</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {result.payments.map((payment, index) => {
+                              const agreement = agreements.find(a => String(a.id) === String(payment.agreementId));
+                              const company = agreement ? companies.find(c => String(c.id) === String(agreement.companyId)) : null;
+                              return (
+                                <tr key={index}>
+                                  <td>
+                                    {company ? company.name : `Anlaşma #${payment.agreementId}`}
+                                  </td>
+                                  <td className="text-end">{payment.panelCount}</td>
+                                  <td className="text-end">{payment.weeksInRange}</td>
+                                  <td className="text-end">{formatCurrency(payment.weeklyRatePerPanel)}</td>
+                                  <td className="text-end">{payment.agreementPercentage}%</td>
+                                  <td className="text-end fw-bold">{formatCurrency(payment.amount)}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {sitePaymentResults.length === 0 && sitePaymentFilter.dateFrom && sitePaymentFilter.dateTo && (
+              <div className="alert alert-info mt-4">
+                <i className="bi bi-info-circle me-2"></i>
+                Seçili tarih aralığında ödeme gerektiren anlaşma bulunamadı.
+              </div>
+            )}
+          </div>
         </div>
       )}
 

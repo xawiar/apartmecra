@@ -701,7 +701,11 @@ const AgreementHelpers = ({
       y = addText('Reklam Veren:', margin, y, pageWidth - 2 * margin, 11, 'bold');
       y = addText(`Firma Unvani: ${companyName || ''}`, margin + 4, y, pageWidth - 2 * margin);
       y = addText(`Adres: ${company?.address || ''}`, margin + 4, y, pageWidth - 2 * margin);
-      y = addText(`Vergi Dairesi / No: ${company?.taxInfo || ''}`, margin + 4, y, pageWidth - 2 * margin);
+      // Vergi Dairesi ve Vergi No'yu birleştir
+      const taxInfo = company?.taxOffice && company?.taxNumber 
+        ? `${company.taxOffice} / ${company.taxNumber}`
+        : company?.taxOffice || company?.taxNumber || company?.taxInfo || '';
+      y = addText(`Vergi Dairesi / No: ${taxInfo}`, margin + 4, y, pageWidth - 2 * margin);
       y = addText(`Telefon: ${company?.phone || ''}`, margin + 4, y, pageWidth - 2 * margin);
       y += 4;
 
