@@ -137,26 +137,8 @@ const AgreementUIHandlers = ({
       setSiteBlockSelections(prev => ({ ...prev, [siteId]: [] }));
       setSitePanelSelections(prev => ({ ...prev, [siteId]: {} }));
       
-      // İş merkezi için otomatik blok seçimi
-      const site = sites.find(s => s.id === siteId);
-      if (site && site.siteType === 'business_center') {
-        const blockKey = `${siteId}-block-A`;
-        setSiteBlockSelections(prev => ({ ...prev, [siteId]: [blockKey] }));
-        setSitePanelSelections(prev => ({
-          ...prev,
-          [siteId]: {
-            [blockKey]: []
-          }
-        }));
-        // İş merkezi için panel sayısını güncelle
-        setTimeout(() => {
-          const panelCount = parseInt(site.panels) || 0;
-          setSitePanelCounts(prev => ({
-            ...prev,
-            [siteId]: 0 // Başlangıçta 0, panel seçildikçe güncellenecek
-          }));
-        }, 0);
-      }
+      // İş merkezi için blok seçimi artık manuel (otomatik seçim kaldırıldı)
+      // Kullanıcı blok seçmek zorunda, böylece panel seçimi de çalışır
     }
   };
 
