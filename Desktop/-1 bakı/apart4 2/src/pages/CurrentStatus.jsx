@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getSites, getAgreements, getCompanies } from '../services/api';
+import { getSites, getAgreements, getCompanies, getPanelImages } from '../services/api';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -7,6 +7,7 @@ const CurrentStatus = () => {
   const [sites, setSites] = useState([]);
   const [agreements, setAgreements] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const [panelImages, setPanelImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -17,15 +18,20 @@ const CurrentStatus = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [sitesData, agreementsData, companiesData] = await Promise.all([
+        const [sitesData, agreementsData, companiesData, panelImagesData] = await Promise.all([
           getSites(),
           getAgreements(),
-          getCompanies()
+          getCompanies(),
+          getPanelImages().catch(err => {
+            console.warn('Error fetching panel images (non-critical):', err);
+            return [];
+          })
         ]);
         
         setSites(sitesData);
         setAgreements(agreementsData);
         setCompanies(companiesData);
+        setPanelImages(Array.isArray(panelImagesData) ? panelImagesData : (panelImagesData?.data || []));
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -80,6 +86,16 @@ const CurrentStatus = () => {
     return siteAgreements;
   };
 
+  // Get panel image from personnel uploads
+  const getPanelImage = (agreementId, siteId, blockId, panelId) => {
+    return panelImages.find(img =>
+      img.agreementId === agreementId.toString() &&
+      img.siteId === siteId &&
+      img.blockId === blockId &&
+      img.panelId === panelId.toString()
+    );
+  };
+
   // Check if a panel is being used and get agreement info
   const getPanelInfo = (siteId, blockLabel, panelId) => {
     const relevantAgreements = getFilteredAgreementsForSite(siteId);
@@ -94,6 +110,9 @@ const CurrentStatus = () => {
         if (agreement.sitePanelSelections[siteId][blockId]) {
           // Check if this panel is selected in this block for this site in this agreement
           if (agreement.sitePanelSelections[siteId][blockId].includes(panelId)) {
+            // Get panel image if exists
+            const panelImage = getPanelImage(agreement.id, siteId, blockId, panelId);
+            
             return {
               isUsed: true,
               companyName: getCompanyName(agreement.companyId),
@@ -101,7 +120,8 @@ const CurrentStatus = () => {
               endDate: agreement.endDate,
               agreementId: agreement.id,
               status: agreement.status,
-              photoUrl: agreement.photoUrl
+              photoUrl: agreement.photoUrl,
+              panelImage: panelImage
             };
           }
         }
@@ -711,13 +731,18 @@ const CurrentStatus = () => {
                                             : 'bg-light text-muted'
                                         }`}
                                         style={{
-                                          width: '60px',
-                                          height: '80px',
+                                          width: panelInfo.panelImage ? '90px' : '60px',
+                                          height: panelInfo.panelImage ? '120px' : '80px',
                                           fontSize: '10px',
                                           fontWeight: 'bold',
                                           flexDirection: 'column',
                                           padding: '2px',
-                                          cursor: panelInfo.isUsed ? 'pointer' : 'default'
+                                          cursor: panelInfo.isUsed ? 'pointer' : 'default',
+                                          backgroundImage: panelInfo.panelImage ? `url(${panelInfo.panelImage.url})` : 'none',
+                                          backgroundSize: 'cover',
+                                          backgroundPosition: 'center',
+                                          backgroundRepeat: 'no-repeat',
+                                          minHeight: panelInfo.panelImage ? '120px' : '80px'
                                         }}
                                         title={
                                           panelInfo.isUsed 
@@ -765,6 +790,17 @@ const CurrentStatus = () => {
                                               `;
                                             }
                                             
+                                            if (panelInfo.panelImage) {
+                                              content += `
+                                                <div class="text-center mt-3">
+                                                  <strong>Personel Yüklenen Fotoğraf:</strong>
+                                                  <div class="mt-2">
+                                                    <img src="${panelInfo.panelImage.url}" style="max-width: 100%; max-height: 300px;" alt="Panel Fotoğrafı" class="border rounded" />
+                                                  </div>
+                                                </div>
+                                              `;
+                                            }
+                                            
                                             content += `</div>`;
                                             
                                             window.showAlert(
@@ -775,46 +811,64 @@ const CurrentStatus = () => {
                                           }
                                         }}
                                       >
-                                        <div style={{ fontSize: '12px' }}>{panelNumber}</div>
-                                        {panelInfo.isUsed && (
+                                        {!panelInfo.panelImage && (
                                           <>
-                                            <div 
-                                              style={{ 
-                                                fontSize: '8px', 
-                                                lineHeight: '1',
-                                                textAlign: 'center',
-                                                wordBreak: 'break-word',
-                                                overflow: 'hidden',
-                                                maxHeight: '24px'
-                                              }}
-                                              className="mt-1"
-                                            >
-                                              {panelInfo.companyName.length > 12 
-                                                ? panelInfo.companyName.substring(0, 12) + '...' 
-                                                : panelInfo.companyName}
-                                            </div>
-                                            <div 
-                                              style={{ 
-                                                fontSize: '7px', 
-                                                lineHeight: '1',
-                                                textAlign: 'center'
-                                              }}
-                                              className="mt-1"
-                                            >
-                                              {filteredMode ? `${panelInfo.startDate}` : panelInfo.endDate}
-                                            </div>
-                                            {filteredMode && (
-                                              <div 
-                                                style={{ 
-                                                  fontSize: '6px', 
-                                                  lineHeight: '1',
-                                                  textAlign: 'center'
-                                                }}
-                                              >
-                                                {panelInfo.endDate}
-                                              </div>
+                                            <div style={{ fontSize: '12px' }}>{panelNumber}</div>
+                                            {panelInfo.isUsed && (
+                                              <>
+                                                <div 
+                                                  style={{ 
+                                                    fontSize: '8px', 
+                                                    lineHeight: '1',
+                                                    textAlign: 'center',
+                                                    wordBreak: 'break-word',
+                                                    overflow: 'hidden',
+                                                    maxHeight: '24px'
+                                                  }}
+                                                  className="mt-1"
+                                                >
+                                                  {panelInfo.companyName.length > 12 
+                                                    ? panelInfo.companyName.substring(0, 12) + '...' 
+                                                    : panelInfo.companyName}
+                                                </div>
+                                                <div 
+                                                  style={{ 
+                                                    fontSize: '7px', 
+                                                    lineHeight: '1',
+                                                    textAlign: 'center'
+                                                  }}
+                                                  className="mt-1"
+                                                >
+                                                  {filteredMode ? `${panelInfo.startDate}` : panelInfo.endDate}
+                                                </div>
+                                                {filteredMode && (
+                                                  <div 
+                                                    style={{ 
+                                                      fontSize: '6px', 
+                                                      lineHeight: '1',
+                                                      textAlign: 'center'
+                                                    }}
+                                                  >
+                                                    {panelInfo.endDate}
+                                                  </div>
+                                                )}
+                                              </>
                                             )}
                                           </>
+                                        )}
+                                        {panelInfo.isUsed && (
+                                          <div className="position-absolute top-0 end-0" style={{ fontSize: '8px' }}>
+                                            {panelInfo.panelImage ? (
+                                              <i className="bi bi-camera-fill text-success"></i>
+                                            ) : (
+                                              <i className="bi bi-lock-fill"></i>
+                                            )}
+                                          </div>
+                                        )}
+                                        {panelInfo.panelImage && (
+                                          <div className="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white text-center" style={{ fontSize: '6px', padding: '2px' }}>
+                                            Panel {panelNumber}
+                                          </div>
                                         )}
                                       </div>
                                     );
@@ -925,34 +979,70 @@ const CurrentStatus = () => {
                                                   : 'bg-light text-muted'
                                               }`}
                                               style={{
-                                                width: '60px',
-                                                height: '80px',
+                                                width: panelInfo.panelImage ? '90px' : '60px',
+                                                height: panelInfo.panelImage ? '120px' : '80px',
                                                 fontSize: '10px',
                                                 fontWeight: 'bold',
                                                 flexDirection: 'column',
                                                 padding: '2px',
-                                                cursor: panelInfo.isUsed ? 'pointer' : 'default'
+                                                cursor: panelInfo.isUsed ? 'pointer' : 'default',
+                                                backgroundImage: panelInfo.panelImage ? `url(${panelInfo.panelImage.url})` : 'none',
+                                                backgroundSize: 'cover',
+                                                backgroundPosition: 'center',
+                                                backgroundRepeat: 'no-repeat',
+                                                minHeight: panelInfo.panelImage ? '120px' : '80px'
                                               }}
                                               title={
                                                 panelInfo.isUsed 
-                                                  ? `Panel ${panelNumber} - ${panelInfo.companyName}${filteredMode ? ` (${panelInfo.startDate} - ${panelInfo.endDate})` : ` (Bitiş: ${panelInfo.endDate})`}${panelInfo.status ? ` [${panelInfo.status === 'active' ? 'Aktif' : 'Pasif'}]` : ''}`
+                                                  ? `Panel ${panelNumber} - ${panelInfo.companyName}${filteredMode ? ` (${panelInfo.startDate} - ${panelInfo.endDate})` : ` (Bitiş: ${panelInfo.endDate})`}${panelInfo.status ? ` [${panelInfo.status === 'active' ? 'Aktif' : 'Pasif'}]` : ''}${panelInfo.panelImage ? ' (Fotoğraf var)' : ''}`
                                                   : `Panel ${panelNumber} - Boş`
                                               }
                                               onClick={() => {
                                                 if (panelInfo.isUsed && window.showAlert) {
+                                                  let content = `<div class="text-start">
+                                                    <div class="mb-3"><strong>Reklam Veren Firma:</strong> ${panelInfo.companyName}</div>
+                                                    <div class="mb-3"><strong>Anlaşma Süresi:</strong> ${formatDate(panelInfo.startDate)} - ${formatDate(panelInfo.endDate)}</div>
+                                                    <div class="mb-3"><strong>Anlaşma ID:</strong> ${panelInfo.agreementId}</div>
+                                                  `;
+                                                  
+                                                  if (panelInfo.panelImage) {
+                                                    content += `
+                                                      <div class="text-center mt-3">
+                                                        <strong>Personel Yüklenen Fotoğraf:</strong>
+                                                        <div class="mt-2">
+                                                          <img src="${panelInfo.panelImage.url}" style="max-width: 100%; max-height: 300px;" alt="Panel Fotoğrafı" class="border rounded" />
+                                                        </div>
+                                                      </div>
+                                                    `;
+                                                  }
+                                                  
+                                                  content += `</div>`;
+                                                  
                                                   window.showAlert(
                                                     `Panel ${panelNumber} - ${site.name}`,
-                                                    `<div class="text-start">
-                                                      <div class="mb-3"><strong>Reklam Veren Firma:</strong> ${panelInfo.companyName}</div>
-                                                      <div class="mb-3"><strong>Anlaşma Süresi:</strong> ${formatDate(panelInfo.startDate)} - ${formatDate(panelInfo.endDate)}</div>
-                                                      <div class="mb-3"><strong>Anlaşma ID:</strong> ${panelInfo.agreementId}</div>
-                                                    </div>`,
+                                                    content,
                                                     'info'
                                                   );
                                                 }
                                               }}
                                             >
-                                              {panelNumber}
+                                              {!panelInfo.panelImage && (
+                                                <div>{panelNumber}</div>
+                                              )}
+                                              {panelInfo.isUsed && (
+                                                <div className="position-absolute top-0 end-0" style={{ fontSize: '8px' }}>
+                                                  {panelInfo.panelImage ? (
+                                                    <i className="bi bi-camera-fill text-success"></i>
+                                                  ) : (
+                                                    <i className="bi bi-lock-fill"></i>
+                                                  )}
+                                                </div>
+                                              )}
+                                              {panelInfo.panelImage && (
+                                                <div className="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white text-center" style={{ fontSize: '6px', padding: '2px' }}>
+                                                  Panel {panelNumber}
+                                                </div>
+                                              )}
                                             </div>
                                           );
                                         })}

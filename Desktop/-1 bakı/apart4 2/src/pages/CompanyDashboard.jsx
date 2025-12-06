@@ -156,7 +156,7 @@ const CompanyDashboard = () => {
           getSites(),
           getCompanies(),
           getTransactions(),
-          getPanelImages({ companyId: companyId }).catch(err => {
+          getPanelImages().catch(err => {
             console.warn('Error fetching panel images (non-critical):', err);
             return [];
           })
