@@ -298,7 +298,7 @@ const AgreementFormModal = ({
                                     <h6 className="text-warning mb-3 d-flex align-items-center">
                                       <i className="bi bi-briefcase-fill me-2"></i>
                                       <span className="fw-bold">İş Merkezleri</span>
-                                      <span className="badge bg-warning text-dark ms-2">{businessCenters.length}</span>
+                                      <span className="badge bg-warning text-dark ms-2">{(businessCenters || []).length}</span>
                                     </h6>
                                     <div className="row g-3">
                                       {(businessCenters || []).map(site => (
