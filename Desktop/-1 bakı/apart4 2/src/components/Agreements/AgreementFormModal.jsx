@@ -281,7 +281,10 @@ const AgreementFormModal = ({
                                                 <span className="fw-medium">{site.name}</span>
                                                 <div className="small text-muted mt-1">
                                                   <i className="bi bi-grid me-1"></i>
-                                                  {site.blocks} Blok, {site.panels} Panel
+                                                  {site.siteType === 'business_center' 
+                                                    ? `${parseInt(site.manualPanels) || parseInt(site.panels) || 0} Panel`
+                                                    : `${site.blocks} Blok, ${site.panels} Panel`
+                                                  }
                                                 </div>
                                               </div>
                                             </label>
