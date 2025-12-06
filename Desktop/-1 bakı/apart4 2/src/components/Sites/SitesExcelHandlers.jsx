@@ -248,6 +248,10 @@ const SitesExcelHandlers = ({
             // Clear site fields for business centers
             siteData.apartmentCount = '';
             siteData.averagePeople = '';
+            
+            // İş merkezleri için elevators ve panels 0 olarak ayarla (manuel girilecek)
+            siteData.elevators = 0;
+            siteData.panels = 0;
           }
           
           // Calculate elevators and panels only for sites (not business centers)
