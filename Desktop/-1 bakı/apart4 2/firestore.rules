@@ -42,8 +42,11 @@ service cloud.firestore {
 
     function isPersonnel() {
       return isAuthenticated() &&
-             hasUserDoc() &&
-             getUserDoc().data.role == 'personnel';
+             (
+               (hasUserDoc() && getUserDoc().data.role == 'personnel') ||
+               (request.auth.token.email != null && 
+                request.auth.token.email.split('@')[1] == 'personnel.local')
+             );
     }
 
     function getUserCompanyId() {
@@ -136,11 +139,13 @@ service cloud.firestore {
                   (isCompanyUser() && resource.data.companyId == getUserCompanyId()) ||
                   (isSiteUser() && resource.data.siteId == getUserSiteId());
 
-      // List: Admin, personel ve firma kullanıcıları (kendi companyId'sine ait olanlar)
+      // List: Admin ve personel tüm görselleri listeleyebilir
       // Firma kullanıcıları sadece kendi companyId'sine ait görselleri listeleyebilir
+      // Site kullanıcıları sadece kendi siteId'sine ait görselleri listeleyebilir
       allow list: if isAdmin() || 
                     isPersonnel() ||
-                    isCompanyUser();
+                    (isCompanyUser() && request.auth.token.companyId != null) ||
+                    (isSiteUser() && request.auth.token.siteId != null);
 
       // Yazma: sadece admin ve personel
       allow create, update, delete: if isAdmin() || isPersonnel();
