@@ -111,8 +111,8 @@ const AgreementsMain = () => {
         // Create an array of promises for archiving all agreements
         const archivePromises = agreements.map(async (agreement) => {
           try {
-            const success = await archiveAgreement(agreement.id);
-            if (success) {
+            const result = await archiveAgreement(agreement.id);
+            if (result && result.success) {
               successCount++;
               // Log the action
               await createLog({
@@ -122,7 +122,8 @@ const AgreementsMain = () => {
               return { success: true, agreementId: agreement.id };
             } else {
               errorCount++;
-              return { success: false, agreementId: agreement.id };
+              console.error('Failed to archive agreement:', agreement.id, result);
+              return { success: false, agreementId: agreement.id, error: result?.error || 'Unknown error' };
             }
           } catch (error) {
             console.error('Error archiving agreement:', agreement.id, error);
@@ -134,8 +135,16 @@ const AgreementsMain = () => {
         // Wait for all archive operations to complete
         await Promise.all(archivePromises);
         
-        // Update state to remove all agreements
-        setAgreements([]);
+        // Reload agreements from server to reflect changes
+        const updatedAgreements = await getAgreements();
+        const uniqueAgreements = updatedAgreements.filter((agreement, index, self) => 
+          index === self.findIndex(a => 
+            (a.id === agreement.id && a._docId === agreement._docId) ||
+            (a.id && agreement.id && a.id === agreement.id) ||
+            (a._docId && agreement._docId && a._docId === agreement._docId)
+          )
+        );
+        setAgreements(uniqueAgreements);
         
         await window.showAlert(
           'İşlem Tamamlandı',
