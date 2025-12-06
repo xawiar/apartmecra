@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import SiteDashboard from './pages/SiteDashboard';
 import CompanyDashboard from './pages/CompanyDashboard';
+import CompanyOrders from './pages/CompanyOrders';
 import ObserverDashboard from './pages/ObserverDashboard';
 import PersonnelDashboard from './pages/PersonnelDashboard';
 import Sites from './pages/Sites';
@@ -74,6 +75,13 @@ function App() {
             <PrivateRoute>
               <BootstrapLayout>
                 <CompanyDashboard />
+              </BootstrapLayout>
+            </PrivateRoute>
+          } />
+          <Route path="/company-orders" element={
+            <PrivateRoute>
+              <BootstrapLayout>
+                <CompanyOrders />
               </BootstrapLayout>
             </PrivateRoute>
           } />
