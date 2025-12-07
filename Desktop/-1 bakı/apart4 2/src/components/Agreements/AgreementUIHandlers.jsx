@@ -1045,9 +1045,7 @@ const AgreementUIHandlers = ({
       const evenAvailablePanels = availablePanels.filter(p => p.panelNumber % 2 === 0);
       
       // Check if odd panels are being used (unavailable)
-      // Mantık: Eğer tek panellerin çoğu doluysa, çift panelleri seç
       const oddUnavailablePanels = unavailablePanels.filter(p => p.panelNumber % 2 === 1);
-      const totalOddPanels = Math.ceil(totalPanels / 2); // Toplam tek panel sayısı (1,3,5...)
       
       const targetCount = totalPanels > 0 ? Math.floor((totalPanels - 1) / 2) : 0;
       const alreadySelected = currentSelections.length;
@@ -1065,27 +1063,31 @@ const AgreementUIHandlers = ({
       if (oddAvailablePanels.length >= needToSelect) {
         // Yeterli tek panel var, sadece tek panelleri seç
         panelsToSelect = oddAvailablePanels.slice(0, needToSelect).map(p => p.panelKey);
-      } else if (oddAvailablePanels.length > 0) {
-        // Bazı tek paneller var ama yeterli değil
-        // Eğer tek panellerin çoğu doluysa, çift panelleri seç
-        // Aksi halde önce tek panelleri seç, sonra çift panelleri ekle
-        if (oddUnavailablePanels.length > 0 && oddUnavailablePanels.length >= Math.ceil(totalOddPanels / 2)) {
-          // Tek panellerin çoğu dolu, çift panelleri seç
+      } else if (oddUnavailablePanels.length > 0) {
+        // Tek paneller dolu (başka anlaşmada kullanılıyor), çift panelleri seç
+        if (evenAvailablePanels.length > 0) {
           const evenToSelect = Math.min(needToSelect, evenAvailablePanels.length);
           panelsToSelect = evenAvailablePanels.slice(0, evenToSelect).map(p => p.panelKey);
-        } else {
-          // Önce tek panelleri seç, sonra çift panelleri ekle
+        } else if (oddAvailablePanels.length > 0) {
+          // Çift paneller de dolu, kalan tek panelleri seç
+          const oddToSelect = Math.min(needToSelect, oddAvailablePanels.length);
+          panelsToSelect = oddAvailablePanels.slice(0, oddToSelect).map(p => p.panelKey);
+        }
+      } else {
+        // Tek paneller dolu değil ama yeterli tek panel yok
+        // Önce mevcut tek panelleri seç, sonra çift panelleri ekle
+        if (oddAvailablePanels.length > 0) {
           panelsToSelect = oddAvailablePanels.map(p => p.panelKey);
           const remaining = needToSelect - panelsToSelect.length;
           if (remaining > 0 && evenAvailablePanels.length > 0) {
             const evenToSelect = Math.min(remaining, evenAvailablePanels.length);
             panelsToSelect = [...panelsToSelect, ...evenAvailablePanels.slice(0, evenToSelect).map(p => p.panelKey)];
           }
+        } else if (evenAvailablePanels.length > 0) {
+          // Hiç tek panel müsait değil, sadece çift panelleri seç
+          const evenToSelect = Math.min(needToSelect, evenAvailablePanels.length);
+          panelsToSelect = evenAvailablePanels.slice(0, evenToSelect).map(p => p.panelKey);
         }
-      } else if (evenAvailablePanels.length > 0) {
-        // Hiç tek panel müsait değil, sadece çift panelleri seç
-        const evenToSelect = Math.min(needToSelect, evenAvailablePanels.length);
-        panelsToSelect = evenAvailablePanels.slice(0, evenToSelect).map(p => p.panelKey);
       }
       
       if (panelsToSelect.length > 0) {
