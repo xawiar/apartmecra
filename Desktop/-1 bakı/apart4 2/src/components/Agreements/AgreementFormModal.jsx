@@ -228,9 +228,9 @@ const AgreementFormModal = ({
                               </div>
 
                               {/* Regular Sites Grouped by Neighborhood */}
-                              {sortedNeighborhoods.map(neighborhood => {
-                                const neighborhoodSites = sitesByNeighborhood[neighborhood] || [];
-                                const selectedSitesInRange = uiHandlers.getSelectedSitesForRange(rangeIndex, sitePanelSelections) || [];
+                              {(sortedNeighborhoods || []).map(neighborhood => {
+                                const neighborhoodSites = (sitesByNeighborhood[neighborhood] || []);
+                                const selectedSitesInRange = (uiHandlers.getSelectedSitesForRange && uiHandlers.getSelectedSitesForRange(rangeIndex, sitePanelSelections)) || [];
                                 const allNeighborhoodSelected = neighborhoodSites.length > 0 && 
                                   neighborhoodSites.every(site => selectedSitesInRange.includes(site.id));
                                 
@@ -253,7 +253,7 @@ const AgreementFormModal = ({
                                       </button>
                                     </div>
                                     <div className="row g-3">
-                                      {neighborhoodSites.map(site => {
+                                      {(neighborhoodSites || []).map(site => {
                                         const isSelected = selectedSitesInRange.includes(site.id);
                                         return (
                                           <div key={site.id} className="col-md-6 col-sm-12">
@@ -297,8 +297,8 @@ const AgreementFormModal = ({
                                     <span className="badge bg-warning text-dark ms-2">{businessCenters.length}</span>
                                   </h6>
                                   <div className="row g-3">
-                                    {businessCenters.map(site => {
-                                      const selectedSitesInRange = uiHandlers.getSelectedSitesForRange(rangeIndex, sitePanelSelections) || [];
+                                    {(businessCenters || []).map(site => {
+                                      const selectedSitesInRange = (uiHandlers.getSelectedSitesForRange && uiHandlers.getSelectedSitesForRange(rangeIndex, sitePanelSelections)) || [];
                                       const isSelected = selectedSitesInRange.includes(site.id);
                                       return (
                                         <div key={site.id} className="col-md-6 col-sm-12">
@@ -335,8 +335,8 @@ const AgreementFormModal = ({
 
                             {/* Block and Panel Selection for Selected Sites in this Range */}
                             {(() => {
-                              const selectedSitesInRange = uiHandlers.getSelectedSitesForRange(rangeIndex, sitePanelSelections) || [];
-                              if (selectedSitesInRange.length === 0) {
+                              const selectedSitesInRange = (uiHandlers.getSelectedSitesForRange && uiHandlers.getSelectedSitesForRange(rangeIndex, sitePanelSelections)) || [];
+                              if (!selectedSitesInRange || selectedSitesInRange.length === 0) {
                                 return (
                                   <div className="alert alert-info mb-0">
                                     <i className="bi bi-info-circle me-2"></i>
@@ -345,14 +345,14 @@ const AgreementFormModal = ({
                                 );
                               }
 
-                              return selectedSitesInRange.map(siteId => {
+                              return (selectedSitesInRange || []).map(siteId => {
                                 const site = (sites || []).find(s => s.id === siteId);
                                 if (!site) return null;
                                 
                                 const blockLabels = site.siteType === 'business_center' 
                                   ? ['A'] 
                                   : (helpers.generateBlockLabels(site.blocks) || []);
-                                const selectedBlocks = uiHandlers.getSelectedBlocksForRange(rangeIndex, siteId, siteBlockSelections) || [];
+                                const selectedBlocks = (uiHandlers.getSelectedBlocksForRange && uiHandlers.getSelectedBlocksForRange(rangeIndex, siteId, siteBlockSelections)) || [];
 
                                 return (
                                   <div key={siteId} className="mb-4 pb-3 border-bottom">

@@ -780,7 +780,7 @@ const AgreementUIHandlers = ({
   // Handle site selection for a specific date range
   const handleSiteSelectionForRange = (rangeIndex, siteId, sitePanelSelections) => {
     const rangeKey = `range-${rangeIndex}`;
-    const currentSites = (sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) || [];
+    const currentSites = (sitePanelSelections && sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) || [];
     
     let newSites;
     if (currentSites.includes(siteId)) {
@@ -795,7 +795,7 @@ const AgreementUIHandlers = ({
       const updated = {
         ...prev,
         [rangeKey]: {
-          ...prev[rangeKey],
+          ...(prev[rangeKey] || {}),
           sites: newSites
         }
       };
@@ -805,22 +805,28 @@ const AgreementUIHandlers = ({
 
   // Get selected sites for a specific date range
   const getSelectedSitesForRange = (rangeIndex, sitePanelSelections) => {
+    if (!sitePanelSelections || typeof sitePanelSelections !== 'object') {
+      return [];
+    }
     const rangeKey = `range-${rangeIndex}`;
-    return (sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) || [];
+    if (sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) {
+      return Array.isArray(sitePanelSelections[rangeKey].sites) ? sitePanelSelections[rangeKey].sites : [];
+    }
+    return [];
   };
 
   // Handle select all sites for a date range
   const handleSelectAllSitesForRange = (rangeIndex, sites, sitePanelSelections) => {
     const rangeKey = `range-${rangeIndex}`;
-    const currentSites = (sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) || [];
-    const allSiteIds = (sites || []).map(s => s.id);
+    const currentSites = (sitePanelSelections && sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) || [];
+    const allSiteIds = (sites || []).map(s => s.id).filter(id => id != null);
     const allSelected = allSiteIds.length > 0 && allSiteIds.every(id => currentSites.includes(id));
     
     setSitePanelSelections(prev => {
       const updated = {
         ...prev,
         [rangeKey]: {
-          ...prev[rangeKey],
+          ...(prev[rangeKey] || {}),
           sites: allSelected ? [] : allSiteIds
         }
       };
@@ -831,8 +837,8 @@ const AgreementUIHandlers = ({
   // Handle select all sites in a neighborhood for a date range
   const handleSelectNeighborhoodForRange = (rangeIndex, neighborhood, neighborhoodSites, sitePanelSelections) => {
     const rangeKey = `range-${rangeIndex}`;
-    const currentSites = (sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) || [];
-    const neighborhoodSiteIds = (neighborhoodSites || []).map(s => s.id);
+    const currentSites = (sitePanelSelections && sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) || [];
+    const neighborhoodSiteIds = (neighborhoodSites || []).map(s => s.id).filter(id => id != null);
     const allNeighborhoodSelected = neighborhoodSiteIds.length > 0 && 
       neighborhoodSiteIds.every(id => currentSites.includes(id));
     
@@ -850,7 +856,7 @@ const AgreementUIHandlers = ({
       const updated = {
         ...prev,
         [rangeKey]: {
-          ...prev[rangeKey],
+          ...(prev[rangeKey] || {}),
           sites: newSites
         }
       };
@@ -861,7 +867,7 @@ const AgreementUIHandlers = ({
   // Handle block selection for a specific date range
   const handleBlockSelectionForRange = (rangeIndex, siteId, blockKey, siteBlockSelections, sitePanelSelections) => {
     const rangeKey = `range-${rangeIndex}`;
-    const currentBlocks = (siteBlockSelections[rangeKey] && 
+    const currentBlocks = (siteBlockSelections && siteBlockSelections[rangeKey] && 
       siteBlockSelections[rangeKey][siteId]) || [];
     
     let newBlocks;
@@ -888,9 +894,9 @@ const AgreementUIHandlers = ({
         const updated = {
           ...prev,
           [siteId]: {
-            ...prev[siteId],
+            ...(prev[siteId] || {}),
             [blockKey]: {
-              ...prev[siteId]?.[blockKey],
+              ...(prev[siteId]?.[blockKey] || {}),
               [rangeKey]: []
             }
           }
@@ -904,7 +910,7 @@ const AgreementUIHandlers = ({
       const updated = {
         ...prev,
         [rangeKey]: {
-          ...prev[rangeKey],
+          ...(prev[rangeKey] || {}),
           [siteId]: newBlocks
         }
       };
@@ -919,8 +925,14 @@ const AgreementUIHandlers = ({
 
   // Get selected blocks for a specific date range and site
   const getSelectedBlocksForRange = (rangeIndex, siteId, siteBlockSelections) => {
+    if (!siteBlockSelections || typeof siteBlockSelections !== 'object') {
+      return [];
+    }
     const rangeKey = `range-${rangeIndex}`;
-    return (siteBlockSelections[rangeKey] && siteBlockSelections[rangeKey][siteId]) || [];
+    if (siteBlockSelections[rangeKey] && siteBlockSelections[rangeKey][siteId]) {
+      return Array.isArray(siteBlockSelections[rangeKey][siteId]) ? siteBlockSelections[rangeKey][siteId] : [];
+    }
+    return [];
   };
 
   return {
