@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, createUser, updateUser, deleteUser, getLogs, getSites } from '../services/api';
+import { getUsers, createUser, updateUser, deleteUser, getLogs, getSites, getCompanies } from '../services/api';
 import Archive from './Archive';
 import jsPDF from 'jspdf';
 
@@ -118,6 +118,195 @@ const Settings = () => {
   const handleCloseUserForm = () => {
     setShowAddUserForm(false);
     setEditingUser(null);
+  };
+
+  // Handle delete all users (except admin)
+  const handleDeleteAllUsers = async () => {
+    const result = await window.showConfirm(
+      'Tüm Kullanıcıları Sil',
+      'Admin hariç tüm kullanıcıları siteden ve Firebase Auth\'dan silmek istediğinize emin misiniz? Bu işlem geri alınamaz!',
+      'error'
+    );
+    
+    if (!result) {
+      return;
+    }
+    
+    try {
+      // Filter out admin users
+      const usersToDelete = users.filter(user => 
+        user.role !== 'admin' && 
+        user.role !== 'administrator' &&
+        user.email !== 'admin@apartmecra.com'
+      );
+      
+      if (usersToDelete.length === 0) {
+        await window.showAlert(
+          'Bilgi',
+          'Silinecek kullanıcı bulunmamaktadır.',
+          'info'
+        );
+        return;
+      }
+      
+      let successCount = 0;
+      let errorCount = 0;
+      
+      // Delete users in batches
+      const batchSize = 5;
+      for (let i = 0; i < usersToDelete.length; i += batchSize) {
+        const batch = usersToDelete.slice(i, i + batchSize);
+        
+        const deletePromises = batch.map(async (user) => {
+          try {
+            // Delete from Firestore
+            await deleteUser(user.id);
+            
+            // Delete from Firebase Auth using Cloud Function
+            if (user.email) {
+              try {
+                const functionUrl = `https://us-central1-apartmecra-elz.cloudfunctions.net/deleteUserByEmail`;
+                const response = await fetch(functionUrl, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ email: user.email })
+                });
+                
+                if (!response.ok) {
+                  console.warn(`Failed to delete user from Auth: ${user.email}`);
+                }
+              } catch (authError) {
+                console.warn(`Error deleting user from Auth: ${user.email}`, authError);
+                // Continue even if Auth deletion fails
+              }
+            }
+            
+            successCount++;
+            return { success: true, userId: user.id };
+          } catch (error) {
+            console.error(`Error deleting user ${user.id}:`, error);
+            errorCount++;
+            return { success: false, userId: user.id, error: error.message };
+          }
+        });
+        
+        await Promise.all(deletePromises);
+        
+        // Add delay between batches
+        if (i + batchSize < usersToDelete.length) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      
+      // Reload users
+      const updatedUsers = await getUsers();
+      setUsers(updatedUsers);
+      
+      if (errorCount === 0) {
+        await window.showAlert(
+          'Başarılı',
+          `${successCount} kullanıcı başarıyla silindi.`,
+          'success'
+        );
+      } else {
+        await window.showAlert(
+          'Kısmen Başarılı',
+          `${successCount} kullanıcı silindi, ${errorCount} kullanıcı silinemedi.`,
+          'warning'
+        );
+      }
+    } catch (error) {
+      console.error('Error deleting all users:', error);
+      await window.showAlert(
+        'Hata',
+        'Kullanıcılar silinirken bir hata oluştu: ' + error.message,
+        'error'
+      );
+    }
+  };
+
+  // Handle recreate users for all sites and companies
+  const handleRecreateUsers = async () => {
+    const result = await window.showConfirm(
+      'Kullanıcıları Yeniden Oluştur',
+      'Tüm site ve firmalar için kullanıcıları yeniden oluşturmak istediğinize emin misiniz? Mevcut kullanıcılar varsa güncellenecektir.',
+      'warning'
+    );
+    
+    if (!result) {
+      return;
+    }
+    
+    try {
+      const [allSites, allCompanies] = await Promise.all([
+        getSites(),
+        getCompanies()
+      ]);
+      
+      // Filter out archived sites and companies
+      const activeSites = allSites.filter(site => site.status !== 'archived');
+      const activeCompanies = allCompanies.filter(company => company.status !== 'archived');
+      
+      let siteSuccessCount = 0;
+      let siteErrorCount = 0;
+      let companySuccessCount = 0;
+      let companyErrorCount = 0;
+      
+      // Import createSiteUser and createCompanyUser from firebaseDb
+      const { createSiteUser, createCompanyUser } = await import('../services/firebaseDb.js');
+      
+      // Create users for sites
+      for (const site of activeSites) {
+        try {
+          await createSiteUser(site.id, site);
+          siteSuccessCount++;
+        } catch (error) {
+          console.error(`Error creating user for site ${site.id}:`, error);
+          siteErrorCount++;
+        }
+      }
+      
+      // Create users for companies
+      for (const company of activeCompanies) {
+        try {
+          await createCompanyUser(company.id, company);
+          companySuccessCount++;
+        } catch (error) {
+          console.error(`Error creating user for company ${company.id}:`, error);
+          companyErrorCount++;
+        }
+      }
+      
+      // Reload users
+      const updatedUsers = await getUsers();
+      setUsers(updatedUsers);
+      
+      const totalSuccess = siteSuccessCount + companySuccessCount;
+      const totalError = siteErrorCount + companyErrorCount;
+      
+      if (totalError === 0) {
+        await window.showAlert(
+          'Başarılı',
+          `${totalSuccess} kullanıcı başarıyla oluşturuldu/güncellendi. (${siteSuccessCount} site, ${companySuccessCount} firma)`,
+          'success'
+        );
+      } else {
+        await window.showAlert(
+          'Kısmen Başarılı',
+          `${totalSuccess} kullanıcı oluşturuldu, ${totalError} kullanıcı oluşturulamadı. (${siteSuccessCount} site, ${companySuccessCount} firma başarılı)`,
+          'warning'
+        );
+      }
+    } catch (error) {
+      console.error('Error recreating users:', error);
+      await window.showAlert(
+        'Hata',
+        'Kullanıcılar oluşturulurken bir hata oluştu: ' + error.message,
+        'error'
+      );
+    }
   };
 
   const handleDeleteUser = async (userId) => {
@@ -658,6 +847,26 @@ const Settings = () => {
                   Kullanıcı Ekle
                 </button>
               </div>
+            </div>
+
+            {/* Bulk Actions */}
+            <div className="d-flex gap-2 mb-4 p-3 bg-light rounded">
+              <button 
+                onClick={handleDeleteAllUsers}
+                className="btn btn-danger btn-sm"
+                title="Admin hariç tüm kullanıcıları sil"
+              >
+                <i className="bi bi-trash me-1"></i>
+                Tüm Kullanıcıları Sil
+              </button>
+              <button 
+                onClick={handleRecreateUsers}
+                className="btn btn-success btn-sm"
+                title="Tüm site ve firmalar için kullanıcı oluştur"
+              >
+                <i className="bi bi-arrow-clockwise me-1"></i>
+                Yeniden Oluştur
+              </button>
             </div>
 
             {/* Filter Results Info */}

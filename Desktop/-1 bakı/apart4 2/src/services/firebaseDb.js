@@ -1092,7 +1092,7 @@ const generateAgreementId = (date, sequenceNumber) => {
   return `${sequenceNumber}${day}${month}${String(year).slice(-2)}`;
 };
 
-const createSiteUser = async (siteId, siteData) => {
+export const createSiteUser = async (siteId, siteData) => {
   try {
     const email = `${siteId}@site.local`;
     // Şifre kontrolü: phone boşsa 123456, değilse phone değeri
@@ -1162,7 +1162,7 @@ const createSiteUser = async (siteId, siteData) => {
   }
 };
 
-const createCompanyUser = async (companyId, companyData) => {
+export const createCompanyUser = async (companyId, companyData) => {
   try {
     const email = `${companyId}@company.local`;
     const password = companyData.phone || companyId;
