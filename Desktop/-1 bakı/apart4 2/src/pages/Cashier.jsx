@@ -1022,7 +1022,7 @@ const Cashier = () => {
                     </thead>
                     <tbody>
                       {sitePaymentResults.map((result) => (
-                        <tr key={result.siteId}>
+                        <tr key={result.siteId} className={result.paid ? 'table-success' : ''}>
                           <td className="fw-medium">{result.siteName}</td>
                           <td className="text-end fw-bold text-primary">
                             {formatCurrency(result.totalAmount)}
@@ -1039,14 +1039,21 @@ const Cashier = () => {
                             </button>
                           </td>
                           <td className="text-center">
-                            <button
-                              className="btn btn-sm btn-success"
-                              onClick={() => handlePaySitePayment(result)}
-                              title="Ödeme Yap"
-                            >
-                              <i className="bi bi-currency-dollar me-1"></i>
-                              Ödeme Yap
-                            </button>
+                            {result.paid ? (
+                              <span className="badge bg-success">
+                                <i className="bi bi-check-circle me-1"></i>
+                                Ödendi
+                              </span>
+                            ) : (
+                              <button
+                                className="btn btn-sm btn-success"
+                                onClick={() => handlePaySitePayment(result)}
+                                title="Ödeme Yap"
+                              >
+                                <i className="bi bi-currency-dollar me-1"></i>
+                                Ödeme Yap
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))}
