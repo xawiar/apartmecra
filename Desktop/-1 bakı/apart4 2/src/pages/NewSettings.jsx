@@ -257,10 +257,10 @@ const Settings = () => {
       // Import createSiteUser and createCompanyUser from firebaseDb
       const { createSiteUser, createCompanyUser } = await import('../services/firebaseDb.js');
       
-      // Create users for sites
+      // Create users for sites (force recreate to ensure fresh users)
       for (const site of activeSites) {
         try {
-          await createSiteUser(site.id, site);
+          await createSiteUser(site.id, site, true); // forceRecreate = true
           siteSuccessCount++;
         } catch (error) {
           console.error(`Error creating user for site ${site.id}:`, error);
@@ -268,10 +268,10 @@ const Settings = () => {
         }
       }
       
-      // Create users for companies
+      // Create users for companies (force recreate to ensure fresh users)
       for (const company of activeCompanies) {
         try {
-          await createCompanyUser(company.id, company);
+          await createCompanyUser(company.id, company, true); // forceRecreate = true
           companySuccessCount++;
         } catch (error) {
           console.error(`Error creating user for company ${company.id}:`, error);

@@ -1092,39 +1092,11 @@ const generateAgreementId = (date, sequenceNumber) => {
   return `${sequenceNumber}${day}${month}${String(year).slice(-2)}`;
 };
 
-export const createSiteUser = async (siteId, siteData) => {
+export const createSiteUser = async (siteId, siteData, forceRecreate = false) => {
   try {
     const email = `${siteId}@site.local`;
     // Şifre kontrolü: phone boşsa 123456, değilse phone değeri
     const password = (siteData.phone && siteData.phone.trim() !== '') ? siteData.phone : '123456';
-    
-    // Check if user already exists (to prevent duplicate creation)
-    // Cloud Function might have already created the user
-    try {
-      const { getAuth } = await import('firebase/auth');
-      const { auth } = await import('../config/firebase.js');
-      
-      // Try to sign in to check if user exists
-      // If user doesn't exist, this will throw an error
-      const { signInWithEmailAndPassword } = await import('firebase/auth');
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        // User exists, skip creation
-        console.log('Site user already exists, skipping creation:', email);
-        return;
-      } catch (checkError) {
-        // If error is not "user-not-found", it might be wrong password
-        // In that case, user exists but we can't verify, so skip creation to be safe
-        if (checkError.code !== 'auth/user-not-found' && checkError.code !== 'auth/wrong-password') {
-          console.log('Site user might already exist, skipping creation:', email);
-          return;
-        }
-        // User doesn't exist, continue with creation
-      }
-    } catch (checkError) {
-      // If we can't check, continue with creation (will fail gracefully if duplicate)
-      console.log('Could not check existing user, attempting creation:', checkError.message);
-    }
     
     const userData = {
       username: siteId,
@@ -1135,65 +1107,94 @@ export const createSiteUser = async (siteId, siteData) => {
       email: email
     };
     
-    // Create user in Firestore
-    await createUser(userData);
+    // If forceRecreate is true, delete existing user first
+    if (forceRecreate) {
+      try {
+        // Delete from Auth using Cloud Function
+        const functionUrl = `https://us-central1-apartmecra-elz.cloudfunctions.net/deleteUserByEmail`;
+        await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: email })
+        }).catch(() => {
+          // Ignore errors if user doesn't exist
+        });
+        
+        // Delete from Firestore users collection
+        const usersSnapshot = await getDocs(query(collection(db, 'users'), where('email', '==', email)));
+        const deletePromises = usersSnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+      } catch (deleteError) {
+        console.log('Error deleting existing user (may not exist):', deleteError.message);
+        // Continue with creation
+      }
+    }
     
-    // Create user in Firebase Authentication
+    // Check if user exists in Firestore
+    const existingUsers = await getDocs(query(collection(db, 'users'), where('email', '==', email)));
+    
+    if (!existingUsers.empty && !forceRecreate) {
+      // User exists, update password in Auth
+      try {
+        const { getFunctions, httpsCallable } = await import('firebase/functions');
+        const { functions } = await import('../config/firebase.js');
+        const updatePassword = httpsCallable(functions, 'updateUserPasswordByEmail');
+        await updatePassword({ email, newPassword: password });
+        console.log('Site user password updated in Auth:', email);
+      } catch (updateError) {
+        console.warn('Failed to update password, will try to create:', updateError.message);
+        // Continue with creation attempt
+      }
+    }
+    
+    // Create or update user in Firestore
+    if (existingUsers.empty || forceRecreate) {
+      await createUser(userData);
+    } else {
+      // Update existing user
+      const existingUserDoc = existingUsers.docs[0];
+      await updateDoc(existingUserDoc.ref, {
+        ...userData,
+        updatedAt: serverTimestamp()
+      });
+    }
+    
+    // Create user in Firebase Authentication (if doesn't exist)
     const authResult = await createUserWithEmail(email, password, userData);
     
     if (authResult.success) {
-      console.log('Site user created in Firebase Auth:', authResult.user.uid);
+      console.log('Site user created/updated in Firebase Auth:', email);
     } else {
-      // If user already exists, that's okay (Cloud Function might have created it)
+      // If user already exists, update password
       if (authResult.error && authResult.error.includes('already exists')) {
-        console.log('Site user already exists (likely created by Cloud Function):', email);
+        try {
+          const { getFunctions, httpsCallable } = await import('firebase/functions');
+          const { functions } = await import('../config/firebase.js');
+          const updatePassword = httpsCallable(functions, 'updateUserPasswordByEmail');
+          await updatePassword({ email, newPassword: password });
+          console.log('Site user password updated in Auth:', email);
+        } catch (updateError) {
+          console.error('Failed to update site user password:', updateError);
+        }
       } else {
         console.error('Failed to create site user in Firebase Auth:', authResult.error);
+        throw new Error(authResult.error);
       }
     }
     
+    return { success: true, email, password };
   } catch (error) {
-    // If user already exists, that's okay (Cloud Function might have created it)
-    if (error.message && error.message.includes('already exists')) {
-      console.log('Site user already exists (likely created by Cloud Function):', `${siteId}@site.local`);
-    } else {
-      console.error('Error creating site user:', error);
-    }
+    console.error('Error creating site user:', error);
+    throw error;
   }
 };
 
-export const createCompanyUser = async (companyId, companyData) => {
+export const createCompanyUser = async (companyId, companyData, forceRecreate = false) => {
   try {
     const email = `${companyId}@company.local`;
     const password = companyData.phone || companyId;
-    
-    // Check if user already exists (to prevent duplicate creation)
-    // Cloud Function might have already created the user
-    try {
-      const { getAuth } = await import('firebase/auth');
-      const { auth } = await import('../config/firebase.js');
-      
-      // Try to sign in to check if user exists
-      // If user doesn't exist, this will throw an error
-      const { signInWithEmailAndPassword } = await import('firebase/auth');
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        // User exists, skip creation
-        console.log('Company user already exists, skipping creation:', email);
-        return;
-      } catch (checkError) {
-        // If error is not "user-not-found", it might be wrong password
-        // In that case, user exists but we can't verify, so skip creation to be safe
-        if (checkError.code !== 'auth/user-not-found' && checkError.code !== 'auth/wrong-password') {
-          console.log('Company user might already exist, skipping creation:', email);
-          return;
-        }
-        // User doesn't exist, continue with creation
-      }
-    } catch (checkError) {
-      // If we can't check, continue with creation (will fail gracefully if duplicate)
-      console.log('Could not check existing user, attempting creation:', checkError.message);
-    }
     
     const userData = {
       username: companyId,
@@ -1204,30 +1205,87 @@ export const createCompanyUser = async (companyId, companyData) => {
       email: email
     };
     
-    // Create user in Firestore
-    await createUser(userData);
-    
-    // Create user in Firebase Authentication
-    const authResult = await createUserWithEmail(email, password, userData);
-    
-    if (authResult.success) {
-      console.log('Company user created in Firebase Auth:', authResult.user.uid);
-    } else {
-      // If user already exists, that's okay (Cloud Function might have created it)
-      if (authResult.error && authResult.error.includes('already exists')) {
-        console.log('Company user already exists (likely created by Cloud Function):', email);
-      } else {
-        console.error('Failed to create company user in Firebase Auth:', authResult.error);
+    // If forceRecreate is true, delete existing user first
+    if (forceRecreate) {
+      try {
+        // Delete from Auth using Cloud Function
+        const functionUrl = `https://us-central1-apartmecra-elz.cloudfunctions.net/deleteUserByEmail`;
+        await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: email })
+        }).catch(() => {
+          // Ignore errors if user doesn't exist
+        });
+        
+        // Delete from Firestore users collection
+        const usersSnapshot = await getDocs(query(collection(db, 'users'), where('email', '==', email)));
+        const deletePromises = usersSnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+      } catch (deleteError) {
+        console.log('Error deleting existing user (may not exist):', deleteError.message);
+        // Continue with creation
       }
     }
     
-  } catch (error) {
-    // If user already exists, that's okay (Cloud Function might have created it)
-    if (error.message && error.message.includes('already exists')) {
-      console.log('Company user already exists (likely created by Cloud Function):', `${companyId}@company.local`);
-    } else {
-      console.error('Error creating company user:', error);
+    // Check if user exists in Firestore
+    const existingUsers = await getDocs(query(collection(db, 'users'), where('email', '==', email)));
+    
+    if (!existingUsers.empty && !forceRecreate) {
+      // User exists, update password in Auth
+      try {
+        const { getFunctions, httpsCallable } = await import('firebase/functions');
+        const { functions } = await import('../config/firebase.js');
+        const updatePassword = httpsCallable(functions, 'updateUserPasswordByEmail');
+        await updatePassword({ email, newPassword: password });
+        console.log('Company user password updated in Auth:', email);
+      } catch (updateError) {
+        console.warn('Failed to update password, will try to create:', updateError.message);
+        // Continue with creation attempt
+      }
     }
+    
+    // Create or update user in Firestore
+    if (existingUsers.empty || forceRecreate) {
+      await createUser(userData);
+    } else {
+      // Update existing user
+      const existingUserDoc = existingUsers.docs[0];
+      await updateDoc(existingUserDoc.ref, {
+        ...userData,
+        updatedAt: serverTimestamp()
+      });
+    }
+    
+    // Create user in Firebase Authentication (if doesn't exist)
+    const authResult = await createUserWithEmail(email, password, userData);
+    
+    if (authResult.success) {
+      console.log('Company user created/updated in Firebase Auth:', email);
+    } else {
+      // If user already exists, update password
+      if (authResult.error && authResult.error.includes('already exists')) {
+        try {
+          const { getFunctions, httpsCallable } = await import('firebase/functions');
+          const { functions } = await import('../config/firebase.js');
+          const updatePassword = httpsCallable(functions, 'updateUserPasswordByEmail');
+          await updatePassword({ email, newPassword: password });
+          console.log('Company user password updated in Auth:', email);
+        } catch (updateError) {
+          console.error('Failed to update company user password:', updateError);
+        }
+      } else {
+        console.error('Failed to create company user in Firebase Auth:', authResult.error);
+        throw new Error(authResult.error);
+      }
+    }
+    
+    return { success: true, email, password };
+  } catch (error) {
+    console.error('Error creating company user:', error);
+    throw error;
   }
 };
 
