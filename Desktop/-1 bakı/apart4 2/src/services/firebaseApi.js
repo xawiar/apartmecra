@@ -566,59 +566,17 @@ export const deleteArchivedAgreement = async (agreementId) => {
 export const restoreSite = async (siteId) => {
   await initializeFirebase();
   
-  try {
-    const { getDocument, createDocument, deleteDocument } = await import('./firebaseDb.js');
-    
-    const siteResult = await getDocument('archivedSites', siteId);
-    if (!siteResult.success) {
-      return false;
-    }
-    
-    const site = siteResult.data;
-    delete site.status;
-    delete site.archivedAt;
-    
-    const restoreResult = await createDocument('sites', site);
-    
-    if (restoreResult.success) {
-      await deleteDocument('archivedSites', siteId);
-      return true;
-    }
-    
-    return false;
-  } catch (error) {
-    console.error('Error restoring site:', error);
-    return false;
-  }
+  const { restoreSite: restoreSiteInDb } = await import('./firebaseDb.js');
+  const result = await restoreSiteInDb(siteId);
+  return result.success || false;
 };
 
 export const restoreCompany = async (companyId) => {
   await initializeFirebase();
   
-  try {
-    const { getDocument, createDocument, deleteDocument } = await import('./firebaseDb.js');
-    
-    const companyResult = await getDocument('archivedCompanies', companyId);
-    if (!companyResult.success) {
-      return false;
-    }
-    
-    const company = companyResult.data;
-    delete company.status;
-    delete company.archivedAt;
-    
-    const restoreResult = await createDocument('companies', company);
-    
-    if (restoreResult.success) {
-      await deleteDocument('archivedCompanies', companyId);
-      return true;
-    }
-    
-    return false;
-  } catch (error) {
-    console.error('Error restoring company:', error);
-    return false;
-  }
+  const { restoreCompany: restoreCompanyInDb } = await import('./firebaseDb.js');
+  const result = await restoreCompanyInDb(companyId);
+  return result.success || false;
 };
 
 export const restoreAgreement = async (agreementId) => {

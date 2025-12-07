@@ -226,10 +226,8 @@ export const getSites = async () => {
 };
 
 export const getArchivedSites = async () => {
-  // Sadece arşivlenen siteleri getir
-  const result = await getCollection(COLLECTIONS.SITES, [
-    { field: 'status', operator: '==', value: 'archived' }
-  ], 'archivedAt', 'desc');
+  // archivedSites koleksiyonundan tüm arşivlenen siteleri getir
+  const result = await getCollection(COLLECTIONS.ARCHIVED_SITES, [], 'archivedAt', 'desc');
   return result.data || [];
 };
 
@@ -473,20 +471,26 @@ export const archiveSite = async (siteId) => {
       siteResult = { success: true, data: { id: docSnap.id, ...docSnap.data() } };
     }
     
-    // Artık doğru Firestore doküman ID'si elimizde: docId
-    const updateResult = await updateDocument(COLLECTIONS.SITES, docId, {
-      status: 'archived',
-      archivedAt: serverTimestamp()
-    });
+    const siteData = siteResult.data;
     
-    if (updateResult.success) {
-      console.log(`✅ Site ${siteId} (doc: ${docId}) archived successfully`);
-      console.log(`⚠️ Site user ${siteId}@site.local login is now disabled`);
-      return { success: true, message: `Site archived. User login disabled.` };
-    }
+    // Site verisini archivedSites koleksiyonuna kopyala
+    const archiveData = {
+      ...siteData,
+      originalDocId: docId,
+      archivedAt: serverTimestamp(),
+      archivedFrom: 'sites'
+    };
     
-    console.error('archiveSite: Failed to update document for site:', siteId, 'docId:', docId);
-    return { success: false, error: 'Failed to archive site' };
+    // archivedSites koleksiyonuna ekle
+    const archiveRef = await addDoc(collection(db, COLLECTIONS.ARCHIVED_SITES), archiveData);
+    
+    // Orijinal dokümanı sil
+    const siteDocRef = doc(db, COLLECTIONS.SITES, docId);
+    await deleteDoc(siteDocRef);
+    
+    console.log(`✅ Site ${siteId} (doc: ${docId}) archived successfully to archivedSites`);
+    console.log(`⚠️ Site user ${siteId}@site.local login is now disabled`);
+    return { success: true, message: `Site archived. User login disabled.` };
   } catch (error) {
     console.error('Error archiving site:', error);
     return { success: false, error: error.message };
@@ -503,11 +507,85 @@ export const getCompanies = async () => {
 };
 
 export const getArchivedCompanies = async () => {
-  // Sadece arşivlenen firmaları getir
-  const result = await getCollection(COLLECTIONS.COMPANIES, [
-    { field: 'status', operator: '==', value: 'archived' }
-  ], 'archivedAt', 'desc');
+  // archivedCompanies koleksiyonundan tüm arşivlenen firmaları getir
+  const result = await getCollection(COLLECTIONS.ARCHIVED_COMPANIES, [], 'archivedAt', 'desc');
   return result.data || [];
+};
+
+// Restore archived site back to sites collection
+export const restoreSite = async (siteId) => {
+  try {
+    // Find archived site by id field
+    const queryRef = collection(db, COLLECTIONS.ARCHIVED_SITES);
+    const q = query(queryRef, where('id', '==', siteId));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      console.error('restoreSite: Archived site not found for id:', siteId);
+      return { success: false, error: 'Archived site not found' };
+    }
+
+    const archivedDoc = querySnapshot.docs[0];
+    const archivedData = archivedDoc.data();
+    
+    // Remove archive-specific fields
+    const { originalDocId, archivedAt, archivedFrom, ...siteData } = archivedData;
+    
+    // Create site in sites collection
+    const siteRef = await addDoc(collection(db, COLLECTIONS.SITES), {
+      ...siteData,
+      status: 'active', // Restore as active
+      restoredAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    
+    // Delete from archivedSites
+    await deleteDoc(archivedDoc.ref);
+    
+    console.log(`✅ Site ${siteId} restored successfully from archivedSites`);
+    return { success: true, message: 'Site restored successfully' };
+  } catch (error) {
+    console.error('Error restoring site:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Restore archived company back to companies collection
+export const restoreCompany = async (companyId) => {
+  try {
+    // Find archived company by id field
+    const queryRef = collection(db, COLLECTIONS.ARCHIVED_COMPANIES);
+    const q = query(queryRef, where('id', '==', companyId));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      console.error('restoreCompany: Archived company not found for id:', companyId);
+      return { success: false, error: 'Archived company not found' };
+    }
+
+    const archivedDoc = querySnapshot.docs[0];
+    const archivedData = archivedDoc.data();
+    
+    // Remove archive-specific fields
+    const { originalDocId, archivedAt, archivedFrom, ...companyData } = archivedData;
+    
+    // Create company in companies collection
+    const companyRef = await addDoc(collection(db, COLLECTIONS.COMPANIES), {
+      ...companyData,
+      status: 'active', // Restore as active
+      restoredAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    
+    // Delete from archivedCompanies
+    await deleteDoc(archivedDoc.ref);
+    
+    console.log(`✅ Company ${companyId} restored successfully from archivedCompanies`);
+    return { success: true, message: 'Company restored successfully' };
+  } catch (error) {
+    console.error('Error restoring company:', error);
+    return { success: false, error: error.message };
+  }
 };
 
 export const createCompany = async (companyData) => {
@@ -701,21 +779,27 @@ export const archiveCompany = async (companyId) => {
       return { success: false, error: 'Company not found' };
     }
     
-    const company = companyResult.data;
+    const companyData = companyResult.data;
+    const docId = companyId;
     
-    // Update company status to archived (don't delete, just change status)
-    const updateResult = await updateDocument(COLLECTIONS.COMPANIES, companyId, {
-      status: 'archived',
-      archivedAt: serverTimestamp()
-    });
+    // Company verisini archivedCompanies koleksiyonuna kopyala
+    const archiveData = {
+      ...companyData,
+      originalDocId: docId,
+      archivedAt: serverTimestamp(),
+      archivedFrom: 'companies'
+    };
     
-    if (updateResult.success) {
-      console.log(`✅ Company ${companyId} archived successfully`);
-      console.log(`⚠️ Company user ${companyId}@company.local login is now disabled`);
-      return { success: true, message: `Company archived. User login disabled.` };
-    }
+    // archivedCompanies koleksiyonuna ekle
+    const archiveRef = await addDoc(collection(db, COLLECTIONS.ARCHIVED_COMPANIES), archiveData);
     
-    return { success: false, error: 'Failed to archive company' };
+    // Orijinal dokümanı sil
+    const companyDocRef = doc(db, COLLECTIONS.COMPANIES, docId);
+    await deleteDoc(companyDocRef);
+    
+    console.log(`✅ Company ${companyId} (doc: ${docId}) archived successfully to archivedCompanies`);
+    console.log(`⚠️ Company user ${companyId}@company.local login is now disabled`);
+    return { success: true, message: `Company archived. User login disabled.` };
   } catch (error) {
     console.error('Error archiving company:', error);
     return { success: false, error: error.message };
