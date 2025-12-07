@@ -227,107 +227,165 @@ const AgreementFormModal = ({
                                 </div>
                               </div>
 
-                              {/* Regular Sites Grouped by Neighborhood */}
-                              {(sortedNeighborhoods || []).map(neighborhood => {
-                                const neighborhoodSites = (sitesByNeighborhood[neighborhood] || []).filter(s => s != null);
-                                const selectedSitesInRange = (uiHandlers.getSelectedSitesForRange && uiHandlers.getSelectedSitesForRange(rangeIndex, sitePanelSelections)) || [];
-                                const allNeighborhoodSelected = neighborhoodSites.length > 0 && 
-                                  neighborhoodSites.every(site => site && site.id && selectedSitesInRange.includes(site.id));
-                                
-                                return (
-                                  <div key={neighborhood} className="mb-4">
-                                    <div className="d-flex justify-content-between align-items-center mb-3">
-                                      <h6 className="text-primary mb-0 d-flex align-items-center">
-                                        <i className="bi bi-geo-alt-fill me-2"></i>
-                                        <span className="fw-bold">{neighborhood}</span>
-                                        <span className="badge bg-primary ms-2">{neighborhoodSites.length}</span>
-                                      </h6>
-                                      <button
-                                        type="button"
-                                        className={`btn btn-sm ${allNeighborhoodSelected ? 'btn-outline-danger' : 'btn-outline-primary'}`}
-                                        onClick={() => uiHandlers.handleSelectNeighborhoodForRange(rangeIndex, neighborhood, neighborhoodSites, sitePanelSelections)}
-                                        title={allNeighborhoodSelected ? 'Mahalledeki tüm siteleri kaldır' : 'Mahalledeki tüm siteleri seç'}
-                                      >
-                                        <i className={`bi ${allNeighborhoodSelected ? 'bi-x-square' : 'bi-check-square'} me-1`}></i>
-                                        {allNeighborhoodSelected ? 'Tümünü Kaldır' : 'Tümünü Seç'}
-                                      </button>
-                                    </div>
-                                    <div className="row g-3">
-                                      {(neighborhoodSites || []).map(site => {
-                                        const isSelected = selectedSitesInRange.includes(site.id);
-                                        return (
-                                          <div key={site.id} className="col-md-6 col-sm-12">
-                                            <div className={`form-check-card h-100 ${isSelected ? 'border-primary' : ''}`}>
-                                              <input
-                                                type="checkbox"
-                                                id={`site-${site.id}-range-${rangeIndex}`}
-                                                checked={isSelected}
-                                                onChange={() => uiHandlers.handleSiteSelectionForRange(rangeIndex, site.id, sitePanelSelections)}
-                                                className="form-check-input"
-                                              />
-                                              <label htmlFor={`site-${site.id}-range-${rangeIndex}`} className="form-check-label h-100 d-flex align-items-center p-3">
-                                                <div className="me-3">
-                                                  <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                                                    <i className="bi bi-building text-primary"></i>
-                                                  </div>
-                                                </div>
-                                                <div className="flex-grow-1">
-                                                  <span className="fw-medium">{site.name}</span>
-                                                  <div className="small text-muted mt-1">
-                                                    <i className="bi bi-grid me-1"></i>
-                                                    {site.blocks} Blok, {site.panels} Panel
-                                                  </div>
-                                                </div>
-                                              </label>
+                              {/* Regular Sites Grouped by Neighborhood - Accordion */}
+                              <div className="accordion" id={`sites-accordion-${rangeIndex}`}>
+                                {(sortedNeighborhoods || []).map((neighborhood, neighborhoodIndex) => {
+                                  const neighborhoodSites = (sitesByNeighborhood[neighborhood] || []).filter(s => s != null);
+                                  const selectedSitesInRange = (uiHandlers.getSelectedSitesForRange && uiHandlers.getSelectedSitesForRange(rangeIndex, sitePanelSelections)) || [];
+                                  const allNeighborhoodSelected = neighborhoodSites.length > 0 && 
+                                    neighborhoodSites.every(site => site && site.id && selectedSitesInRange.includes(site.id));
+                                  const selectedCountInNeighborhood = neighborhoodSites.filter(site => site && site.id && selectedSitesInRange.includes(site.id)).length;
+                                  const accordionId = `neighborhood-${rangeIndex}-${neighborhoodIndex}`;
+                                  
+                                  return (
+                                    <div key={neighborhood} className="accordion-item">
+                                      <h2 className="accordion-header" id={`heading-${accordionId}`}>
+                                        <button
+                                          className="accordion-button collapsed"
+                                          type="button"
+                                          data-bs-toggle="collapse"
+                                          data-bs-target={`#${accordionId}`}
+                                          aria-expanded="false"
+                                          aria-controls={accordionId}
+                                        >
+                                          <div className="d-flex justify-content-between align-items-center w-100 me-3">
+                                            <span className="fw-semibold text-primary">
+                                              <i className="bi bi-geo-alt-fill me-2"></i>
+                                              {neighborhood}
+                                            </span>
+                                            <div className="d-flex align-items-center gap-2">
+                                              <span className="badge bg-primary">
+                                                {selectedCountInNeighborhood} / {neighborhoodSites.length}
+                                              </span>
+                                              <button
+                                                type="button"
+                                                className={`btn btn-sm ${allNeighborhoodSelected ? 'btn-outline-danger' : 'btn-outline-primary'}`}
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  uiHandlers.handleSelectNeighborhoodForRange(rangeIndex, neighborhood, neighborhoodSites, sitePanelSelections);
+                                                }}
+                                                title={allNeighborhoodSelected ? 'Mahalledeki tüm siteleri kaldır' : 'Mahalledeki tüm siteleri seç'}
+                                              >
+                                                <i className={`bi ${allNeighborhoodSelected ? 'bi-x-square' : 'bi-check-square'}`}></i>
+                                              </button>
                                             </div>
                                           </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-
-                              {/* Business Centers */}
-                              {businessCenters.length > 0 && (
-                                <div className="mt-4 pt-4 border-top">
-                                  <h6 className="text-warning mb-3 d-flex align-items-center">
-                                    <i className="bi bi-briefcase-fill me-2"></i>
-                                    <span className="fw-bold">İş Merkezleri</span>
-                                    <span className="badge bg-warning text-dark ms-2">{businessCenters.length}</span>
-                                  </h6>
-                                  <div className="row g-3">
-                                    {(businessCenters || []).map(site => {
-                                      const selectedSitesInRange = (uiHandlers.getSelectedSitesForRange && uiHandlers.getSelectedSitesForRange(rangeIndex, sitePanelSelections)) || [];
-                                      const isSelected = selectedSitesInRange.includes(site.id);
-                                      return (
-                                        <div key={site.id} className="col-md-6 col-sm-12">
-                                          <div className={`form-check-card h-100 border-warning ${isSelected ? 'border-primary' : ''}`}>
-                                            <input
-                                              type="checkbox"
-                                              id={`site-${site.id}-range-${rangeIndex}`}
-                                              checked={isSelected}
-                                              onChange={() => uiHandlers.handleSiteSelectionForRange(rangeIndex, site.id, sitePanelSelections)}
-                                              className="form-check-input"
-                                            />
-                                            <label htmlFor={`site-${site.id}-range-${rangeIndex}`} className="form-check-label h-100 d-flex align-items-center p-3">
-                                              <div className="me-3">
-                                                <div className="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                                                  <i className="bi bi-briefcase text-warning"></i>
+                                        </button>
+                                      </h2>
+                                      <div
+                                        id={accordionId}
+                                        className="accordion-collapse collapse"
+                                        aria-labelledby={`heading-${accordionId}`}
+                                        data-bs-parent={`#sites-accordion-${rangeIndex}`}
+                                      >
+                                        <div className="accordion-body">
+                                          <div className="row g-3">
+                                            {(neighborhoodSites || []).map(site => {
+                                              const isSelected = selectedSitesInRange.includes(site.id);
+                                              return (
+                                                <div key={site.id} className="col-md-6 col-sm-12">
+                                                  <div className={`form-check-card h-100 ${isSelected ? 'border-primary' : ''}`}>
+                                                    <input
+                                                      type="checkbox"
+                                                      id={`site-${site.id}-range-${rangeIndex}`}
+                                                      checked={isSelected}
+                                                      onChange={() => uiHandlers.handleSiteSelectionForRange(rangeIndex, site.id, sitePanelSelections)}
+                                                      className="form-check-input"
+                                                    />
+                                                    <label htmlFor={`site-${site.id}-range-${rangeIndex}`} className="form-check-label h-100 d-flex align-items-center p-3">
+                                                      <div className="me-3">
+                                                        <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                                          <i className="bi bi-building text-primary"></i>
+                                                        </div>
+                                                      </div>
+                                                      <div className="flex-grow-1">
+                                                        <span className="fw-medium">{site.name}</span>
+                                                        <div className="small text-muted mt-1">
+                                                          <i className="bi bi-grid me-1"></i>
+                                                          {site.blocks} Blok, {site.panels} Panel
+                                                        </div>
+                                                      </div>
+                                                    </label>
+                                                  </div>
                                                 </div>
-                                              </div>
-                                              <div className="flex-grow-1">
-                                                <span className="fw-medium">{site.name}</span>
-                                                <div className="small text-muted mt-1">
-                                                  <i className="bi bi-grid me-1"></i>
-                                                  {parseInt(site.manualPanels) || parseInt(site.panels) || 0} Panel
-                                                </div>
-                                              </div>
-                                            </label>
+                                              );
+                                            })}
                                           </div>
                                         </div>
-                                      );
-                                    })}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Business Centers - Accordion */}
+                              {businessCenters.length > 0 && (
+                                <div className="mt-4 pt-4 border-top">
+                                  <div className="accordion" id={`business-centers-accordion-${rangeIndex}`}>
+                                    <div className="accordion-item">
+                                      <h2 className="accordion-header" id={`heading-business-centers-${rangeIndex}`}>
+                                        <button
+                                          className="accordion-button collapsed"
+                                          type="button"
+                                          data-bs-toggle="collapse"
+                                          data-bs-target={`#business-centers-${rangeIndex}`}
+                                          aria-expanded="false"
+                                          aria-controls={`business-centers-${rangeIndex}`}
+                                        >
+                                          <div className="d-flex justify-content-between align-items-center w-100 me-3">
+                                            <span className="fw-semibold text-warning">
+                                              <i className="bi bi-briefcase-fill me-2"></i>
+                                              İş Merkezleri
+                                            </span>
+                                            <span className="badge bg-warning text-dark">
+                                              {businessCenters.length}
+                                            </span>
+                                          </div>
+                                        </button>
+                                      </h2>
+                                      <div
+                                        id={`business-centers-${rangeIndex}`}
+                                        className="accordion-collapse collapse"
+                                        aria-labelledby={`heading-business-centers-${rangeIndex}`}
+                                        data-bs-parent={`#business-centers-accordion-${rangeIndex}`}
+                                      >
+                                        <div className="accordion-body">
+                                          <div className="row g-3">
+                                            {(businessCenters || []).map(site => {
+                                              const selectedSitesInRange = (uiHandlers.getSelectedSitesForRange && uiHandlers.getSelectedSitesForRange(rangeIndex, sitePanelSelections)) || [];
+                                              const isSelected = selectedSitesInRange.includes(site.id);
+                                              return (
+                                                <div key={site.id} className="col-md-6 col-sm-12">
+                                                  <div className={`form-check-card h-100 border-warning ${isSelected ? 'border-primary' : ''}`}>
+                                                    <input
+                                                      type="checkbox"
+                                                      id={`site-${site.id}-range-${rangeIndex}`}
+                                                      checked={isSelected}
+                                                      onChange={() => uiHandlers.handleSiteSelectionForRange(rangeIndex, site.id, sitePanelSelections)}
+                                                      className="form-check-input"
+                                                    />
+                                                    <label htmlFor={`site-${site.id}-range-${rangeIndex}`} className="form-check-label h-100 d-flex align-items-center p-3">
+                                                      <div className="me-3">
+                                                        <div className="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                                          <i className="bi bi-briefcase text-warning"></i>
+                                                        </div>
+                                                      </div>
+                                                      <div className="flex-grow-1">
+                                                        <span className="fw-medium">{site.name}</span>
+                                                        <div className="small text-muted mt-1">
+                                                          <i className="bi bi-grid me-1"></i>
+                                                          {parseInt(site.manualPanels) || parseInt(site.panels) || 0} Panel
+                                                        </div>
+                                                      </div>
+                                                    </label>
+                                                  </div>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
                               )}
