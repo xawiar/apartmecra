@@ -1151,7 +1151,10 @@ export const createSiteUser = async (siteId, siteData, forceRecreate = false) =>
     
     // Create or update user in Firestore
     if (existingUsers.empty || forceRecreate) {
-      await createUser(userData);
+      const createResult = await createUser(userData);
+      if (!createResult || !createResult.success) {
+        throw new Error(createResult?.error || 'Failed to create user in Firestore');
+      }
     } else {
       // Update existing user
       const existingUserDoc = existingUsers.docs[0];
@@ -1249,7 +1252,10 @@ export const createCompanyUser = async (companyId, companyData, forceRecreate = 
     
     // Create or update user in Firestore
     if (existingUsers.empty || forceRecreate) {
-      await createUser(userData);
+      const createResult = await createUser(userData);
+      if (!createResult || !createResult.success) {
+        throw new Error(createResult?.error || 'Failed to create user in Firestore');
+      }
     } else {
       // Update existing user
       const existingUserDoc = existingUsers.docs[0];
