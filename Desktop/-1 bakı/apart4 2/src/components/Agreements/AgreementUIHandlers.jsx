@@ -777,6 +777,152 @@ const AgreementUIHandlers = ({
     });
   };
 
+  // Handle site selection for a specific date range
+  const handleSiteSelectionForRange = (rangeIndex, siteId, sitePanelSelections) => {
+    const rangeKey = `range-${rangeIndex}`;
+    const currentSites = (sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) || [];
+    
+    let newSites;
+    if (currentSites.includes(siteId)) {
+      // Remove site
+      newSites = currentSites.filter(id => id !== siteId);
+    } else {
+      // Add site
+      newSites = [...currentSites, siteId];
+    }
+    
+    setSitePanelSelections(prev => {
+      const updated = {
+        ...prev,
+        [rangeKey]: {
+          ...prev[rangeKey],
+          sites: newSites
+        }
+      };
+      return updated;
+    });
+  };
+
+  // Get selected sites for a specific date range
+  const getSelectedSitesForRange = (rangeIndex, sitePanelSelections) => {
+    const rangeKey = `range-${rangeIndex}`;
+    return (sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) || [];
+  };
+
+  // Handle select all sites for a date range
+  const handleSelectAllSitesForRange = (rangeIndex, sites, sitePanelSelections) => {
+    const rangeKey = `range-${rangeIndex}`;
+    const currentSites = (sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) || [];
+    const allSiteIds = (sites || []).map(s => s.id);
+    const allSelected = allSiteIds.length > 0 && allSiteIds.every(id => currentSites.includes(id));
+    
+    setSitePanelSelections(prev => {
+      const updated = {
+        ...prev,
+        [rangeKey]: {
+          ...prev[rangeKey],
+          sites: allSelected ? [] : allSiteIds
+        }
+      };
+      return updated;
+    });
+  };
+
+  // Handle select all sites in a neighborhood for a date range
+  const handleSelectNeighborhoodForRange = (rangeIndex, neighborhood, neighborhoodSites, sitePanelSelections) => {
+    const rangeKey = `range-${rangeIndex}`;
+    const currentSites = (sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) || [];
+    const neighborhoodSiteIds = (neighborhoodSites || []).map(s => s.id);
+    const allNeighborhoodSelected = neighborhoodSiteIds.length > 0 && 
+      neighborhoodSiteIds.every(id => currentSites.includes(id));
+    
+    let newSites;
+    if (allNeighborhoodSelected) {
+      // Remove all neighborhood sites
+      newSites = currentSites.filter(id => !neighborhoodSiteIds.includes(id));
+    } else {
+      // Add all neighborhood sites
+      const toAdd = neighborhoodSiteIds.filter(id => !currentSites.includes(id));
+      newSites = [...currentSites, ...toAdd];
+    }
+    
+    setSitePanelSelections(prev => {
+      const updated = {
+        ...prev,
+        [rangeKey]: {
+          ...prev[rangeKey],
+          sites: newSites
+        }
+      };
+      return updated;
+    });
+  };
+
+  // Handle block selection for a specific date range
+  const handleBlockSelectionForRange = (rangeIndex, siteId, blockKey, siteBlockSelections, sitePanelSelections) => {
+    const rangeKey = `range-${rangeIndex}`;
+    const currentBlocks = (siteBlockSelections[rangeKey] && 
+      siteBlockSelections[rangeKey][siteId]) || [];
+    
+    let newBlocks;
+    if (currentBlocks.includes(blockKey)) {
+      // Remove block
+      newBlocks = currentBlocks.filter(key => key !== blockKey);
+      
+      // Remove panel selections for this block
+      setSitePanelSelections(prev => {
+        const updated = { ...prev };
+        if (updated[siteId] && updated[siteId][blockKey]) {
+          if (updated[siteId][blockKey][rangeKey]) {
+            delete updated[siteId][blockKey][rangeKey];
+          }
+        }
+        return updated;
+      });
+    } else {
+      // Add block
+      newBlocks = [...currentBlocks, blockKey];
+      
+      // Initialize panel selections for this block
+      setSitePanelSelections(prev => {
+        const updated = {
+          ...prev,
+          [siteId]: {
+            ...prev[siteId],
+            [blockKey]: {
+              ...prev[siteId]?.[blockKey],
+              [rangeKey]: []
+            }
+          }
+        };
+        setTimeout(() => updateSitePanelCount(siteId, updated, setSitePanelCounts), 0);
+        return updated;
+      });
+    }
+    
+    setSiteBlockSelections(prev => {
+      const updated = {
+        ...prev,
+        [rangeKey]: {
+          ...prev[rangeKey],
+          [siteId]: newBlocks
+        }
+      };
+      return updated;
+    });
+    
+    // For removal case, update panel count immediately
+    if (currentBlocks.includes(blockKey)) {
+      setTimeout(() => updateSitePanelCount(siteId, sitePanelSelections, setSitePanelCounts), 0);
+    }
+  };
+
+  // Get selected blocks for a specific date range and site
+  const getSelectedBlocksForRange = (rangeIndex, siteId, siteBlockSelections) => {
+    const rangeKey = `range-${rangeIndex}`;
+    return (siteBlockSelections[rangeKey] && siteBlockSelections[rangeKey][siteId]) || [];
+  };
+
   return {
     handleAddAgreement,
     handleEditAgreement,
@@ -784,7 +930,13 @@ const AgreementUIHandlers = ({
     handleCloseAddForm,
     handleFormChange,
     handleSiteSelection,
+    handleSiteSelectionForRange,
+    getSelectedSitesForRange,
+    handleSelectAllSitesForRange,
+    handleSelectNeighborhoodForRange,
     handleBlockSelection,
+    handleBlockSelectionForRange,
+    getSelectedBlocksForRange,
     handlePanelSelection,
     handlePanelSelectionForDateRange,
     handleWeekSelection,

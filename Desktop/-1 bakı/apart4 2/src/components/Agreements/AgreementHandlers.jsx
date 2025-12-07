@@ -706,39 +706,40 @@ const AgreementHandlers = ({
       return;
     }
     
-    if (selectedSites.length === 0) {
-      console.log('Please select at least one site');
-      return;
-    }
-    
     // Check if any site has panel selections - Updated for new system
     // Supports both old format (array) and new format (object with date ranges)
     let hasPanelSelections = false;
-    console.log('Checking panel selections for sites:', selectedSites);
-    for (const siteId of selectedSites) {
-      const siteSelections = sitePanelSelections[siteId];
-      console.log('Site selections for site', siteId, ':', siteSelections);
-      if (siteSelections) {
-        for (const blockKey in siteSelections) {
-          console.log('Block', blockKey, 'has panels:', siteSelections[blockKey]);
-          const blockSelections = siteSelections[blockKey];
-          if (Array.isArray(blockSelections)) {
-            // Old format: array of panel keys
-            if (blockSelections.length > 0) {
-              hasPanelSelections = true;
-              break;
-            }
-          } else if (typeof blockSelections === 'object') {
-            // New format: object with date range keys
-            for (const rangeKey in blockSelections) {
-              if (Array.isArray(blockSelections[rangeKey]) && blockSelections[rangeKey].length > 0) {
+    console.log('Checking panel selections for sites');
+    
+    // Check if we have selections for any date range
+    for (let rangeIndex = 0; rangeIndex < dateRanges.length; rangeIndex++) {
+      const rangeKey = `range-${rangeIndex}`;
+      const selectedSitesInRange = (sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) || [];
+      
+      for (const siteId of selectedSitesInRange) {
+        const siteSelections = sitePanelSelections[siteId];
+        console.log('Site selections for site', siteId, ':', siteSelections);
+        if (siteSelections) {
+          for (const blockKey in siteSelections) {
+            console.log('Block', blockKey, 'has panels:', siteSelections[blockKey]);
+            const blockSelections = siteSelections[blockKey];
+            if (Array.isArray(blockSelections)) {
+              // Old format: array of panel keys
+              if (blockSelections.length > 0) {
+                hasPanelSelections = true;
+                break;
+              }
+            } else if (typeof blockSelections === 'object') {
+              // New format: object with date range keys
+              if (blockSelections[rangeKey] && Array.isArray(blockSelections[rangeKey]) && blockSelections[rangeKey].length > 0) {
                 hasPanelSelections = true;
                 break;
               }
             }
+            if (hasPanelSelections) break;
           }
-          if (hasPanelSelections) break;
         }
+        if (hasPanelSelections) break;
       }
       if (hasPanelSelections) break;
     }
@@ -785,12 +786,20 @@ const AgreementHandlers = ({
         return;
       }
       
+      // Collect all selected sites from all date ranges
+      const allSelectedSites = new Set();
+      dateRanges.forEach((range, rangeIndex) => {
+        const rangeKey = `range-${rangeIndex}`;
+        const sitesInRange = (sitePanelSelections[rangeKey] && sitePanelSelections[rangeKey].sites) || [];
+        sitesInRange.forEach(siteId => allSelectedSites.add(siteId));
+      });
+      
       const agreementData = {
         ...formData,
         startDate: startDate, // Geriye uyumluluk için
         endDate: endDate, // Geriye uyumluluk için
         dateRanges: dateRanges, // Birden fazla tarih aralığı
-        siteIds: selectedSites,
+        siteIds: Array.from(allSelectedSites), // All sites from all ranges
         sitePanelCounts: sitePanelCounts,
         siteBlockSelections: siteBlockSelections,
         sitePanelSelections: sitePanelSelections,
