@@ -403,43 +403,93 @@ const AgreementFormModal = ({
                                 );
                               }
 
-                              return (selectedSitesInRange || []).map(siteId => {
+                              // Calculate total selected blocks
+                              let totalSelectedBlocks = 0;
+                              let totalBlocks = 0;
+                              (selectedSitesInRange || []).forEach(siteId => {
                                 const site = (sites || []).find(s => s.id === siteId);
-                                if (!site) return null;
-                                
+                                if (!site) return;
+                                const selectedBlocks = (uiHandlers.getSelectedBlocksForRange && uiHandlers.getSelectedBlocksForRange(rangeIndex, siteId, siteBlockSelections)) || [];
                                 const blockLabels = site.siteType === 'business_center' 
                                   ? ['A'] 
                                   : (helpers.generateBlockLabels(site.blocks) || []);
-                                const selectedBlocks = (uiHandlers.getSelectedBlocksForRange && uiHandlers.getSelectedBlocksForRange(rangeIndex, siteId, siteBlockSelections)) || [];
+                                totalSelectedBlocks += selectedBlocks.length;
+                                totalBlocks += blockLabels.length;
+                              });
 
-                                return (
-                                  <div key={siteId} className="mb-4 pb-3 border-bottom">
-                                    <h6 className="mb-3 fw-bold text-primary d-flex justify-content-between align-items-center">
-                                      <span>
-                                        <i className="bi bi-geo-alt me-2"></i>
-                                        {site.name}
+                              return (
+                                <div key={`blocks-range-${rangeIndex}`}>
+                                  {/* Global buttons for all selected sites */}
+                                  <div className="mb-3 d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                    <label className="form-label fw-medium mb-0">
+                                      Blok ve Panel Seçimi
+                                      <span className="badge bg-primary ms-2">
+                                        {totalSelectedBlocks} / {totalBlocks} Blok Seçili
                                       </span>
-                                      <div className="d-flex gap-2">
-                                        <button
-                                          type="button"
-                                          className="btn btn-sm btn-success"
-                                          onClick={() => uiHandlers.handleSelectAllBlocksForRange(rangeIndex, siteId, site, siteBlockSelections, sitePanelSelections)}
-                                          title="Tüm blokları seç"
-                                        >
-                                          <i className="bi bi-check-square me-1"></i>
-                                          Tüm Blokları Seç
-                                        </button>
-                                        <button
-                                          type="button"
-                                          className="btn btn-sm btn-primary"
-                                          onClick={() => uiHandlers.handleSelectHalfForAllInRange(rangeIndex, siteId, site, siteBlockSelections, sitePanelSelections, [range])}
-                                          title="Tüm blokların panellerinin yarısını seç"
-                                        >
-                                          <i className="bi bi-check2-all me-1"></i>
-                                          Tümünün Yarısını Seç
-                                        </button>
-                                      </div>
-                                    </h6>
+                                    </label>
+                                    <div className="d-flex gap-2">
+                                      <button
+                                        type="button"
+                                        className="btn btn-sm btn-success"
+                                        onClick={() => uiHandlers.handleSelectAllBlocksForAllSitesInRange(rangeIndex, selectedSitesInRange, sites, siteBlockSelections, sitePanelSelections)}
+                                        title="Seçili tüm sitelerin tüm bloklarını seç"
+                                      >
+                                        <i className="bi bi-check-square me-1"></i>
+                                        Tüm Blokları Seç
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn btn-sm btn-primary"
+                                        onClick={() => uiHandlers.handleSelectHalfForAllSitesInRange(rangeIndex, selectedSitesInRange, sites, siteBlockSelections, sitePanelSelections, [range])}
+                                        title="Seçili tüm sitelerin tüm bloklarının panellerinin yarısını seç"
+                                      >
+                                        <i className="bi bi-check2-all me-1"></i>
+                                        Tümünün Yarısını Seç
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Sites with blocks in accordion */}
+                                  <div className="accordion" id={`blocks-accordion-${rangeIndex}`}>
+                                    {(selectedSitesInRange || []).map(siteId => {
+                                      const site = (sites || []).find(s => s.id === siteId);
+                                      if (!site) return null;
+                                      
+                                      const blockLabels = site.siteType === 'business_center' 
+                                        ? ['A'] 
+                                        : (helpers.generateBlockLabels(site.blocks) || []);
+                                      const selectedBlocks = (uiHandlers.getSelectedBlocksForRange && uiHandlers.getSelectedBlocksForRange(rangeIndex, siteId, siteBlockSelections)) || [];
+                                      const siteAccordionId = `site-blocks-${rangeIndex}-${siteId}`;
+
+                                      return (
+                                        <div key={siteId} className="accordion-item">
+                                          <h2 className="accordion-header" id={`heading-${siteAccordionId}`}>
+                                            <button
+                                              className="accordion-button collapsed"
+                                              type="button"
+                                              data-bs-toggle="collapse"
+                                              data-bs-target={`#${siteAccordionId}`}
+                                              aria-expanded="false"
+                                              aria-controls={siteAccordionId}
+                                            >
+                                              <div className="d-flex justify-content-between align-items-center w-100 me-3">
+                                                <span className="fw-semibold text-primary">
+                                                  <i className="bi bi-geo-alt me-2"></i>
+                                                  {site.name}
+                                                </span>
+                                                <span className="badge bg-primary">
+                                                  {selectedBlocks.length} / {blockLabels.length}
+                                                </span>
+                                              </div>
+                                            </button>
+                                          </h2>
+                                          <div
+                                            id={siteAccordionId}
+                                            className="accordion-collapse collapse"
+                                            aria-labelledby={`heading-${siteAccordionId}`}
+                                            data-bs-parent={`#blocks-accordion-${rangeIndex}`}
+                                          >
+                                            <div className="accordion-body">
                                     
                                     {/* Block Selection */}
                                     <div className="mb-4">
@@ -503,6 +553,7 @@ const AgreementFormModal = ({
                                       
                                       {/* Panel Selection for Selected Blocks - Accordion */}
                                       {(() => {
+                                        const rangeKey = `range-${rangeIndex}`;
                                         const blocksToShow = site.siteType === 'business_center' 
                                           ? (selectedBlocks.includes(`${siteId}-block-A`) ? [`${siteId}-block-A`] : [])
                                           : selectedBlocks.filter(blockKey => blockKey && blockKey.startsWith(`${siteId}-block-`));
@@ -617,10 +668,14 @@ const AgreementFormModal = ({
                                           </div>
                                         );
                                       })()}
-                                    </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
                                   </div>
-                                );
-                              });
+                                </div>
+                              );
                             })()}
                           </>
                         )}
