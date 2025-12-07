@@ -712,6 +712,7 @@ const AgreementHandlers = ({
     }
     
     // Check if any site has panel selections - Updated for new system
+    // Supports both old format (array) and new format (object with date ranges)
     let hasPanelSelections = false;
     console.log('Checking panel selections for sites:', selectedSites);
     for (const siteId of selectedSites) {
@@ -720,10 +721,23 @@ const AgreementHandlers = ({
       if (siteSelections) {
         for (const blockKey in siteSelections) {
           console.log('Block', blockKey, 'has panels:', siteSelections[blockKey]);
-          if (siteSelections[blockKey].length > 0) {
-            hasPanelSelections = true;
-            break;
+          const blockSelections = siteSelections[blockKey];
+          if (Array.isArray(blockSelections)) {
+            // Old format: array of panel keys
+            if (blockSelections.length > 0) {
+              hasPanelSelections = true;
+              break;
+            }
+          } else if (typeof blockSelections === 'object') {
+            // New format: object with date range keys
+            for (const rangeKey in blockSelections) {
+              if (Array.isArray(blockSelections[rangeKey]) && blockSelections[rangeKey].length > 0) {
+                hasPanelSelections = true;
+                break;
+              }
+            }
           }
+          if (hasPanelSelections) break;
         }
       }
       if (hasPanelSelections) break;

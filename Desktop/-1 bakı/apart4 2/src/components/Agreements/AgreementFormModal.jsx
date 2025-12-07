@@ -485,77 +485,172 @@ const AgreementFormModal = ({
                                     return (selectedBlocks || []).filter(blockKey => blockKey && blockKey.startsWith(`${siteId}-block-`));
                                   })().map(blockKey => {
                                       const blockLabel = blockKey.split('-')[2]; // Extract block label (A, B, C, etc.)
-                                      const selectedPanels = (sitePanelSelections[siteId] && sitePanelSelections[siteId][blockKey]) || [];
+                                      const dateRanges = formData.dateRanges || [{ startDate: '', endDate: '' }];
                                       
-                                      return (
-                                        <div key={`${siteId}-${blockKey}-panels`} className="mt-3">
-                                          <div className="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded">
-                                            <h6 className="mb-0 fw-semibold text-primary">
-                                              <i className="bi bi-grid-3x3-gap me-2"></i>
-                                              {site.siteType === 'business_center' ? 'İş Merkezi Panelleri' : `Blok ${blockLabel} Panelleri`}
-                                            </h6>
-                                            <button
-                                              type="button"
-                                              className="btn btn-primary btn-sm fw-bold"
-                                              onClick={() => {
-                                                const totalPanels = site.siteType === 'business_center' 
-                                                  ? (parseInt(site.manualPanels) || parseInt(site.panels) || 0) 
-                                                  : (parseInt(site.elevatorsPerBlock) || 0) * 2;
-                                                uiHandlers.handleSelectHalf(siteId, blockKey, sitePanelSelections, totalPanels);
-                                              }}
-                                              title="Panellerin yarısını otomatik seç (tek sayılar önce, sonra çift sayılar)"
-                                              style={{ minWidth: '120px' }}
-                                            >
-                                              <i className="bi bi-check2-square me-1"></i>
-                                              Yarısını Seç
-                                            </button>
-                                          </div>
-                                          <div className="row g-2">
-                                            {Array.from({ length: site.siteType === 'business_center' ? (parseInt(site.manualPanels) || parseInt(site.panels) || 0) : (parseInt(site.elevatorsPerBlock) || 0) * 2 }, (_, i) => {
-                                              const panelId = i + 1;
-                                              const panelKey = `panel-${panelId}`;
-                                              const isPanelSelected = selectedPanels.includes(panelKey);
-                                              const panelName = generatePanelName(siteId, blockLabel, panelId);
-                                              const isAvailable = helpers.isPanelAvailable(siteId, blockKey, panelKey, formData.startDate, formData.endDate, formData.dateRanges);
-                                              const usageInfo = !isAvailable ? helpers.getPanelUsageInfo(siteId, blockKey, panelKey, formData.startDate, formData.endDate) : null;
+                                      // If multiple date ranges, show panel selection for each range
+                                      if (dateRanges.length > 1) {
+                                        return (
+                                          <div key={`${siteId}-${blockKey}-panels`} className="mt-3">
+                                            {dateRanges.map((range, rangeIndex) => {
+                                              // Get panel selections for this date range
+                                              const rangeKey = `range-${rangeIndex}`;
+                                              const selectedPanels = (sitePanelSelections[siteId] && 
+                                                sitePanelSelections[siteId][blockKey] && 
+                                                sitePanelSelections[siteId][blockKey][rangeKey]) || [];
                                               
                                               return (
-                                                <div key={panelKey} className="col-4 col-sm-3 col-md-2">
-                                                  <div 
-                                                    className={`card panel-card h-100 border-2 ${!isAvailable ? 'border-warning bg-warning bg-opacity-10' : isPanelSelected ? 'border-primary bg-primary bg-opacity-10' : 'border-light'}`} 
-                                                    style={{ cursor: isAvailable ? 'pointer' : 'not-allowed', transition: 'all 0.2s', position: 'relative' }}
-                                                    onClick={() => { if (isAvailable) uiHandlers.handlePanelSelection(siteId, blockKey, panelKey, sitePanelSelections); }}
-                                                  >
-                                                    <div className="card-body p-2 d-flex flex-column align-items-center">
-                                                      <div className="form-check mb-1">
-                                                        <input
-                                                          type="checkbox"
-                                                          id={`${siteId}-${blockKey}-${panelKey}`}
-                                                          checked={isPanelSelected}
-                                                          onChange={() => { if (isAvailable) uiHandlers.handlePanelSelection(siteId, blockKey, panelKey, sitePanelSelections); }}
-                                                          className="form-check-input"
-                                                          onClick={(e) => e.stopPropagation()}
-                                                          disabled={!isAvailable}
-                                                        />
-                                                      </div>
-                                                      <div className="text-center">
-                                                        <div className="fw-bold text-truncate" style={{ fontSize: '10px', maxWidth: '80px' }}>{panelName}</div>
-                                                        <div className="small text-muted mt-1" style={{ fontSize: '9px' }}>Panel {panelId}</div>
-                                                        {!isAvailable && usageInfo && (
-                                                          <div className="small text-muted mt-1" style={{ fontSize: '8px' }}>
-                                                            <i className="bi bi-lock-fill me-1"></i>
-                                                            {usageInfo.companyName}
+                                                <div key={`${siteId}-${blockKey}-${rangeIndex}`} className="mb-4 border rounded p-3">
+                                                  <div className="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded">
+                                                    <h6 className="mb-0 fw-semibold text-primary">
+                                                      <i className="bi bi-grid-3x3-gap me-2"></i>
+                                                      {site.siteType === 'business_center' ? 'İş Merkezi Panelleri' : `Blok ${blockLabel} Panelleri`}
+                                                      <span className="badge bg-info ms-2">Aralık {rangeIndex + 1}</span>
+                                                      <small className="text-muted ms-2">
+                                                        {range.startDate && range.endDate 
+                                                          ? `${new Date(range.startDate).toLocaleDateString('tr-TR')} - ${new Date(range.endDate).toLocaleDateString('tr-TR')}`
+                                                          : 'Tarih seçilmedi'}
+                                                      </small>
+                                                    </h6>
+                                                    <button
+                                                      type="button"
+                                                      className="btn btn-primary btn-sm fw-bold"
+                                                      onClick={() => {
+                                                        const totalPanels = site.siteType === 'business_center' 
+                                                          ? (parseInt(site.manualPanels) || parseInt(site.panels) || 0) 
+                                                          : (parseInt(site.elevatorsPerBlock) || 0) * 2;
+                                                        uiHandlers.handleSelectHalfForDateRange(siteId, blockKey, rangeIndex, sitePanelSelections, totalPanels, [range]);
+                                                      }}
+                                                      title="Panellerin yarısını otomatik seç (tek sayılar önce, sonra çift sayılar)"
+                                                      style={{ minWidth: '120px' }}
+                                                    >
+                                                      <i className="bi bi-check2-square me-1"></i>
+                                                      Yarısını Seç
+                                                    </button>
+                                                  </div>
+                                                  <div className="row g-2">
+                                                    {Array.from({ length: site.siteType === 'business_center' ? (parseInt(site.manualPanels) || parseInt(site.panels) || 0) : (parseInt(site.elevatorsPerBlock) || 0) * 2 }, (_, i) => {
+                                                      const panelId = i + 1;
+                                                      const panelKey = `panel-${panelId}`;
+                                                      const isPanelSelected = selectedPanels.includes(panelKey);
+                                                      const panelName = generatePanelName(siteId, blockLabel, panelId);
+                                                      const isAvailable = helpers.isPanelAvailable(siteId, blockKey, panelKey, range.startDate, range.endDate, [range]);
+                                                      const usageInfo = !isAvailable ? helpers.getPanelUsageInfo(siteId, blockKey, panelKey, range.startDate, range.endDate) : null;
+                                                      
+                                                      return (
+                                                        <div key={panelKey} className="col-4 col-sm-3 col-md-2">
+                                                          <div 
+                                                            className={`card panel-card h-100 border-2 ${!isAvailable ? 'border-warning bg-warning bg-opacity-10' : isPanelSelected ? 'border-primary bg-primary bg-opacity-10' : 'border-light'}`} 
+                                                            style={{ cursor: isAvailable ? 'pointer' : 'not-allowed', transition: 'all 0.2s', position: 'relative' }}
+                                                            onClick={() => { if (isAvailable) uiHandlers.handlePanelSelectionForDateRange(siteId, blockKey, panelKey, rangeIndex, sitePanelSelections); }}
+                                                          >
+                                                            <div className="card-body p-2 d-flex flex-column align-items-center">
+                                                              <div className="form-check mb-1">
+                                                                <input
+                                                                  type="checkbox"
+                                                                  id={`${siteId}-${blockKey}-${panelKey}-${rangeIndex}`}
+                                                                  checked={isPanelSelected}
+                                                                  onChange={() => { if (isAvailable) uiHandlers.handlePanelSelectionForDateRange(siteId, blockKey, panelKey, rangeIndex, sitePanelSelections); }}
+                                                                  className="form-check-input"
+                                                                  onClick={(e) => e.stopPropagation()}
+                                                                  disabled={!isAvailable}
+                                                                />
+                                                              </div>
+                                                              <div className="text-center">
+                                                                <div className="fw-bold text-truncate" style={{ fontSize: '10px', maxWidth: '80px' }}>{panelName}</div>
+                                                                <div className="small text-muted mt-1" style={{ fontSize: '9px' }}>Panel {panelId}</div>
+                                                                {!isAvailable && usageInfo && (
+                                                                  <div className="small text-muted mt-1" style={{ fontSize: '8px' }}>
+                                                                    <i className="bi bi-lock-fill me-1"></i>
+                                                                    {usageInfo.companyName}
+                                                                  </div>
+                                                                )}
+                                                              </div>
+                                                            </div>
                                                           </div>
-                                                        )}
-                                                      </div>
-                                                    </div>
+                                                        </div>
+                                                      );
+                                                    })}
                                                   </div>
                                                 </div>
                                               );
                                             })}
                                           </div>
-                                        </div>
-                                      );
+                                        );
+                                      } else {
+                                        // Single date range - use existing logic
+                                        const selectedPanels = (sitePanelSelections[siteId] && sitePanelSelections[siteId][blockKey]) || [];
+                                        const range = dateRanges[0] || {};
+                                        
+                                        return (
+                                          <div key={`${siteId}-${blockKey}-panels`} className="mt-3">
+                                            <div className="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded">
+                                              <h6 className="mb-0 fw-semibold text-primary">
+                                                <i className="bi bi-grid-3x3-gap me-2"></i>
+                                                {site.siteType === 'business_center' ? 'İş Merkezi Panelleri' : `Blok ${blockLabel} Panelleri`}
+                                              </h6>
+                                              <button
+                                                type="button"
+                                                className="btn btn-primary btn-sm fw-bold"
+                                                onClick={() => {
+                                                  const totalPanels = site.siteType === 'business_center' 
+                                                    ? (parseInt(site.manualPanels) || parseInt(site.panels) || 0) 
+                                                    : (parseInt(site.elevatorsPerBlock) || 0) * 2;
+                                                  uiHandlers.handleSelectHalf(siteId, blockKey, sitePanelSelections, totalPanels);
+                                                }}
+                                                title="Panellerin yarısını otomatik seç (tek sayılar önce, sonra çift sayılar)"
+                                                style={{ minWidth: '120px' }}
+                                              >
+                                                <i className="bi bi-check2-square me-1"></i>
+                                                Yarısını Seç
+                                              </button>
+                                            </div>
+                                            <div className="row g-2">
+                                              {Array.from({ length: site.siteType === 'business_center' ? (parseInt(site.manualPanels) || parseInt(site.panels) || 0) : (parseInt(site.elevatorsPerBlock) || 0) * 2 }, (_, i) => {
+                                                const panelId = i + 1;
+                                                const panelKey = `panel-${panelId}`;
+                                                const isPanelSelected = selectedPanels.includes(panelKey);
+                                                const panelName = generatePanelName(siteId, blockLabel, panelId);
+                                                const isAvailable = helpers.isPanelAvailable(siteId, blockKey, panelKey, formData.startDate, formData.endDate, formData.dateRanges);
+                                                const usageInfo = !isAvailable ? helpers.getPanelUsageInfo(siteId, blockKey, panelKey, formData.startDate, formData.endDate) : null;
+                                                
+                                                return (
+                                                  <div key={panelKey} className="col-4 col-sm-3 col-md-2">
+                                                    <div 
+                                                      className={`card panel-card h-100 border-2 ${!isAvailable ? 'border-warning bg-warning bg-opacity-10' : isPanelSelected ? 'border-primary bg-primary bg-opacity-10' : 'border-light'}`} 
+                                                      style={{ cursor: isAvailable ? 'pointer' : 'not-allowed', transition: 'all 0.2s', position: 'relative' }}
+                                                      onClick={() => { if (isAvailable) uiHandlers.handlePanelSelection(siteId, blockKey, panelKey, sitePanelSelections); }}
+                                                    >
+                                                      <div className="card-body p-2 d-flex flex-column align-items-center">
+                                                        <div className="form-check mb-1">
+                                                          <input
+                                                            type="checkbox"
+                                                            id={`${siteId}-${blockKey}-${panelKey}`}
+                                                            checked={isPanelSelected}
+                                                            onChange={() => { if (isAvailable) uiHandlers.handlePanelSelection(siteId, blockKey, panelKey, sitePanelSelections); }}
+                                                            className="form-check-input"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            disabled={!isAvailable}
+                                                          />
+                                                        </div>
+                                                        <div className="text-center">
+                                                          <div className="fw-bold text-truncate" style={{ fontSize: '10px', maxWidth: '80px' }}>{panelName}</div>
+                                                          <div className="small text-muted mt-1" style={{ fontSize: '9px' }}>Panel {panelId}</div>
+                                                          {!isAvailable && usageInfo && (
+                                                            <div className="small text-muted mt-1" style={{ fontSize: '8px' }}>
+                                                              <i className="bi bi-lock-fill me-1"></i>
+                                                              {usageInfo.companyName}
+                                                            </div>
+                                                          )}
+                                                        </div>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        );
+                                      }
                                     })}
                                 </div>
                                 

@@ -121,13 +121,24 @@ const AgreementHelpers = ({
   };
 
   // Update the total panel count for a site based on selected panels - Updated for new system
+  // Supports both old format (array) and new format (object with date ranges)
   const updateSitePanelCount = (siteId, sitePanelSelections, setSitePanelCounts) => {
     const siteSelections = sitePanelSelections[siteId] || {};
     let totalSelectedPanels = 0;
     
     // Count all selected panels for this site
     Object.values(siteSelections).forEach(blockSelections => {
-      totalSelectedPanels += blockSelections.length;
+      if (Array.isArray(blockSelections)) {
+        // Old format: array of panel keys
+        totalSelectedPanels += blockSelections.length;
+      } else if (typeof blockSelections === 'object') {
+        // New format: object with date range keys
+        Object.values(blockSelections).forEach(rangePanels => {
+          if (Array.isArray(rangePanels)) {
+            totalSelectedPanels += rangePanels.length;
+          }
+        });
+      }
     });
     
     // Update the panel count for this site

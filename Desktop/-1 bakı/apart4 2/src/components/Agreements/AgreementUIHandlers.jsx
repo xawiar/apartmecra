@@ -224,6 +224,151 @@ const AgreementUIHandlers = ({
     });
   };
 
+  // Handle panel selection for a specific date range (for multiple date ranges)
+  const handlePanelSelectionForDateRange = (siteId, blockKey, panelKey, rangeIndex, sitePanelSelections) => {
+    const rangeKey = `range-${rangeIndex}`;
+    const currentSelections = (sitePanelSelections[siteId] && 
+      sitePanelSelections[siteId][blockKey] && 
+      sitePanelSelections[siteId][blockKey][rangeKey]) || [];
+    
+    let newSelections;
+    if (currentSelections.includes(panelKey)) {
+      // Remove panel
+      newSelections = currentSelections.filter(key => key !== panelKey);
+    } else {
+      // Add panel
+      newSelections = [...currentSelections, panelKey];
+    }
+    
+    setSitePanelSelections(prev => {
+      const updated = {
+        ...prev,
+        [siteId]: {
+          ...prev[siteId],
+          [blockKey]: {
+            ...prev[siteId]?.[blockKey],
+            [rangeKey]: newSelections
+          }
+        }
+      };
+      // Update total panel count for the site after state update
+      updateSitePanelCount(siteId, updated, setSitePanelCounts);
+      return updated;
+    });
+  };
+
+  // Handle "Select Half" for a specific date range
+  const handleSelectHalfForDateRange = (siteId, blockKey, rangeIndex, sitePanelSelections, totalPanels, dateRange) => {
+    const site = sites.find(s => s.id === siteId);
+    if (!site) return;
+
+    const rangeKey = `range-${rangeIndex}`;
+    const currentSelections = (sitePanelSelections[siteId] && 
+      sitePanelSelections[siteId][blockKey] && 
+      sitePanelSelections[siteId][blockKey][rangeKey]) || [];
+    
+    // Collect ALL panels (both available and unavailable) to check which ones are used
+    const allPanels = [];
+    const availablePanels = [];
+    const unavailablePanels = [];
+    
+    for (let i = 1; i <= totalPanels; i++) {
+      const panelKey = `panel-${i}`;
+      const isAvailable = helpers && helpers.isPanelAvailable 
+        ? helpers.isPanelAvailable(siteId, blockKey, panelKey, dateRange[0].startDate, dateRange[0].endDate, dateRange)
+        : true;
+      
+      allPanels.push({ panelKey, panelNumber: i, isAvailable });
+      
+      if (isAvailable && !currentSelections.includes(panelKey)) {
+        availablePanels.push({ panelKey, panelNumber: i });
+      } else if (!isAvailable) {
+        unavailablePanels.push({ panelKey, panelNumber: i });
+      }
+    }
+
+    if (availablePanels.length === 0) {
+      if (showAlertModal) {
+        showAlertModal('Bilgi', 'Seçilebilecek müsait panel bulunmamaktadır.', 'info');
+      }
+      return;
+    }
+
+    // Separate odd and even panels from available panels
+    const oddAvailablePanels = availablePanels.filter(p => p.panelNumber % 2 === 1);
+    const evenAvailablePanels = availablePanels.filter(p => p.panelNumber % 2 === 0);
+    
+    // Check if odd panels are being used (unavailable)
+    const oddUnavailablePanels = unavailablePanels.filter(p => p.panelNumber % 2 === 1);
+    const oddPanelsAreUsed = oddUnavailablePanels.length > 0;
+
+    // Calculate how many panels to select
+    const targetCount = totalPanels > 0 ? Math.floor((totalPanels - 1) / 2) : 0;
+    const alreadySelected = currentSelections.length;
+    const needToSelect = Math.max(0, targetCount - alreadySelected);
+
+    if (needToSelect === 0) {
+      if (showAlertModal) {
+        showAlertModal('Bilgi', 'Zaten yeterli sayıda panel seçilmiş.', 'info');
+      }
+      return;
+    }
+
+    let panelsToSelect = [];
+
+    // Mantık:
+    // 1. Eğer tek paneller kullanılmışsa (unavailable), çift panelleri seç
+    // 2. Eğer tek paneller müsaitse, önce tek panelleri seç
+    // 3. Eğer yeterli tek panel yoksa, çift panelleri ekle
+    
+    if (oddPanelsAreUsed && evenAvailablePanels.length > 0) {
+      // Tek paneller kullanılmış, çift panelleri seç
+      const evenToSelect = Math.min(needToSelect, evenAvailablePanels.length);
+      panelsToSelect = evenAvailablePanels.slice(0, evenToSelect).map(p => p.panelKey);
+    } else if (oddAvailablePanels.length > 0) {
+      // Tek paneller müsait, önce tek panelleri seç
+      const oddToSelect = Math.min(needToSelect, oddAvailablePanels.length);
+      panelsToSelect = oddAvailablePanels.slice(0, oddToSelect).map(p => p.panelKey);
+      
+      // Eğer yeterli tek panel yoksa, çift panelleri ekle
+      if (panelsToSelect.length < needToSelect && evenAvailablePanels.length > 0) {
+        const remaining = needToSelect - panelsToSelect.length;
+        const evenToSelect = Math.min(remaining, evenAvailablePanels.length);
+        panelsToSelect = [...panelsToSelect, ...evenAvailablePanels.slice(0, evenToSelect).map(p => p.panelKey)];
+      }
+    } else if (evenAvailablePanels.length > 0) {
+      // Sadece çift paneller müsait
+      const evenToSelect = Math.min(needToSelect, evenAvailablePanels.length);
+      panelsToSelect = evenAvailablePanels.slice(0, evenToSelect).map(p => p.panelKey);
+    }
+
+    if (panelsToSelect.length === 0) {
+      if (showAlertModal) {
+        showAlertModal('Bilgi', 'Seçilebilecek müsait panel bulunmamaktadır.', 'info');
+      }
+      return;
+    }
+
+    // Add selected panels to current selections
+    const newSelections = [...currentSelections, ...panelsToSelect];
+
+    setSitePanelSelections(prev => {
+      const updated = {
+        ...prev,
+        [siteId]: {
+          ...prev[siteId],
+          [blockKey]: {
+            ...prev[siteId]?.[blockKey],
+            [rangeKey]: newSelections
+          }
+        }
+      };
+      // Update total panel count for the site after state update
+      updateSitePanelCount(siteId, updated, setSitePanelCounts);
+      return updated;
+    });
+  };
+
   // Handle week selection
   const handleWeekSelection = (weekId, selectedWeeks, setSelectedWeeks) => {
     let newSelectedWeeks;
@@ -641,8 +786,10 @@ const AgreementUIHandlers = ({
     handleSiteSelection,
     handleBlockSelection,
     handlePanelSelection,
+    handlePanelSelectionForDateRange,
     handleWeekSelection,
     handleSelectHalf,
+    handleSelectHalfForDateRange,
     handleSelectHalfForAll,
     handleSelectAllBlocks,
     handleAddDateRange,
