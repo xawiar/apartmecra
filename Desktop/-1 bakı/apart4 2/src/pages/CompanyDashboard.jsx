@@ -174,8 +174,17 @@ const CompanyDashboard = () => {
         // Get company information
         const companyInfo = allCompanies.find(c => String(c.id) === String(companyId)) || null;
         
+        // Remove duplicate sites (by id or _docId)
+        const uniqueSites = allSites.filter((site, index, self) => 
+          index === self.findIndex(s => 
+            (s.id === site.id && s._docId === site._docId) ||
+            (s.id && site.id && String(s.id) === String(site.id)) ||
+            (s._docId && site._docId && s._docId === site._docId)
+          )
+        );
+        
         setAgreements(companyAgreements);
-        setSites(allSites);
+        setSites(uniqueSites);
         setCompany(companyInfo);
         setTransactions(allTransactions);
         setPanelImages(allPanelImages);
@@ -783,7 +792,7 @@ const CompanyDashboard = () => {
                          <div className="card-body">
                            {/* Sites, Blocks, and Panels */}
                            <div className="row g-3">
-                             {(agreement.siteIds || []).map((siteId) => {
+                             {[...new Set(agreement.siteIds || [])].map((siteId) => {
                                const site = getSiteById(siteId);
                                if (!site) return null;
                                

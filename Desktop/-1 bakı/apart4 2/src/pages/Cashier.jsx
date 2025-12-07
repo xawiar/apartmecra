@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getPartners, updatePartner, getAgreements, getSites, getCompanies, updateSite, createLog } from '../services/api';
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getPartners, updatePartner, getAgreements, getSites, getCompanies, updateSite, updateCompany, updateAgreement, createLog } from '../services/api';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -749,20 +749,116 @@ const Cashier = () => {
         // Don't fail the entire operation if partner reset fails
       }
       
+      // Reset all agreements' financial data
+      try {
+        console.log('Resetting all agreements financial data...');
+        const currentAgreements = await getAgreements();
+        let agreementsResetCount = 0;
+        
+        for (const agreement of currentAgreements) {
+          const hasFinancialData = agreement.paymentReceived || 
+                                   agreement.creditPaymentReceived || 
+                                   agreement.totalAmount;
+          
+          if (hasFinancialData) {
+            const updatedAgreement = {
+              ...agreement,
+              paymentReceived: false,
+              creditPaymentReceived: false,
+              totalAmount: 0,
+              paidAmount: 0
+            };
+            await updateAgreement(agreement.id, updatedAgreement);
+            agreementsResetCount++;
+            console.log(`Agreement ${agreement.id} financial data reset`);
+          }
+        }
+        console.log(`All agreements financial data reset successfully (${agreementsResetCount} agreements)`);
+      } catch (agreementError) {
+        console.error('Error resetting agreements financial data:', agreementError);
+        // Don't fail the entire operation if agreement reset fails
+      }
+      
+      // Reset all sites' pending payments
+      try {
+        console.log('Resetting all sites pending payments...');
+        const currentSites = await getSites();
+        let sitesResetCount = 0;
+        
+        for (const site of currentSites) {
+          if (site.pendingPayments && site.pendingPayments.length > 0) {
+            const updatedSite = {
+              ...site,
+              pendingPayments: [],
+              hasPendingPayment: false
+            };
+            await updateSite(site.id, updatedSite);
+            sitesResetCount++;
+            console.log(`Site ${site.name} pending payments reset`);
+          }
+        }
+        console.log(`All sites pending payments reset successfully (${sitesResetCount} sites)`);
+      } catch (siteError) {
+        console.error('Error resetting sites pending payments:', siteError);
+        // Don't fail the entire operation if site reset fails
+      }
+      
+      // Reset all companies' credit data
+      try {
+        console.log('Resetting all companies credit data...');
+        const currentCompanies = await getCompanies();
+        let companiesResetCount = 0;
+        
+        for (const company of currentCompanies) {
+          if (company.credit || (company.creditHistory && company.creditHistory.length > 0)) {
+            const updatedCompany = {
+              ...company,
+              credit: 0,
+              creditHistory: []
+            };
+            await updateCompany(company.id, updatedCompany);
+            companiesResetCount++;
+            console.log(`Company ${company.name} credit data reset`);
+          }
+        }
+        console.log(`All companies credit data reset successfully (${companiesResetCount} companies)`);
+      } catch (companyError) {
+        console.error('Error resetting companies credit data:', companyError);
+        // Don't fail the entire operation if company reset fails
+      }
+      
       // Update state to reflect empty transactions
       setTransactions([]);
+      
+      // Reload all data to reflect changes
+      try {
+        const [updatedTransactions, updatedPartners, updatedAgreements, updatedSites, updatedCompanies] = await Promise.all([
+          getTransactions(),
+          getPartners(),
+          getAgreements(),
+          getSites(),
+          getCompanies()
+        ]);
+        setTransactions(updatedTransactions);
+        setPartners(updatedPartners);
+        setAgreements(updatedAgreements);
+        setSites(updatedSites);
+        setCompanies(updatedCompanies);
+      } catch (reloadError) {
+        console.error('Error reloading data:', reloadError);
+      }
       
       // Show success message with details
       if (errorCount === 0) {
         await window.showAlert(
           'Başarılı',
-          `Tüm kasa verileri başarıyla sıfırlandı. ${successCount} işlem silindi ve tüm ortak bakiyeleri sıfırlandı.`,
+          `Tüm mali veriler başarıyla sıfırlandı. ${successCount} işlem silindi, tüm ortak bakiyeleri, anlaşma mali bilgileri, site ödemeleri ve firma kredi bilgileri sıfırlandı.`,
           'success'
         );
       } else {
         await window.showAlert(
           'Kısmen Başarılı',
-          `${successCount} işlem silindi, ${errorCount} işlem silinemedi. Tüm ortak bakiyeleri sıfırlandı. Sayfayı yenileyin.`,
+          `${successCount} işlem silindi, ${errorCount} işlem silinemedi. Tüm mali veriler sıfırlandı. Sayfayı yenileyin.`,
           'warning'
         );
       }
@@ -1553,7 +1649,7 @@ const Cashier = () => {
               className="btn btn-outline-danger rounded-pill px-5 py-3 d-flex align-items-center"
             >
               <i className="bi bi-trash me-2"></i>
-              Tüm Kasayı Sıfırla
+              Tüm Mali Verileri Sıfırla
             </button>
           </div>
         </>
@@ -1805,7 +1901,7 @@ const Cashier = () => {
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Tüm Kasa Verilerini Sıfırla</h5>
+                <h5 className="modal-title">Tüm Mali Verileri Sıfırla</h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -1813,7 +1909,16 @@ const Cashier = () => {
                 ></button>
               </div>
               <div className="modal-body">
-                <p>Tüm mali verileri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+                <p className="fw-bold text-danger">Tüm mali verileri sıfırlamak istediğinizden emin misiniz?</p>
+                <p className="mb-2">Bu işlem şunları silecek/sıfırlayacak:</p>
+                <ul className="text-start">
+                  <li>Tüm kasa işlemleri (transactions)</li>
+                  <li>Tüm ortak bakiyeleri</li>
+                  <li>Tüm anlaşma mali bilgileri (ödemeler, tutarlar)</li>
+                  <li>Tüm site bekleyen ödemeleri</li>
+                  <li>Tüm firma kredi bilgileri</li>
+                </ul>
+                <p className="text-danger fw-bold">Bu işlem geri alınamaz!</p>
               </div>
               <div className="modal-footer">
                 <button

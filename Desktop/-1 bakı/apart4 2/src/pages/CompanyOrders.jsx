@@ -154,7 +154,16 @@ const CompanyOrders = () => {
           String(agreement.companyId) === String(companyId)
         );
         
-        setSites(allSites);
+        // Remove duplicate sites (by id or _docId)
+        const uniqueSites = allSites.filter((site, index, self) => 
+          index === self.findIndex(s => 
+            (s.id === site.id && s._docId === site._docId) ||
+            (s.id && site.id && String(s.id) === String(site.id)) ||
+            (s._docId && site._docId && s._docId === site._docId)
+          )
+        );
+        
+        setSites(uniqueSites);
         setAgreements(companyAgreements);
         
         // Load orders (all company agreements, can filter by isOrder flag if needed)
