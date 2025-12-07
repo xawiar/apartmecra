@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getPartners, updatePartner, getAgreements, getSites, getCompanies } from '../services/api';
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getPartners, updatePartner, getAgreements, getSites, getCompanies, updateSite, createLog } from '../services/api';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -907,6 +907,7 @@ const Cashier = () => {
                         <th>Site Adı</th>
                         <th className="text-end">Toplam Tutar</th>
                         <th>Detaylar</th>
+                        <th className="text-center">İşlem</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -925,6 +926,16 @@ const Cashier = () => {
                             >
                               <i className="bi bi-chevron-down me-1"></i>
                               Detaylar ({result.payments.length})
+                            </button>
+                          </td>
+                          <td className="text-center">
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() => handlePaySitePayment(result)}
+                              title="Ödeme Yap"
+                            >
+                              <i className="bi bi-currency-dollar me-1"></i>
+                              Ödeme Yap
                             </button>
                           </td>
                         </tr>
