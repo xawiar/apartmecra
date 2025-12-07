@@ -242,17 +242,24 @@ const AgreementUIHandlers = ({
     if (!site) return;
 
     const currentSelections = (sitePanelSelections[siteId] && sitePanelSelections[siteId][blockKey]) || [];
-    const availablePanels = [];
     
-    // Collect all available panels with their numbers
+    // Collect ALL panels (both available and unavailable) to check which ones are used
+    const allPanels = [];
+    const availablePanels = [];
+    const unavailablePanels = [];
+    
     for (let i = 1; i <= totalPanels; i++) {
       const panelKey = `panel-${i}`;
       const isAvailable = helpers && helpers.isPanelAvailable 
-        ? helpers.isPanelAvailable(siteId, blockKey, panelKey, formData.startDate, formData.endDate)
+        ? helpers.isPanelAvailable(siteId, blockKey, panelKey, formData.startDate, formData.endDate, formData.dateRanges)
         : true;
+      
+      allPanels.push({ panelKey, panelNumber: i, isAvailable });
       
       if (isAvailable && !currentSelections.includes(panelKey)) {
         availablePanels.push({ panelKey, panelNumber: i });
+      } else if (!isAvailable) {
+        unavailablePanels.push({ panelKey, panelNumber: i });
       }
     }
 
@@ -263,9 +270,13 @@ const AgreementUIHandlers = ({
       return;
     }
 
-    // Separate odd and even panels
-    const oddPanels = availablePanels.filter(p => p.panelNumber % 2 === 1);
-    const evenPanels = availablePanels.filter(p => p.panelNumber % 2 === 0);
+    // Separate odd and even panels from available panels
+    const oddAvailablePanels = availablePanels.filter(p => p.panelNumber % 2 === 1);
+    const evenAvailablePanels = availablePanels.filter(p => p.panelNumber % 2 === 0);
+    
+    // Check if odd panels are being used (unavailable)
+    const oddUnavailablePanels = unavailablePanels.filter(p => p.panelNumber % 2 === 1);
+    const oddPanelsAreUsed = oddUnavailablePanels.length > 0;
 
     // Calculate how many panels to select
     // Özel mantık: 3 panel varsa 1, 5 panel varsa 2 seç
@@ -284,23 +295,30 @@ const AgreementUIHandlers = ({
 
     let panelsToSelect = [];
 
-    // First, try to select odd panels
-    if (oddPanels.length > 0) {
-      const oddToSelect = Math.min(needToSelect, oddPanels.length);
-      panelsToSelect = oddPanels.slice(0, oddToSelect).map(p => p.panelKey);
-    }
-
-    // If we need more panels and odd panels are not enough, add even panels
-    if (panelsToSelect.length < needToSelect && evenPanels.length > 0) {
-      const remaining = needToSelect - panelsToSelect.length;
-      const evenToSelect = Math.min(remaining, evenPanels.length);
-      panelsToSelect = [...panelsToSelect, ...evenPanels.slice(0, evenToSelect).map(p => p.panelKey)];
-    }
-
-    // If odd panels are all full, use even panels
-    if (panelsToSelect.length === 0 && evenPanels.length > 0) {
-      const evenToSelect = Math.min(needToSelect, evenPanels.length);
-      panelsToSelect = evenPanels.slice(0, evenToSelect).map(p => p.panelKey);
+    // Mantık:
+    // 1. Eğer tek paneller kullanılmışsa (unavailable), çift panelleri seç
+    // 2. Eğer tek paneller müsaitse, önce tek panelleri seç
+    // 3. Eğer yeterli tek panel yoksa, çift panelleri ekle
+    
+    if (oddPanelsAreUsed && evenAvailablePanels.length > 0) {
+      // Tek paneller kullanılmış, çift panelleri seç
+      const evenToSelect = Math.min(needToSelect, evenAvailablePanels.length);
+      panelsToSelect = evenAvailablePanels.slice(0, evenToSelect).map(p => p.panelKey);
+    } else if (oddAvailablePanels.length > 0) {
+      // Tek paneller müsait, önce tek panelleri seç
+      const oddToSelect = Math.min(needToSelect, oddAvailablePanels.length);
+      panelsToSelect = oddAvailablePanels.slice(0, oddToSelect).map(p => p.panelKey);
+      
+      // Eğer yeterli tek panel yoksa, çift panelleri ekle
+      if (panelsToSelect.length < needToSelect && evenAvailablePanels.length > 0) {
+        const remaining = needToSelect - panelsToSelect.length;
+        const evenToSelect = Math.min(remaining, evenAvailablePanels.length);
+        panelsToSelect = [...panelsToSelect, ...evenAvailablePanels.slice(0, evenToSelect).map(p => p.panelKey)];
+      }
+    } else if (evenAvailablePanels.length > 0) {
+      // Sadece çift paneller müsait
+      const evenToSelect = Math.min(needToSelect, evenAvailablePanels.length);
+      panelsToSelect = evenAvailablePanels.slice(0, evenToSelect).map(p => p.panelKey);
     }
 
     if (panelsToSelect.length === 0) {
@@ -361,23 +379,30 @@ const AgreementUIHandlers = ({
       blocksToProcess.forEach(blockKey => {
         const blockLabel = blockKey.split('-')[2];
         const totalPanels = site.siteType === 'business_center' 
-          ? (parseInt(site.panels) || 0) 
+          ? (parseInt(site.panels) || parseInt(site.manualPanels) || 0) 
           : (parseInt(site.elevatorsPerBlock) || 0) * 2;
 
         if (totalPanels === 0) return;
 
         const currentSelections = (sitePanelSelections[siteId] && sitePanelSelections[siteId][blockKey]) || [];
-        const availablePanels = [];
         
-        // Collect all available panels with their numbers
+        // Collect ALL panels (both available and unavailable) to check which ones are used
+        const allPanels = [];
+        const availablePanels = [];
+        const unavailablePanels = [];
+        
         for (let i = 1; i <= totalPanels; i++) {
           const panelKey = `panel-${i}`;
           const isAvailable = helpers && helpers.isPanelAvailable 
             ? helpers.isPanelAvailable(siteId, blockKey, panelKey, formData.startDate, formData.endDate, formData.dateRanges)
             : true;
           
+          allPanels.push({ panelKey, panelNumber: i, isAvailable });
+          
           if (isAvailable && !currentSelections.includes(panelKey)) {
             availablePanels.push({ panelKey, panelNumber: i });
+          } else if (!isAvailable) {
+            unavailablePanels.push({ panelKey, panelNumber: i });
           }
         }
 
@@ -386,9 +411,13 @@ const AgreementUIHandlers = ({
           return;
         }
 
-        // Separate odd and even panels
-        const oddPanels = availablePanels.filter(p => p.panelNumber % 2 === 1);
-        const evenPanels = availablePanels.filter(p => p.panelNumber % 2 === 0);
+        // Separate odd and even panels from available panels
+        const oddAvailablePanels = availablePanels.filter(p => p.panelNumber % 2 === 1);
+        const evenAvailablePanels = availablePanels.filter(p => p.panelNumber % 2 === 0);
+        
+        // Check if odd panels are being used (unavailable)
+        const oddUnavailablePanels = unavailablePanels.filter(p => p.panelNumber % 2 === 1);
+        const oddPanelsAreUsed = oddUnavailablePanels.length > 0;
 
         // Calculate how many panels to select
         // Özel mantık: 3 panel varsa 1, 5 panel varsa 2 seç
@@ -404,23 +433,30 @@ const AgreementUIHandlers = ({
 
         let panelsToSelect = [];
 
-        // First, try to select odd panels
-        if (oddPanels.length > 0) {
-          const oddToSelect = Math.min(needToSelect, oddPanels.length);
-          panelsToSelect = oddPanels.slice(0, oddToSelect).map(p => p.panelKey);
-        }
-
-        // If we need more panels and odd panels are not enough, add even panels
-        if (panelsToSelect.length < needToSelect && evenPanels.length > 0) {
-          const remaining = needToSelect - panelsToSelect.length;
-          const evenToSelect = Math.min(remaining, evenPanels.length);
-          panelsToSelect = [...panelsToSelect, ...evenPanels.slice(0, evenToSelect).map(p => p.panelKey)];
-        }
-
-        // If odd panels are all full, use even panels
-        if (panelsToSelect.length === 0 && evenPanels.length > 0) {
-          const evenToSelect = Math.min(needToSelect, evenPanels.length);
-          panelsToSelect = evenPanels.slice(0, evenToSelect).map(p => p.panelKey);
+        // Mantık:
+        // 1. Eğer tek paneller kullanılmışsa (unavailable), çift panelleri seç
+        // 2. Eğer tek paneller müsaitse, önce tek panelleri seç
+        // 3. Eğer yeterli tek panel yoksa, çift panelleri ekle
+        
+        if (oddPanelsAreUsed && evenAvailablePanels.length > 0) {
+          // Tek paneller kullanılmış, çift panelleri seç
+          const evenToSelect = Math.min(needToSelect, evenAvailablePanels.length);
+          panelsToSelect = evenAvailablePanels.slice(0, evenToSelect).map(p => p.panelKey);
+        } else if (oddAvailablePanels.length > 0) {
+          // Tek paneller müsait, önce tek panelleri seç
+          const oddToSelect = Math.min(needToSelect, oddAvailablePanels.length);
+          panelsToSelect = oddAvailablePanels.slice(0, oddToSelect).map(p => p.panelKey);
+          
+          // Eğer yeterli tek panel yoksa, çift panelleri ekle
+          if (panelsToSelect.length < needToSelect && evenAvailablePanels.length > 0) {
+            const remaining = needToSelect - panelsToSelect.length;
+            const evenToSelect = Math.min(remaining, evenAvailablePanels.length);
+            panelsToSelect = [...panelsToSelect, ...evenAvailablePanels.slice(0, evenToSelect).map(p => p.panelKey)];
+          }
+        } else if (evenAvailablePanels.length > 0) {
+          // Sadece çift paneller müsait
+          const evenToSelect = Math.min(needToSelect, evenAvailablePanels.length);
+          panelsToSelect = evenAvailablePanels.slice(0, evenToSelect).map(p => p.panelKey);
         }
 
         if (panelsToSelect.length > 0) {
