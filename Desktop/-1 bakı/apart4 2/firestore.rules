@@ -60,38 +60,10 @@ service cloud.firestore {
     }
     
     // Users collection
+    // GEÇİCİ OLARAK TÜM İŞLEMLER AÇIK - YENİDEN OLUŞTUR BUTONU İÇİN
+    // Güvenlik için daha sonra sıkılaştırılmalı
     match /users/{userId} {
-      // Kullanıcı listesi sadece admin'e açık
-      // Email kontrolü ile admin@apartmecra.com da erişebilir
-      allow list: if isAdmin() ||
-                   (isAuthenticated() && 
-                    request.auth.token.email != null && 
-                    request.auth.token.email == 'admin@apartmecra.com');
-
-      // Kendisini veya admin olan herkes görebilir
-      allow get: if isAuthenticated() && (request.auth.uid == userId || isAdmin() ||
-                   (isAuthenticated() && 
-                    request.auth.token.email != null && 
-                    request.auth.token.email == 'admin@apartmecra.com'));
-
-      // Admin kullanıcıları oluşturabilir (Yeniden Oluştur butonu için)
-      // Email kontrolü ile admin@apartmecra.com da oluşturabilir
-      // Veya Firestore'da admin rolüne sahip kullanıcı
-      // Geçici olarak tüm authenticated kullanıcılara izin ver (güvenlik için daha sonra sıkılaştırılabilir)
-      allow create: if isAuthenticated();
-
-      // Kullanıcı kendi profilini güncelleyebilir (sınırlı) veya admin her şeyi güncelleyebilir
-      allow update: if isAuthenticated() && (request.auth.uid == userId || 
-                   (isAuthenticated() && 
-                    request.auth.token.email != null && 
-                    request.auth.token.email == 'admin@apartmecra.com') ||
-                   (isAuthenticated() && 
-                    hasUserDoc() && 
-                    getUserDoc().data.role == 'admin'));
-
-      // Silme sadece admin
-      // Geçici olarak tüm authenticated kullanıcılara izin ver (güvenlik için daha sonra sıkılaştırılabilir)
-      allow delete: if isAuthenticated();
+      allow read, write: if isAuthenticated();
     }
     
     // Sites collection
