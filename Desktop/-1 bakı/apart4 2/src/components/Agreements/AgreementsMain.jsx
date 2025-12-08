@@ -17,6 +17,61 @@ const AgreementsMain = () => {
   const [sites, setSites] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Helper function to remove duplicates from agreements array
+  const removeDuplicateAgreements = (agreementsList) => {
+    const seenIds = new Set();
+    const seenDocIds = new Set();
+    const uniqueAgreements = [];
+    
+    for (const agreement of agreementsList) {
+      if (!agreement) continue;
+      
+      let isDuplicate = false;
+      
+      // Check by _docId first (most reliable)
+      if (agreement._docId) {
+        const docId = String(agreement._docId);
+        if (seenDocIds.has(docId)) {
+          isDuplicate = true;
+        } else {
+          seenDocIds.add(docId);
+        }
+      }
+      
+      // Also check by id
+      if (agreement.id) {
+        const id = String(agreement.id);
+        if (seenIds.has(id)) {
+          isDuplicate = true;
+        } else {
+          seenIds.add(id);
+        }
+      }
+      
+      // If both _docId and id exist, check if they match an existing agreement
+      if (!isDuplicate && agreement._docId && agreement.id) {
+        const docId = String(agreement._docId);
+        const id = String(agreement.id);
+        // Check if this id or docId already exists in seen sets
+        if (seenDocIds.has(docId) || seenIds.has(id)) {
+          isDuplicate = true;
+        }
+      }
+      
+      if (!isDuplicate) {
+        uniqueAgreements.push(agreement);
+      }
+    }
+    
+    return uniqueAgreements;
+  };
+  
+  // Wrapper for setAgreements that always removes duplicates
+  const setAgreementsUnique = (newAgreements) => {
+    const unique = removeDuplicateAgreements(Array.isArray(newAgreements) ? newAgreements : []);
+    setAgreements(unique);
+  };
   const [showModal, setShowModal] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [currentAgreement, setCurrentAgreement] = useState(null);
@@ -137,14 +192,8 @@ const AgreementsMain = () => {
         
         // Reload agreements from server to reflect changes
         const updatedAgreements = await getAgreements();
-        const uniqueAgreements = updatedAgreements.filter((agreement, index, self) => 
-          index === self.findIndex(a => 
-            (a.id === agreement.id && a._docId === agreement._docId) ||
-            (a.id && agreement.id && a.id === agreement.id) ||
-            (a._docId && agreement._docId && a._docId === agreement._docId)
-          )
-        );
-        setAgreements(uniqueAgreements);
+        const uniqueAgreements = removeDuplicateAgreements(updatedAgreements);
+        setAgreementsUnique(uniqueAgreements);
         
         await window.showAlert(
           'İşlem Tamamlandı',
@@ -163,7 +212,7 @@ const AgreementsMain = () => {
   };
 
   const handlers = AgreementHandlers({
-    agreements, setAgreements,
+    agreements, setAgreements: setAgreementsUnique,
     sites, setSites,
     companies, setCompanies,
     formData, setFormData,
@@ -304,7 +353,7 @@ const AgreementsMain = () => {
           return false;
         });
         
-        setAgreements(uniqueAgreements);
+        setAgreementsUnique(uniqueAgreements);
         setSites(uniqueSites);
         setCompanies(uniqueCompanies);
       } catch (error) {
@@ -417,7 +466,7 @@ const AgreementsMain = () => {
       
       if (savedAgreement) {
         // Update agreement in state
-        setAgreements(agreements.map(a => a.id === currentAgreement.id ? savedAgreement : a));
+        setAgreementsUnique(agreements.map(a => a.id === currentAgreement.id ? savedAgreement : a));
         
         // Update current agreement if it's the same
         if (currentAgreement.id === (currentAgreement?.id)) {
@@ -678,27 +727,7 @@ const AgreementsMain = () => {
               <div className="d-flex justify-content-between align-items-center">
                 <div>
                   <h6 className="text-muted mb-1">Toplam Anlaşma</h6>
-                  <h3 className="mb-0 fw-bold">{(() => {
-                    // Count unique agreements (by id or _docId)
-                    const seenAgreementIds = new Set();
-                    const seenAgreementDocIds = new Set();
-                    return agreements.filter(agreement => {
-                      if (!agreement) return false;
-                      if (agreement._docId) {
-                        const docId = String(agreement._docId);
-                        if (seenAgreementDocIds.has(docId)) return false;
-                        seenAgreementDocIds.add(docId);
-                        return true;
-                      }
-                      if (agreement.id) {
-                        const id = String(agreement.id);
-                        if (seenAgreementIds.has(id)) return false;
-                        seenAgreementIds.add(id);
-                        return true;
-                      }
-                      return false;
-                    }).length;
-                  })()}</h3>
+                  <h3 className="mb-0 fw-bold">{removeDuplicateAgreements(agreements).length}</h3>
                 </div>
                 <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px' }}>
                   <i className="bi bi-file-earmark-text text-primary fs-4"></i>
