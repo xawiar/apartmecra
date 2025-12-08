@@ -235,13 +235,35 @@ const AgreementsMain = () => {
         }));
         
         // Remove duplicates from agreements data (by id or _docId)
-        const uniqueAgreements = agreementsData.filter((agreement, index, self) => 
-          index === self.findIndex(a => 
-            (a.id === agreement.id && a._docId === agreement._docId) ||
-            (a.id && agreement.id && a.id === agreement.id) ||
-            (a._docId && agreement._docId && a._docId === agreement._docId)
-          )
-        );
+        // Priority: _docId > id (if both exist, prefer _docId)
+        const seenIds = new Set();
+        const seenDocIds = new Set();
+        const uniqueAgreements = agreementsData.filter(agreement => {
+          if (!agreement) return false;
+          
+          // Check by _docId first (most reliable)
+          if (agreement._docId) {
+            const docId = String(agreement._docId);
+            if (seenDocIds.has(docId)) {
+              return false; // Duplicate
+            }
+            seenDocIds.add(docId);
+            return true;
+          }
+          
+          // Fallback to id
+          if (agreement.id) {
+            const id = String(agreement.id);
+            if (seenIds.has(id)) {
+              return false; // Duplicate
+            }
+            seenIds.add(id);
+            return true;
+          }
+          
+          // If no id or _docId, exclude it
+          return false;
+        });
         
         // Remove duplicates from sites data (by id or _docId)
         const uniqueSites = initializedSites.filter((site, index, self) => 
@@ -388,11 +410,12 @@ const AgreementsMain = () => {
   // Filter and sort agreements based on active tab
   const getFilteredAgreements = () => {
     const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
     
     if (activeTab === 'orders') {
       // Orders: agreements with isOrder flag or status 'pending'
       return agreements.filter(agreement => 
-        agreement.isOrder === true || agreement.status === 'pending'
+        agreement && (agreement.isOrder === true || agreement.status === 'pending')
       ).sort((a, b) => {
         const aId = typeof a.id === 'string' ? a.id : a.id;
         const bId = typeof b.id === 'string' ? b.id : b.id;
@@ -404,21 +427,53 @@ const AgreementsMain = () => {
     }
     
     let filteredAgreements = agreements.filter(agreement => {
+      // Skip null/undefined agreements
+      if (!agreement) return false;
+      
+      // Default status to 'active' if not set
+      const status = agreement.status || 'active';
+      
+      // Check if endDate exists and is valid
+      if (!agreement.endDate) {
+        // If no endDate, only include if status is explicitly 'expired' or 'terminated' for expired tab
+        if (activeTab === 'expired') {
+          return status === 'expired' || status === 'terminated';
+        }
+        // For active tab, exclude agreements without endDate
+        return false;
+      }
+      
       const endDate = new Date(agreement.endDate);
+      endDate.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+      
+      // Check if date is valid
+      if (isNaN(endDate.getTime())) {
+        return false;
+      }
       
       if (activeTab === 'active') {
-        // Active agreements: status is 'active' and end date is in the future
-        return agreement.status === 'active' && endDate >= currentDate;
+        // Active agreements: status is 'active' (or default) and end date is in the future or today
+        return status === 'active' && endDate >= currentDate;
       } else {
         // Expired agreements: status is 'active' but end date is in the past, or status is 'expired' or 'terminated'
-        return (agreement.status === 'active' && endDate < currentDate) || 
-               agreement.status === 'expired' || 
-               agreement.status === 'terminated';
+        return (status === 'active' && endDate < currentDate) || 
+               status === 'expired' || 
+               status === 'terminated';
       }
     });
     
+    // Remove duplicates based on id or _docId
+    const uniqueAgreements = filteredAgreements.filter((agreement, index, self) => 
+      index === self.findIndex(a => 
+        (a.id && agreement.id && String(a.id) === String(agreement.id)) ||
+        (a._docId && agreement._docId && String(a._docId) === String(agreement._docId)) ||
+        (a.id && agreement.id && a.id === agreement.id) ||
+        (a._docId && agreement._docId && a._docId === agreement._docId)
+      )
+    );
+    
     // Sort by creation date (most recent first) - using id as proxy for creation order
-    return filteredAgreements.sort((a, b) => {
+    return uniqueAgreements.sort((a, b) => {
       // Handle both numeric and string IDs
       const aId = typeof a.id === 'string' ? a.id : a.id;
       const bId = typeof b.id === 'string' ? b.id : b.id;
