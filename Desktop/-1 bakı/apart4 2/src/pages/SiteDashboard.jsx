@@ -238,14 +238,26 @@ const SiteDashboard = () => {
     
     for (const agreement of activeAgreements) {
       // Check if this site has panel selections for this agreement
-      if (agreement.sitePanelSelections && 
-          agreement.sitePanelSelections[siteId]) {
+      if (agreement.sitePanelSelections && agreement.sitePanelSelections[siteId]) {
+        const sitePanelData = agreement.sitePanelSelections[siteId];
+        
         // Check if this block is selected for this site in this agreement
-        const blockSelections = agreement.sitePanelSelections[siteId];
-        if (blockSelections[blockId]) {
-          // Check if this specific panel is selected in this block
-          if (blockSelections[blockId].includes(panelId)) {
-            return true;
+        if (sitePanelData[blockId]) {
+          // Check if new format (with date ranges)
+          if (agreement.dateRanges && Array.isArray(agreement.dateRanges) && agreement.dateRanges.length > 0) {
+            // New format: check all date ranges
+            for (let rangeIndex = 0; rangeIndex < agreement.dateRanges.length; rangeIndex++) {
+              const rangeKey = `range-${rangeIndex}`;
+              const rangePanels = sitePanelData[blockId]?.[rangeKey] || [];
+              if (Array.isArray(rangePanels) && rangePanels.includes(panelId)) {
+                return true;
+              }
+            }
+          } else {
+            // Old format: direct array check
+            if (Array.isArray(sitePanelData[blockId]) && sitePanelData[blockId].includes(panelId)) {
+              return true;
+            }
           }
         }
       }
