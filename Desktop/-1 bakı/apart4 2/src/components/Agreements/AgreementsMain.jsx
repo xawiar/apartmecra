@@ -20,48 +20,40 @@ const AgreementsMain = () => {
   
   // Helper function to remove duplicates from agreements array
   const removeDuplicateAgreements = (agreementsList) => {
-    const seenIds = new Set();
-    const seenDocIds = new Set();
+    if (!Array.isArray(agreementsList)) {
+      console.warn('removeDuplicateAgreements: agreementsList is not an array', agreementsList);
+      return [];
+    }
+    
+    const seenKeys = new Set();
     const uniqueAgreements = [];
     
     for (const agreement of agreementsList) {
       if (!agreement) continue;
       
-      let isDuplicate = false;
-      
-      // Check by _docId first (most reliable)
+      // Create a unique key: prefer _docId, fallback to id
+      let uniqueKey = null;
       if (agreement._docId) {
-        const docId = String(agreement._docId);
-        if (seenDocIds.has(docId)) {
-          isDuplicate = true;
-        } else {
-          seenDocIds.add(docId);
-        }
+        uniqueKey = `docId:${String(agreement._docId)}`;
+      } else if (agreement.id) {
+        uniqueKey = `id:${String(agreement.id)}`;
       }
       
-      // Also check by id
-      if (agreement.id) {
-        const id = String(agreement.id);
-        if (seenIds.has(id)) {
-          isDuplicate = true;
-        } else {
-          seenIds.add(id);
-        }
+      // If no unique key, skip this agreement (but log it)
+      if (!uniqueKey) {
+        console.warn('Agreement has no _docId or id:', agreement);
+        continue;
       }
       
-      // If both _docId and id exist, check if they match an existing agreement
-      if (!isDuplicate && agreement._docId && agreement.id) {
-        const docId = String(agreement._docId);
-        const id = String(agreement.id);
-        // Check if this id or docId already exists in seen sets
-        if (seenDocIds.has(docId) || seenIds.has(id)) {
-          isDuplicate = true;
-        }
+      // Check if we've seen this key before
+      if (seenKeys.has(uniqueKey)) {
+        console.log('Duplicate agreement found:', uniqueKey);
+        continue; // Skip duplicate
       }
       
-      if (!isDuplicate) {
-        uniqueAgreements.push(agreement);
-      }
+      // Add to seen set and include in unique list
+      seenKeys.add(uniqueKey);
+      uniqueAgreements.push(agreement);
     }
     
     return uniqueAgreements;
@@ -279,11 +271,19 @@ const AgreementsMain = () => {
         hasFetchedRef.current = true;
         setLoading(true);
         
+        console.log('Starting to fetch data...');
         const [agreementsData, sitesData, companiesData] = await Promise.all([
           getAgreements(),
           getSites(),
           getCompanies()
         ]);
+        
+        console.log('Fetched agreements data:', agreementsData);
+        console.log('Agreements count:', agreementsData?.length || 0);
+        console.log('Agreements data type:', Array.isArray(agreementsData) ? 'array' : typeof agreementsData);
+        if (agreementsData && agreementsData.length > 0) {
+          console.log('First agreement sample:', agreementsData[0]);
+        }
         
         // Initialize sites with payment properties
         const initializedSites = sitesData.map(site => ({
@@ -292,36 +292,9 @@ const AgreementsMain = () => {
           hasPendingPayment: (site.pendingPayments && site.pendingPayments.length > 0) || false
         }));
         
-        // Remove duplicates from agreements data (by id or _docId)
-        // Priority: _docId > id (if both exist, prefer _docId)
-        const seenIds = new Set();
-        const seenDocIds = new Set();
-        const uniqueAgreements = agreementsData.filter(agreement => {
-          if (!agreement) return false;
-          
-          // Check by _docId first (most reliable)
-          if (agreement._docId) {
-            const docId = String(agreement._docId);
-            if (seenDocIds.has(docId)) {
-              return false; // Duplicate
-            }
-            seenDocIds.add(docId);
-            return true;
-          }
-          
-          // Fallback to id
-          if (agreement.id) {
-            const id = String(agreement.id);
-            if (seenIds.has(id)) {
-              return false; // Duplicate
-            }
-            seenIds.add(id);
-            return true;
-          }
-          
-          // If no id or _docId, exclude it
-          return false;
-        });
+        // Remove duplicates from agreements data using helper function
+        const uniqueAgreements = removeDuplicateAgreements(agreementsData || []);
+        console.log('Unique agreements after filtering:', uniqueAgreements.length);
         
         // Remove duplicates from sites data (by id or _docId)
         const uniqueSites = initializedSites.filter((site, index, self) => 
@@ -362,9 +335,11 @@ const AgreementsMain = () => {
           return false;
         });
         
+        console.log('Setting agreements:', uniqueAgreements.length);
         setAgreementsUnique(uniqueAgreements);
         setSites(uniqueSites);
         setCompanies(uniqueCompanies);
+        console.log('Data fetch completed. Agreements state will be updated.');
       } catch (error) {
         console.error('Error fetching data:', error);
         hasFetchedRef.current = false; // Reset on error to allow retry
