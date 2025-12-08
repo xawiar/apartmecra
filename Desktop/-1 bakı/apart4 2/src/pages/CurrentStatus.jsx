@@ -65,7 +65,7 @@ const CurrentStatus = () => {
   // Get agreements for a specific site based on date filter
   const getFilteredAgreementsForSite = (siteId) => {
     let siteAgreements = agreements.filter(agreement => 
-      agreement.siteIds && agreement.siteIds.includes(siteId)
+      agreement.siteIds && Array.isArray(agreement.siteIds) && agreement.siteIds.includes(siteId)
     );
 
     // If date filter is active, filter by date range
@@ -106,23 +106,49 @@ const CurrentStatus = () => {
     for (const agreement of relevantAgreements) {
       // Check if this agreement has block and panel selections for this site
       if (agreement.sitePanelSelections && agreement.sitePanelSelections[siteId]) {
+        const sitePanelData = agreement.sitePanelSelections[siteId];
+        
         // Check if this block is selected for this site in this agreement
-        if (agreement.sitePanelSelections[siteId][blockId]) {
-          // Check if this panel is selected in this block for this site in this agreement
-          if (agreement.sitePanelSelections[siteId][blockId].includes(panelId)) {
-            // Get panel image if exists
-            const panelImage = getPanelImage(agreement.id, siteId, blockId, panelId);
-            
-            return {
-              isUsed: true,
-              companyName: getCompanyName(agreement.companyId),
-              startDate: agreement.startDate,
-              endDate: agreement.endDate,
-              agreementId: agreement.id,
-              status: agreement.status,
-              photoUrl: agreement.photoUrl,
-              panelImage: panelImage
-            };
+        if (sitePanelData[blockId]) {
+          // Check if new format (with date ranges)
+          if (agreement.dateRanges && Array.isArray(agreement.dateRanges) && agreement.dateRanges.length > 0) {
+            // New format: check all date ranges
+            for (let rangeIndex = 0; rangeIndex < agreement.dateRanges.length; rangeIndex++) {
+              const rangeKey = `range-${rangeIndex}`;
+              const rangePanels = sitePanelData[blockId]?.[rangeKey] || [];
+              if (Array.isArray(rangePanels) && rangePanels.includes(panelId)) {
+                // Get panel image if exists
+                const panelImage = getPanelImage(agreement.id, siteId, blockId, panelId);
+                
+                return {
+                  isUsed: true,
+                  companyName: getCompanyName(agreement.companyId),
+                  startDate: agreement.startDate,
+                  endDate: agreement.endDate,
+                  agreementId: agreement.id,
+                  status: agreement.status,
+                  photoUrl: agreement.photoUrl,
+                  panelImage: panelImage
+                };
+              }
+            }
+          } else {
+            // Old format: direct array check
+            if (Array.isArray(sitePanelData[blockId]) && sitePanelData[blockId].includes(panelId)) {
+              // Get panel image if exists
+              const panelImage = getPanelImage(agreement.id, siteId, blockId, panelId);
+              
+              return {
+                isUsed: true,
+                companyName: getCompanyName(agreement.companyId),
+                startDate: agreement.startDate,
+                endDate: agreement.endDate,
+                agreementId: agreement.id,
+                status: agreement.status,
+                photoUrl: agreement.photoUrl,
+                panelImage: panelImage
+              };
+            }
           }
         }
       }
@@ -661,13 +687,13 @@ const CurrentStatus = () => {
           </h5>
         </div>
         <div className="card-body">
-          <div className="row g-4">
+      <div className="row g-4">
             {(sites || []).filter(site => site.siteType !== 'business_center').map(site => {
-              const blockCount = parseInt(site.blocks) || 0;
-              const elevatorsPerBlock = parseInt(site.elevatorsPerBlock) || 0;
+          const blockCount = parseInt(site.blocks) || 0;
+          const elevatorsPerBlock = parseInt(site.elevatorsPerBlock) || 0;
               // Normal siteler için: elevatorsPerBlock * 2
-              const panelsPerBlock = elevatorsPerBlock * 2;
-              const blockLabels = generateBlockLabels(blockCount);
+          const panelsPerBlock = elevatorsPerBlock * 2;
+          const blockLabels = generateBlockLabels(blockCount);
 
           return (
             <div key={site.id} className="col-12">
@@ -814,46 +840,46 @@ const CurrentStatus = () => {
                                       >
                                         {!panelInfo.panelImage && (
                                           <>
-                                            <div style={{ fontSize: '12px' }}>{panelNumber}</div>
-                                            {panelInfo.isUsed && (
-                                              <>
-                                                <div 
-                                                  style={{ 
-                                                    fontSize: '8px', 
-                                                    lineHeight: '1',
-                                                    textAlign: 'center',
-                                                    wordBreak: 'break-word',
-                                                    overflow: 'hidden',
-                                                    maxHeight: '24px'
-                                                  }}
-                                                  className="mt-1"
-                                                >
-                                                  {panelInfo.companyName.length > 12 
-                                                    ? panelInfo.companyName.substring(0, 12) + '...' 
-                                                    : panelInfo.companyName}
-                                                </div>
-                                                <div 
-                                                  style={{ 
-                                                    fontSize: '7px', 
-                                                    lineHeight: '1',
-                                                    textAlign: 'center'
-                                                  }}
-                                                  className="mt-1"
-                                                >
-                                                  {filteredMode ? `${panelInfo.startDate}` : panelInfo.endDate}
-                                                </div>
-                                                {filteredMode && (
-                                                  <div 
-                                                    style={{ 
-                                                      fontSize: '6px', 
-                                                      lineHeight: '1',
-                                                      textAlign: 'center'
-                                                    }}
-                                                  >
-                                                    {panelInfo.endDate}
-                                                  </div>
-                                                )}
-                                              </>
+                                        <div style={{ fontSize: '12px' }}>{panelNumber}</div>
+                                        {panelInfo.isUsed && (
+                                          <>
+                                            <div 
+                                              style={{ 
+                                                fontSize: '8px', 
+                                                lineHeight: '1',
+                                                textAlign: 'center',
+                                                wordBreak: 'break-word',
+                                                overflow: 'hidden',
+                                                maxHeight: '24px'
+                                              }}
+                                              className="mt-1"
+                                            >
+                                              {panelInfo.companyName.length > 12 
+                                                ? panelInfo.companyName.substring(0, 12) + '...' 
+                                                : panelInfo.companyName}
+                                            </div>
+                                            <div 
+                                              style={{ 
+                                                fontSize: '7px', 
+                                                lineHeight: '1',
+                                                textAlign: 'center'
+                                              }}
+                                              className="mt-1"
+                                            >
+                                              {filteredMode ? `${panelInfo.startDate}` : panelInfo.endDate}
+                                            </div>
+                                            {filteredMode && (
+                                              <div 
+                                                style={{ 
+                                                  fontSize: '6px', 
+                                                  lineHeight: '1',
+                                                  textAlign: 'center'
+                                                }}
+                                              >
+                                                {panelInfo.endDate}
+                                              </div>
+                                            )}
+                                          </>
                                             )}
                                           </>
                                         )}
@@ -889,18 +915,18 @@ const CurrentStatus = () => {
               </div>
             </div>
           );
-            })}
+        })}
             {sites.filter(site => site.siteType !== 'business_center').length === 0 && (
-              <div className="col-12">
-                <div className="text-center py-5">
-                  <div className="empty-state">
-                    <i className="bi bi-building"></i>
-                    <p className="mb-3">Henüz site bulunmamaktadır.</p>
-                  </div>
-                </div>
+          <div className="col-12">
+            <div className="text-center py-5">
+              <div className="empty-state">
+                <i className="bi bi-building"></i>
+                <p className="mb-3">Henüz site bulunmamaktadır.</p>
               </div>
-            )}
+            </div>
           </div>
+        )}
+      </div>
         </div>
       </div>
 
