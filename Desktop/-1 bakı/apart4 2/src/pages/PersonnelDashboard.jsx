@@ -544,13 +544,22 @@ const PersonnelDashboard = () => {
                 <i className="bi bi-building me-2"></i>
                 Siteler ({sites.length})
               </h5>
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => setSidebarOpen(false)}
-                title="Menüyü Kapat"
-              >
-                <i className="bi bi-chevron-left"></i>
-              </button>
+              <div className="d-flex gap-1">
+                <button
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={() => navigate('/sites-map')}
+                  title="Haritada Göster"
+                >
+                  <i className="bi bi-map"></i>
+                </button>
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => setSidebarOpen(false)}
+                  title="Menüyü Kapat"
+                >
+                  <i className="bi bi-chevron-left"></i>
+                </button>
+              </div>
             </div>
             <div className="card-body p-0" style={{ overflowY: 'auto', flex: 1 }}>
               {sites.length > 0 ? (

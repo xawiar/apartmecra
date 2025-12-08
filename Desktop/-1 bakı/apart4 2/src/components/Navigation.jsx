@@ -20,6 +20,7 @@ const Navigation = () => {
     { name: 'Anlaşmalar', path: '/agreements' },
     { name: 'Kasa', path: '/cashier' },
     { name: 'Ortak Payları', path: '/partner-shares' },
+    { name: 'Site Haritası', path: '/sites-map' },
     { name: 'Arşiv', path: '/archive' },
     { name: 'Ayarlar', path: '/settings' },
   ];

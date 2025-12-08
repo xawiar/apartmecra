@@ -14,6 +14,7 @@ import Cashier from './pages/Cashier';
 import PartnerShares from './pages/NewPartnerShares';
 import Settings from './pages/NewSettings';
 import CurrentStatus from './pages/CurrentStatus';
+import SitesMap from './pages/SitesMap';
 import PrivateRoute from './components/PrivateRoute';
 import BootstrapLayout from './components/BootstrapLayout';
 import withObserverRestrictions from './components/withObserverRestrictions';
@@ -132,6 +133,11 @@ function App() {
               <BootstrapLayout>
                 <ObserverRestrictedCurrentStatus />
               </BootstrapLayout>
+            </PrivateRoute>
+          } />
+          <Route path="/sites-map" element={
+            <PrivateRoute>
+              <SitesMap />
             </PrivateRoute>
           } />
         </Routes>
