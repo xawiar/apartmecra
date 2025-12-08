@@ -21,6 +21,7 @@ const Dashboard = () => {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [route, setRoute] = useState(null);
   const [routeLoading, setRouteLoading] = useState(false);
+  const [routeSites, setRouteSites] = useState([]); // Rota sırasındaki siteler
   const [directionsService, setDirectionsService] = useState(null);
   const mapRef = useRef(null);
   const directionsServiceRef = useRef(null);
@@ -212,6 +213,18 @@ const Dashboard = () => {
         (result, status) => {
           if (status === window.google.maps.DirectionsStatus.OK) {
             setRoute(result);
+            
+            // Rota sırasındaki siteleri kaydet (başlangıç noktası + optimal route)
+            const sitesInOrder = [
+              { ...location, isStart: true, order: 0 },
+              ...optimalRoute.map((point, index) => ({
+                ...point.site,
+                order: index + 1,
+                isStart: false
+              }))
+            ];
+            setRouteSites(sitesInOrder);
+            
             // Haritayı rotaya göre ayarla
             if (mapRef.current) {
               const bounds = new window.google.maps.LatLngBounds();
@@ -263,6 +276,7 @@ const Dashboard = () => {
   const clearRoute = () => {
     setRoute(null);
     setCurrentLocation(null);
+    setRouteSites([]);
     if (mapRef.current && sites.length > 0) {
       const bounds = new window.google.maps.LatLngBounds();
       sites.forEach(site => {
@@ -273,6 +287,19 @@ const Dashboard = () => {
       });
       mapRef.current.fitBounds(bounds);
     }
+  };
+
+  // Belirli bir siteye yol tarifi aç
+  const openDirectionsToSite = (site) => {
+    if (!site.locationLat || !site.locationLng) {
+      if (window.showAlert) {
+        window.showAlert('Hata', 'Bu site için konum bilgisi bulunmamaktadır.', 'error');
+      }
+      return;
+    }
+    
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${site.locationLat},${site.locationLng}`;
+    window.open(url, '_blank');
   };
 
   const handleMarkerClick = (site) => {
@@ -548,6 +575,47 @@ const Dashboard = () => {
                 )}
               </div>
             </div>
+            {/* Rota Listesi - Rota oluşturulduğunda göster */}
+            {route && routeSites.length > 0 && (
+              <div className="card-body border-bottom bg-light">
+                <h6 className="fw-bold mb-3">
+                  <i className="bi bi-list-ol me-2"></i>
+                  Rota Sırası ({routeSites.length - 1} Site)
+                </h6>
+                <div className="row g-2" style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                  {routeSites.map((siteItem, index) => {
+                    if (siteItem.isStart) return null; // Başlangıç noktasını gösterme
+                    return (
+                      <div key={siteItem.id || index} className="col-md-6 col-lg-4">
+                        <div className="card border-0 shadow-sm h-100">
+                          <div className="card-body p-2">
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div className="flex-grow-1">
+                                <div className="d-flex align-items-center mb-1">
+                                  <span className="badge bg-primary me-2">{index}</span>
+                                  <strong className="small">{siteItem.name}</strong>
+                                </div>
+                                {siteItem.neighborhood && (
+                                  <small className="text-muted d-block">{siteItem.neighborhood}</small>
+                                )}
+                              </div>
+                              <button
+                                className="btn btn-sm btn-outline-primary"
+                                onClick={() => openDirectionsToSite(siteItem)}
+                                title="Yol Tarifi Al"
+                              >
+                                <i className="bi bi-navigation"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            
             <div className="card-body p-0" style={{ height: '600px', position: 'relative' }}>
               {!mapLoading && GOOGLE_MAPS_API_KEY && (
                 <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
