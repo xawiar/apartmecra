@@ -115,6 +115,7 @@ const CurrentStatus = () => {
     // Create the block ID in the format used by the site dashboard: siteId-block-A, siteId-block-B, etc.
     const blockId = `${siteId}-block-${blockLabel}`;
     
+    // First, check if panel is used in any agreement
     for (const agreement of relevantAgreements) {
       // Check if this agreement has block and panel selections for this site
       if (agreement.sitePanelSelections && agreement.sitePanelSelections[siteId]) {
@@ -129,8 +130,16 @@ const CurrentStatus = () => {
               const rangeKey = `range-${rangeIndex}`;
               const rangePanels = sitePanelData[blockId]?.[rangeKey] || [];
               if (Array.isArray(rangePanels) && rangePanels.includes(panelId)) {
-                // Get panel image if exists
-                const panelImage = getPanelImage(agreement.id, siteId, blockId, panelId);
+                // Get panel image if exists (try this agreement first, then all agreements)
+                let panelImage = getPanelImage(agreement.id, siteId, blockId, panelId);
+                // If not found for this agreement, search all agreements for this panel
+                if (!panelImage) {
+                  panelImage = panelImages.find(img =>
+                    String(img.siteId) === String(siteId) &&
+                    String(img.blockId) === String(blockId) &&
+                    String(img.panelId) === String(panelId)
+                  );
+                }
                 
                 return {
                   isUsed: true,
@@ -147,8 +156,16 @@ const CurrentStatus = () => {
           } else {
             // Old format: direct array check
             if (Array.isArray(sitePanelData[blockId]) && sitePanelData[blockId].includes(panelId)) {
-              // Get panel image if exists
-              const panelImage = getPanelImage(agreement.id, siteId, blockId, panelId);
+              // Get panel image if exists (try this agreement first, then all agreements)
+              let panelImage = getPanelImage(agreement.id, siteId, blockId, panelId);
+              // If not found for this agreement, search all agreements for this panel
+              if (!panelImage) {
+                panelImage = panelImages.find(img =>
+                  String(img.siteId) === String(siteId) &&
+                  String(img.blockId) === String(blockId) &&
+                  String(img.panelId) === String(panelId)
+                );
+              }
               
               return {
                 isUsed: true,
@@ -164,6 +181,28 @@ const CurrentStatus = () => {
           }
         }
       }
+    }
+    
+    // Panel is not used, but check if there's a panel image anyway (personnel might have uploaded)
+    const panelImage = panelImages.find(img =>
+      String(img.siteId) === String(siteId) &&
+      String(img.blockId) === String(blockId) &&
+      String(img.panelId) === String(panelId)
+    );
+    
+    if (panelImage) {
+      // Find the agreement for this panel image
+      const imageAgreement = agreements.find(a => String(a.id) === String(panelImage.agreementId));
+      return {
+        isUsed: false,
+        companyName: imageAgreement ? getCompanyName(imageAgreement.companyId) : 'Bilinmeyen',
+        startDate: imageAgreement?.startDate || '',
+        endDate: imageAgreement?.endDate || '',
+        agreementId: panelImage.agreementId,
+        status: imageAgreement?.status || 'unknown',
+        photoUrl: imageAgreement?.photoUrl || null,
+        panelImage: panelImage
+      };
     }
     
     return { isUsed: false };
