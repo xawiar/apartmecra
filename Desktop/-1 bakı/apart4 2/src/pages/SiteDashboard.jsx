@@ -63,13 +63,13 @@ const SiteDashboard = () => {
           // Count used panels by checking all active and paid agreements
           let usedPanels = 0;
           data.agreements
-            .filter(a => a.status === 'active' && isAgreementPaid(a) && a.siteIds?.includes(siteId))
+            .filter(a => a.status === 'active' && isAgreementPaid(a) && Array.isArray(a.siteIds) && a.siteIds.includes(siteId))
             .forEach(agreement => {
               // Add the panel count for this site in this agreement
               usedPanels += agreement.sitePanelCounts?.[siteId] || 0;
             });
           
-          const activeAgreements = data.agreements.filter(a => a.status === 'active' && a.siteIds?.includes(siteId)).length;
+          const activeAgreements = data.agreements.filter(a => a.status === 'active' && Array.isArray(a.siteIds) && a.siteIds.includes(siteId)).length;
           
           // Calculate total revenue from both income and expense transactions
           // Income: payments received from companies for agreements
@@ -79,7 +79,7 @@ const SiteDashboard = () => {
             t.source?.includes('Anlaşma Ödemesi') &&
             // Make sure this transaction is related to an agreement for this site
             data.agreements.some(a => 
-              a.siteIds?.includes(siteId) && 
+              Array.isArray(a.siteIds) && a.siteIds.includes(siteId) && 
               t.source?.includes(a.id)
             )
           );
@@ -229,7 +229,7 @@ const SiteDashboard = () => {
     const activeAgreements = siteData.agreements.filter(a => 
       a.status === 'active' && 
       isAgreementPaid(a) && 
-      a.siteIds?.includes(siteId)
+      Array.isArray(a.siteIds) && a.siteIds.includes(siteId)
     );
     
     const blockLabel = String.fromCharCode(65 + blockIndex); // A, B, C, etc.
@@ -274,7 +274,7 @@ const SiteDashboard = () => {
     const activeAgreements = siteData.agreements.filter(a => 
       a.status === 'active' && 
       isAgreementPaid(a) && 
-      a.siteIds?.includes(siteId)
+      Array.isArray(a.siteIds) && a.siteIds.includes(siteId)
     );
     
     const blockLabel = String.fromCharCode(65 + blockIndex); // A, B, C, etc.
@@ -325,7 +325,7 @@ const SiteDashboard = () => {
 
   // Filter agreements based on payment filter and site
   const getFilteredAgreements = () => {
-    let filtered = siteData.agreements.filter(a => a.siteIds?.includes(siteId));
+    let filtered = siteData.agreements.filter(a => Array.isArray(a.siteIds) && a.siteIds.includes(siteId));
     
     // Filter by payment status
     if (!paymentFilter.showPaid || !paymentFilter.showUnpaid) {
@@ -662,7 +662,7 @@ const SiteDashboard = () => {
       </div>
 
       {/* Active Agreements with Photos */}
-      {siteData.agreements.filter(a => a.status === 'active' && a.siteIds?.includes(siteId)).length > 0 && (
+      {siteData.agreements.filter(a => a.status === 'active' && Array.isArray(a.siteIds) && a.siteIds.includes(siteId)).length > 0 && (
         <div className="row g-4 mb-4">
           <div className="col-md-12">
             <div className="card custom-card shadow-sm">
@@ -675,7 +675,7 @@ const SiteDashboard = () => {
               <div className="card-body">
                 <div className="row g-3">
                   {siteData.agreements
-                    .filter(a => a.status === 'active' && a.photoUrl && a.siteIds?.includes(siteId))
+                    .filter(a => a.status === 'active' && a.photoUrl && Array.isArray(a.siteIds) && a.siteIds.includes(siteId))
                     .map((agreement) => (
                       <div key={agreement.id} className="col-lg-4 col-md-6">
                         <div className="card h-100">
@@ -710,7 +710,7 @@ const SiteDashboard = () => {
                       </div>
                     ))}
                   
-                  {siteData.agreements.filter(a => a.status === 'active' && a.photoUrl && a.siteIds?.includes(siteId)).length === 0 && (
+                  {siteData.agreements.filter(a => a.status === 'active' && a.photoUrl && Array.isArray(a.siteIds) && a.siteIds.includes(siteId)).length === 0 && (
                     <div className="col-12">
                       <div className="text-center py-4">
                         <i className="bi bi-image text-muted fs-1"></i>
@@ -837,7 +837,7 @@ const SiteDashboard = () => {
               {siteData.transactions
                 .filter(t => 
                   (t.type === 'income' && t.source?.includes('Anlaşma Ödemesi') && 
-                   siteData.agreements.some(a => a.siteIds?.includes(siteId) && t.source?.includes(a.id))) ||
+                   siteData.agreements.some(a => Array.isArray(a.siteIds) && a.siteIds.includes(siteId) && t.source?.includes(a.id))) ||
                   (t.type === 'expense' && t.source?.includes('Site Ödemesi') && t.source?.includes(siteData.site?.name))
                 )
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -861,7 +861,7 @@ const SiteDashboard = () => {
                       {siteData.transactions
                         .filter(t => 
                           (t.type === 'income' && t.source?.includes('Anlaşma Ödemesi') && 
-                           siteData.agreements.some(a => a.siteIds?.includes(siteId) && t.source?.includes(a.id))) ||
+                           siteData.agreements.some(a => Array.isArray(a.siteIds) && a.siteIds.includes(siteId) && t.source?.includes(a.id))) ||
                           (t.type === 'expense' && t.source?.includes('Site Ödemesi') && t.source?.includes(siteData.site?.name))
                         )
                         .sort((a, b) => new Date(b.date) - new Date(a.date))

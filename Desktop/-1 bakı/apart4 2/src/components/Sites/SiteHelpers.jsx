@@ -178,6 +178,7 @@ const SiteHelpers = ({
     // Find all active agreements that include this site
     const siteAgreements = agreements.filter(agreement => 
       agreement.siteIds && 
+      Array.isArray(agreement.siteIds) &&
       agreement.siteIds.includes(site.id) && 
       agreement.status === 'active' &&
       !agreement.isDeleted &&
