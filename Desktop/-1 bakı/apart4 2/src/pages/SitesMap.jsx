@@ -194,6 +194,13 @@ const SitesMap = () => {
               <i className="bi bi-geo-alt me-1"></i>
               Elazığ Merkez
             </button>
+            <button
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => navigate('/sites')}
+            >
+              <i className="bi bi-building me-1"></i>
+              Siteler
+            </button>
             {user?.role === 'personnel' && (
               <button
                 className="btn btn-sm btn-primary"
