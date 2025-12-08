@@ -233,8 +233,18 @@ const Dashboard = () => {
             }
           } else {
             console.error('Directions request failed:', status);
+            let errorMessage = 'Rota oluşturulurken bir hata oluştu.';
+            
+            if (status === 'REQUEST_DENIED') {
+              errorMessage = 'Directions API aktif değil. Google Cloud Console\'dan "Directions API" ve "Routes API" servislerini aktifleştirmeniz gerekiyor.';
+            } else if (status === 'OVER_QUERY_LIMIT') {
+              errorMessage = 'API kullanım limiti aşıldı. Lütfen daha sonra tekrar deneyin.';
+            } else if (status === 'ZERO_RESULTS') {
+              errorMessage = 'Bu noktalar arasında rota bulunamadı.';
+            }
+            
             if (window.showAlert) {
-              window.showAlert('Hata', 'Rota oluşturulurken bir hata oluştu.', 'error');
+              window.showAlert('Hata', errorMessage, 'error');
             }
           }
           setRouteLoading(false);
@@ -558,7 +568,7 @@ const Dashboard = () => {
                       <Marker
                         position={currentLocation}
                         icon={window.google && window.google.maps ? {
-                          url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+                          url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
                           scaledSize: new window.google.maps.Size(40, 40)
                         } : undefined}
                         title="Başlangıç Noktası (Sizin Konumunuz)"
@@ -576,8 +586,8 @@ const Dashboard = () => {
                         onClick={() => handleMarkerClick(site)}
                         icon={window.google && window.google.maps ? {
                           url: site.siteType === 'business_center' 
-                            ? 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
-                            : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                            ? 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+                            : 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
                           scaledSize: new window.google.maps.Size(32, 32)
                         } : undefined}
                       />
@@ -611,7 +621,18 @@ const Dashboard = () => {
                               <strong>Yönetici:</strong> {selectedSite.manager}
                             </p>
                           )}
-                          <div className="d-flex gap-2 mt-2">
+                          {selectedSite.phone && (
+                            <p className="mb-1 small">
+                              <i className="bi bi-telephone me-1"></i>
+                              <strong>Telefon:</strong> {selectedSite.phone}
+                            </p>
+                          )}
+                          {selectedSite.location && (
+                            <p className="mb-2 small text-muted">
+                              {selectedSite.location}
+                            </p>
+                          )}
+                          <div className="d-flex gap-2 mt-2 flex-wrap">
                             <button
                               className="btn btn-sm btn-primary"
                               onClick={() => openInGoogleMaps(selectedSite)}
@@ -619,6 +640,16 @@ const Dashboard = () => {
                               <i className="bi bi-map me-1"></i>
                               Yol Tarifi
                             </button>
+                            {selectedSite.blocks && (
+                              <span className="badge bg-info">
+                                {selectedSite.blocks} Blok
+                              </span>
+                            )}
+                            {selectedSite.panels && (
+                              <span className="badge bg-success">
+                                {selectedSite.panels} Panel
+                              </span>
+                            )}
                           </div>
                         </div>
                       </InfoWindow>
