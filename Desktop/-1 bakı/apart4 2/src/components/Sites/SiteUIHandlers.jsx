@@ -23,7 +23,9 @@ const SiteUIHandlers = ({
       apartmentCount: '',
       averagePeople: '',
       businessCount: '',
-      peopleCount: ''
+      peopleCount: '',
+      bankAccountName: '',
+      iban: ''
     });
     setCurrentSite(null);
     setShowAddForm(true);
@@ -44,7 +46,9 @@ const SiteUIHandlers = ({
       apartmentCount: site.apartmentCount || '',
       averagePeople: site.averagePeople || '',
       businessCount: site.businessCount || '',
-      peopleCount: site.peopleCount || ''
+      peopleCount: site.peopleCount || '',
+      bankAccountName: site.bankAccountName || '',
+      iban: site.iban || ''
     });
     setCurrentSite(site);
     setShowAddForm(true);

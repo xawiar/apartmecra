@@ -32,7 +32,9 @@ const SitesMain = () => {
     apartmentCount: '', // Daire sayısı (site için)
     averagePeople: '', // Ortalama insan sayısı (site için - otomatik hesaplanacak)
     businessCount: '', // İşyeri sayısı (iş merkezi için)
-    peopleCount: '' // İş merkezine giren kişi sayısı (iş merkezi için)
+    peopleCount: '', // İş merkezine giren kişi sayısı (iş merkezi için)
+    bankAccountName: '', // Banka hesap adı
+    iban: '' // IBAN numarası
   });
   const [showPaymentSelection, setShowPaymentSelection] = useState(false);
   const [selectedSiteForPayment, setSelectedSiteForPayment] = useState(null);

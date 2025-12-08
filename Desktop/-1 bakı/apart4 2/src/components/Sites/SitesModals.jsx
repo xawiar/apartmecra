@@ -94,6 +94,20 @@ const SitesModals = ({
                             </div>
                             <div className="ps-4">{currentSite.notes || '-'}</div>
                           </div>
+                          <div className="col-md-6 mb-3">
+                            <div className="d-flex align-items-center mb-2">
+                              <i className="bi bi-bank text-primary me-2"></i>
+                              <strong>Banka Hesap Adı:</strong>
+                            </div>
+                            <div className="ps-4">{currentSite.bankAccountName || '-'}</div>
+                          </div>
+                          <div className="col-md-6 mb-3">
+                            <div className="d-flex align-items-center mb-2">
+                              <i className="bi bi-credit-card text-primary me-2"></i>
+                              <strong>IBAN Numarası:</strong>
+                            </div>
+                            <div className="ps-4">{currentSite.iban || '-'}</div>
+                          </div>
                         </div>
                       </div>
                     </div>

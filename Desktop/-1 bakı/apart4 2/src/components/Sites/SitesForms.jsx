@@ -281,6 +281,33 @@ const SitesForms = ({
                   </>
                 )}
                 
+                <div className="col-md-6 mb-3">
+                  <label htmlFor="bankAccountName" className="form-label fw-bold">Banka Hesap Adı</label>
+                  <input
+                    type="text"
+                    id="bankAccountName"
+                    name="bankAccountName"
+                    value={formData.bankAccountName || ''}
+                    onChange={uiHandlers.handleFormChange}
+                    className="form-control form-control-custom"
+                    placeholder="Banka hesap adını girin"
+                  />
+                </div>
+                
+                <div className="col-md-6 mb-3">
+                  <label htmlFor="iban" className="form-label fw-bold">IBAN Numarası</label>
+                  <input
+                    type="text"
+                    id="iban"
+                    name="iban"
+                    value={formData.iban || ''}
+                    onChange={uiHandlers.handleFormChange}
+                    className="form-control form-control-custom"
+                    placeholder="TR00 0000 0000 0000 0000 0000 00"
+                    maxLength="34"
+                  />
+                </div>
+                
                 <div className="col-12 mb-3">
                   <label htmlFor="notes" className="form-label fw-bold">Notlar</label>
                   <textarea
