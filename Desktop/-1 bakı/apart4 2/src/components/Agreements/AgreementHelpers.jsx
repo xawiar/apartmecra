@@ -231,28 +231,72 @@ const AgreementHelpers = ({
       const newStart = new Date(newRange.startDate);
       const newEnd = new Date(newRange.endDate);
     
-    // Check each existing agreement for date overlap and panel usage
-    for (const agreement of siteAgreements) {
+      // Check each existing agreement for date overlap and panel usage
+      for (const agreement of siteAgreements) {
         const existingRanges = getAgreementRanges(agreement);
         
         for (const existingRange of existingRanges) {
           const existingStart = new Date(existingRange.startDate);
           const existingEnd = new Date(existingRange.endDate);
       
-      // Check if date ranges overlap
-      if (dateRangesOverlap(newStart, newEnd, existingStart, existingEnd)) {
-        // Check if this specific panel is used in the overlapping agreement
-        if (agreement.siteBlockSelections && agreement.siteBlockSelections[siteId]) {
-          const usedBlocks = agreement.siteBlockSelections[siteId];
-          if (usedBlocks.includes(blockKey)) {
-            // Check if this specific panel is used in this block
-            if (agreement.sitePanelSelections && 
-                agreement.sitePanelSelections[siteId] && 
-                agreement.sitePanelSelections[siteId][blockKey] &&
-                agreement.sitePanelSelections[siteId][blockKey].includes(panelKey)) {
-              return false; // Panel is not available
+          // Check if date ranges overlap
+          if (dateRangesOverlap(newStart, newEnd, existingStart, existingEnd)) {
+            // Check if this specific panel is used in the overlapping agreement
+            // Support both old format and new format (with date ranges)
+            let isPanelUsed = false;
+            
+            // Check if agreement uses new format (has dateRanges)
+            if (agreement.dateRanges && Array.isArray(agreement.dateRanges) && agreement.dateRanges.length > 0) {
+              // New format: siteBlockSelections[rangeKey][siteId] and sitePanelSelections[siteId][blockKey][rangeKey]
+              // Find which range index matches the existingRange
+              const existingRangeIndex = agreement.dateRanges.findIndex(r => 
+                r.startDate === existingRange.startDate && r.endDate === existingRange.endDate
+              );
+              
+              if (existingRangeIndex >= 0) {
+                const existingRangeKey = `range-${existingRangeIndex}`;
+                
+                // Check siteBlockSelections for this range
+                if (agreement.siteBlockSelections && 
+                    agreement.siteBlockSelections[existingRangeKey] &&
+                    agreement.siteBlockSelections[existingRangeKey][siteId] &&
+                    Array.isArray(agreement.siteBlockSelections[existingRangeKey][siteId]) &&
+                    agreement.siteBlockSelections[existingRangeKey][siteId].includes(blockKey)) {
+                  
+                  // Check sitePanelSelections for this range
+                  if (agreement.sitePanelSelections && 
+                      agreement.sitePanelSelections[siteId] &&
+                      agreement.sitePanelSelections[siteId][blockKey] &&
+                      typeof agreement.sitePanelSelections[siteId][blockKey] === 'object' &&
+                      agreement.sitePanelSelections[siteId][blockKey][existingRangeKey] &&
+                      Array.isArray(agreement.sitePanelSelections[siteId][blockKey][existingRangeKey]) &&
+                      agreement.sitePanelSelections[siteId][blockKey][existingRangeKey].includes(panelKey)) {
+                    isPanelUsed = true;
+                  }
                 }
               }
+            } else {
+              // Old format: siteBlockSelections[siteId] and sitePanelSelections[siteId][blockKey]
+              if (agreement.siteBlockSelections && agreement.siteBlockSelections[siteId]) {
+                const usedBlocks = Array.isArray(agreement.siteBlockSelections[siteId]) 
+                  ? agreement.siteBlockSelections[siteId]
+                  : [];
+                if (usedBlocks.includes(blockKey)) {
+                  // Check if this specific panel is used in this block
+                  if (agreement.sitePanelSelections && 
+                      agreement.sitePanelSelections[siteId] && 
+                      agreement.sitePanelSelections[siteId][blockKey]) {
+                    const blockPanels = agreement.sitePanelSelections[siteId][blockKey];
+                    if (Array.isArray(blockPanels) && blockPanels.includes(panelKey)) {
+                      isPanelUsed = true;
+                    }
+                  }
+                }
+              }
+            }
+            
+            if (isPanelUsed) {
+              return false; // Panel is not available
             }
           }
         }
@@ -308,31 +352,86 @@ const AgreementHelpers = ({
     if (!startDate || !endDate) return null;
     
     const siteAgreements = agreements.filter(agreement => 
-      agreement.siteIds && agreement.siteIds.includes(siteId) &&
+      agreement.siteIds && Array.isArray(agreement.siteIds) && agreement.siteIds.includes(siteId) &&
       (agreement.status === 'active' || agreement.status === 'completed')
     );
     
     const newStart = new Date(startDate);
     const newEnd = new Date(endDate);
     
+    // Get date ranges from existing agreement (support both old and new format)
+    const getAgreementRanges = (agreement) => {
+      if (agreement.dateRanges && agreement.dateRanges.length > 0) {
+        return agreement.dateRanges.filter(r => r.startDate && r.endDate);
+      } else if (agreement.startDate && agreement.endDate) {
+        return [{ startDate: agreement.startDate, endDate: agreement.endDate }];
+      }
+      return [];
+    };
+    
     for (const agreement of siteAgreements) {
-      const existingStart = new Date(agreement.startDate);
-      const existingEnd = new Date(agreement.endDate);
+      const existingRanges = getAgreementRanges(agreement);
       
-      if (dateRangesOverlap(newStart, newEnd, existingStart, existingEnd)) {
-        if (agreement.siteBlockSelections && agreement.siteBlockSelections[siteId]) {
-          const usedBlocks = agreement.siteBlockSelections[siteId];
-          if (usedBlocks.includes(blockKey)) {
-            if (agreement.sitePanelSelections && 
-                agreement.sitePanelSelections[siteId] && 
-                agreement.sitePanelSelections[siteId][blockKey] &&
-                agreement.sitePanelSelections[siteId][blockKey].includes(panelKey)) {
-              return {
-                agreementId: agreement.id,
-                companyName: getCompanyName(agreement.companyId),
-                startDate: agreement.startDate,
-                endDate: agreement.endDate
-              };
+      for (const existingRange of existingRanges) {
+        const existingStart = new Date(existingRange.startDate);
+        const existingEnd = new Date(existingRange.endDate);
+        
+        if (dateRangesOverlap(newStart, newEnd, existingStart, existingEnd)) {
+          // Check if agreement uses new format (has dateRanges)
+          if (agreement.dateRanges && Array.isArray(agreement.dateRanges) && agreement.dateRanges.length > 0) {
+            // New format: siteBlockSelections[rangeKey][siteId] and sitePanelSelections[siteId][blockKey][rangeKey]
+            const existingRangeIndex = agreement.dateRanges.findIndex(r => 
+              r.startDate === existingRange.startDate && r.endDate === existingRange.endDate
+            );
+            
+            if (existingRangeIndex >= 0) {
+              const existingRangeKey = `range-${existingRangeIndex}`;
+              
+              // Check siteBlockSelections for this range
+              if (agreement.siteBlockSelections && 
+                  agreement.siteBlockSelections[existingRangeKey] &&
+                  agreement.siteBlockSelections[existingRangeKey][siteId] &&
+                  Array.isArray(agreement.siteBlockSelections[existingRangeKey][siteId]) &&
+                  agreement.siteBlockSelections[existingRangeKey][siteId].includes(blockKey)) {
+                
+                // Check sitePanelSelections for this range
+                if (agreement.sitePanelSelections && 
+                    agreement.sitePanelSelections[siteId] &&
+                    agreement.sitePanelSelections[siteId][blockKey] &&
+                    typeof agreement.sitePanelSelections[siteId][blockKey] === 'object' &&
+                    agreement.sitePanelSelections[siteId][blockKey][existingRangeKey] &&
+                    Array.isArray(agreement.sitePanelSelections[siteId][blockKey][existingRangeKey]) &&
+                    agreement.sitePanelSelections[siteId][blockKey][existingRangeKey].includes(panelKey)) {
+                  return {
+                    agreementId: agreement.id,
+                    companyName: getCompanyName(agreement.companyId),
+                    startDate: existingRange.startDate,
+                    endDate: existingRange.endDate
+                  };
+                }
+              }
+            }
+          } else {
+            // Old format: siteBlockSelections[siteId] and sitePanelSelections[siteId][blockKey]
+            if (agreement.siteBlockSelections && agreement.siteBlockSelections[siteId]) {
+              const usedBlocks = Array.isArray(agreement.siteBlockSelections[siteId]) 
+                ? agreement.siteBlockSelections[siteId]
+                : [];
+              if (usedBlocks.includes(blockKey)) {
+                if (agreement.sitePanelSelections && 
+                    agreement.sitePanelSelections[siteId] && 
+                    agreement.sitePanelSelections[siteId][blockKey]) {
+                  const blockPanels = agreement.sitePanelSelections[siteId][blockKey];
+                  if (Array.isArray(blockPanels) && blockPanels.includes(panelKey)) {
+                    return {
+                      agreementId: agreement.id,
+                      companyName: getCompanyName(agreement.companyId),
+                      startDate: agreement.startDate,
+                      endDate: agreement.endDate
+                    };
+                  }
+                }
+              }
             }
           }
         }
