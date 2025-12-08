@@ -79,7 +79,7 @@ const PersonnelDashboard = () => {
     notes: ''
   });
   const [showMap, setShowMap] = useState(false);
-  const [mapLoading, setMapLoading] = useState(true);
+  const [mapLoading, setMapLoading] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [route, setRoute] = useState(null);
   const [routeLoading, setRouteLoading] = useState(false);
@@ -450,6 +450,8 @@ const PersonnelDashboard = () => {
 
   // Map yüklendiğinde tüm siteleri gösterecek şekilde ayarla
   const onMapLoad = useCallback((map) => {
+    if (!map) return;
+    
     mapRef.current = map;
     
     // DirectionsService'i başlat
@@ -483,6 +485,21 @@ const PersonnelDashboard = () => {
     }
     setMapLoading(false);
   }, [sites]);
+
+  // Harita gösterildiğinde loading'i başlat
+  useEffect(() => {
+    if (showMap && GOOGLE_MAPS_API_KEY) {
+      setMapLoading(true);
+      // Timeout ile güvenlik - eğer harita 10 saniye içinde yüklenmezse loading'i durdur
+      const timeout = setTimeout(() => {
+        setMapLoading(false);
+      }, 10000);
+      
+      return () => clearTimeout(timeout);
+    } else {
+      setMapLoading(false);
+    }
+  }, [showMap, GOOGLE_MAPS_API_KEY]);
 
   // İki nokta arasındaki mesafeyi hesapla (Haversine formülü)
   const calculateDistance = (point1, point2) => {
@@ -1622,7 +1639,7 @@ const PersonnelDashboard = () => {
                 )}
                 
                 <div className="card-body p-0" style={{ height: '600px', position: 'relative' }}>
-                  {!mapLoading && GOOGLE_MAPS_API_KEY && (
+                  {showMap && GOOGLE_MAPS_API_KEY && (
                     <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
                       <GoogleMap
                         mapContainerStyle={{ width: '100%', height: '100%' }}
@@ -1635,6 +1652,10 @@ const PersonnelDashboard = () => {
                           fullscreenControl: true,
                         }}
                         onLoad={onMapLoad}
+                        onError={() => {
+                          console.error('Google Maps load error');
+                          setMapLoading(false);
+                        }}
                       >
                         {/* Kullanıcı konumu marker'ı */}
                         {currentLocation && (
@@ -1726,11 +1747,22 @@ const PersonnelDashboard = () => {
                       </GoogleMap>
                     </LoadScript>
                   )}
-                  {(!GOOGLE_MAPS_API_KEY || mapLoading) && (
+                  {showMap && (!GOOGLE_MAPS_API_KEY || mapLoading) && (
                     <div className="d-flex align-items-center justify-content-center h-100">
                       <div className="text-center">
                         <div className="spinner-border text-primary" role="status"></div>
                         <p className="mt-3 text-muted">Harita yükleniyor...</p>
+                      </div>
+                    </div>
+                  )}
+                  {showMap && !GOOGLE_MAPS_API_KEY && !mapLoading && (
+                    <div className="d-flex align-items-center justify-content-center h-100">
+                      <div className="alert alert-warning text-center" style={{ maxWidth: '600px' }}>
+                        <h6 className="alert-heading">
+                          <i className="bi bi-exclamation-triangle me-2"></i>
+                          Google Maps API Key Gerekli
+                        </h6>
+                        <p className="mb-0">Harita görünümünü kullanabilmek için Google Maps API key gerekli.</p>
                       </div>
                     </div>
                   )}
