@@ -805,8 +805,35 @@ const CompanyDashboard = () => {
                                const blockLabels = site.siteType === 'business_center' 
                                  ? ['A'] 
                                  : helpers.generateBlockLabels(blockCount);
-                               const usedBlocks = agreement.siteBlockSelections?.[siteId] || [];
-                               const panelSelections = agreement.sitePanelSelections?.[siteId] || {};
+                               // Collect blocks and panels from all date ranges (new format)
+                               // New format: siteBlockSelections = { "range-0": { "siteId": [blockKeys] }, ... }
+                               // New format: sitePanelSelections = { "siteId": { "blockKey": { "range-0": [panelKeys], ... } } }
+                               let usedBlocks = [];
+                               let panelSelections = {};
+                               
+                               // Check if new format (with date ranges)
+                               if (agreement.dateRanges && Array.isArray(agreement.dateRanges) && agreement.dateRanges.length > 0) {
+                                 // New format: collect from all date ranges
+                                 agreement.dateRanges.forEach((range, rangeIndex) => {
+                                   const rangeKey = `range-${rangeIndex}`;
+                                   const rangeBlocks = agreement.siteBlockSelections?.[rangeKey]?.[siteId] || [];
+                                   usedBlocks = [...new Set([...usedBlocks, ...rangeBlocks])]; // Merge unique blocks
+                                   
+                                   // Collect panels from all ranges for each block
+                                   const sitePanelData = agreement.sitePanelSelections?.[siteId] || {};
+                                   Object.keys(sitePanelData).forEach(blockKey => {
+                                     if (!panelSelections[blockKey]) {
+                                       panelSelections[blockKey] = [];
+                                     }
+                                     const rangePanels = sitePanelData[blockKey]?.[rangeKey] || [];
+                                     panelSelections[blockKey] = [...new Set([...panelSelections[blockKey], ...rangePanels])]; // Merge unique panels
+                                   });
+                                 });
+                               } else {
+                                 // Old format: direct access
+                                 usedBlocks = agreement.siteBlockSelections?.[siteId] || [];
+                                 panelSelections = agreement.sitePanelSelections?.[siteId] || {};
+                               }
                                
                                return (
                                  <div key={siteId} className="col-md-12">
