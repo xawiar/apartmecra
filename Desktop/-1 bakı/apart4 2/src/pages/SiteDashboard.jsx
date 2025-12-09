@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getSiteData, getSites, getCompanies, getPanelImages, getAgreements, getTransactions } from '../services/api';
+import logger from '../utils/logger';
 import { getUser } from '../utils/auth';
 import SiteHelpers from '../components/Sites/SiteHelpers';
 
@@ -120,7 +121,7 @@ const SiteDashboard = () => {
           });
         } else {
           // Site not found - show error message
-          console.error('Site not found for siteId:', siteId);
+          logger.error('Site not found for siteId:', siteId);
           setStats({
             totalPanels: 0,
             usedPanels: 0,
@@ -131,7 +132,7 @@ const SiteDashboard = () => {
           });
         }
       } catch (error) {
-        console.error('Error fetching site data:', error);
+        logger.error('Error fetching site data:', error);
         setStats({
           totalPanels: 0,
           usedPanels: 0,

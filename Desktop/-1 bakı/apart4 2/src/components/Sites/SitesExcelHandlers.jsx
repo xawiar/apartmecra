@@ -121,7 +121,7 @@ const SitesExcelHandlers = ({
           });
           
           // Debug: Log the row being processed
-          console.log(`Processing row ${i + 1}:`, cleanRow);
+          logger.log(`Processing row ${i + 1}:`, cleanRow);
           
           // Map Excel columns to site data (A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11, M=12)
           // E1 sütununda 1 = site, 2 = iş merkezi
@@ -149,7 +149,7 @@ const SitesExcelHandlers = ({
             siteData.phone = '123456';
           }
           
-          console.log(`Parsed site data for row ${i + 1}:`, siteData);
+          logger.log(`Parsed site data for row ${i + 1}:`, siteData);
           
           // Validate required fields
           if (!siteData.name) {
@@ -268,7 +268,7 @@ const SitesExcelHandlers = ({
         
         // Report skipped rows if any
         if (skippedRows.length > 0) {
-          console.log('Skipped rows:', skippedRows);
+          logger.log('Skipped rows:', skippedRows);
           // Check if window.showAlert is available, if not use a fallback
           if (typeof window.showAlert === 'function') {
             await window.showAlert(
@@ -295,12 +295,12 @@ const SitesExcelHandlers = ({
           return;
         }
         
-        console.log('Sites to import:', sitesToImport); // Debug log
+        logger.log('Sites to import:', sitesToImport); // Debug log
         
         // Import sites
         await importSitesFromExcel(sitesToImport);
       } catch (error) {
-        console.error('Error reading Excel file:', error);
+        logger.error('Error reading Excel file:', error);
         // Check if window.showAlert is available, if not use a fallback
         if (typeof window.showAlert === 'function') {
           await window.showAlert(
@@ -318,7 +318,7 @@ const SitesExcelHandlers = ({
 
   // Import sites from Excel data
   const importSitesFromExcel = async (sitesData) => {
-    console.log('Importing sites data:', sitesData); // Debug log
+    logger.log('Importing sites data:', sitesData); // Debug log
     
     if (!sitesData || sitesData.length === 0) {
       // Check if window.showAlert is available, if not use a fallback
@@ -346,12 +346,12 @@ const SitesExcelHandlers = ({
       for (let i = 0; i < sitesData.length; i++) {
         const siteData = sitesData[i];
         try {
-          console.log(`Processing site ${i+1}/${sitesData.length}:`, siteData); // Debug log
+            logger.log(`Processing site ${i+1}/${sitesData.length}:`, siteData); // Debug log
           
           // Validate required fields
           if (!siteData.name || !siteData.manager) {
             const errorMsg = `Satır ${i+2}: Gerekli alanlar eksik (Site: ${siteData.name || 'Bilinmeyen'}, Yönetici: ${siteData.manager || 'Bilinmeyen'})`;
-            console.log(errorMsg);
+            logger.log(errorMsg);
             errorDetails.push(errorMsg);
             errorCount++;
             continue;
@@ -365,7 +365,7 @@ const SitesExcelHandlers = ({
           
           if (existingSite) {
             // Update existing site with new data, but preserve important properties
-            console.log(`Updating existing site: ${existingSite.id}`, siteData);
+            logger.log(`Updating existing site: ${existingSite.id}`, siteData);
             
             // Preserve important existing properties that shouldn't be overwritten
             const updatedSiteData = {
@@ -401,7 +401,7 @@ const SitesExcelHandlers = ({
               await new Promise(resolve => setTimeout(resolve, 100));
             } else {
               const errorMsg = `Satır ${i+2}: Mevcut site güncellenemedi - ${siteData.name}`;
-              console.log(errorMsg);
+              logger.log(errorMsg);
               errorDetails.push(errorMsg);
               errorCount++;
             }
@@ -425,14 +425,14 @@ const SitesExcelHandlers = ({
               await new Promise(resolve => setTimeout(resolve, 100));
             } else {
               const errorMsg = `Satır ${i+2}: Site oluşturulamadı - ${siteData.name}`;
-              console.log(errorMsg);
+              logger.log(errorMsg);
               errorDetails.push(errorMsg);
               errorCount++;
             }
           }
         } catch (error) {
           const errorMsg = `Satır ${i+2}: Hata oluştu - ${siteData.name}: ${error.message}`;
-          console.error(errorMsg, error);
+          logger.error(errorMsg, error);
           errorDetails.push(errorMsg);
           errorCount++;
         }
@@ -440,7 +440,7 @@ const SitesExcelHandlers = ({
       
       // Log detailed error information
       if (errorDetails.length > 0) {
-        console.log('Import error details:', errorDetails);
+        logger.log('Import error details:', errorDetails);
       }
       
       // Show final result
@@ -482,7 +482,7 @@ const SitesExcelHandlers = ({
         }
       }
     } catch (error) {
-      console.error('Error importing sites from Excel:', error);
+      logger.error('Error importing sites from Excel:', error);
       // Check if window.showAlert is available, if not use a fallback
       if (typeof window.showAlert === 'function') {
         await window.showAlert(
@@ -500,11 +500,11 @@ const SitesExcelHandlers = ({
   const exportSitesToExcel = (sitesToExport = null) => {
     // Use passed sites array or fallback to prop
     const sitesData = sitesToExport || sites;
-    console.log('Exporting sites to Excel, sites data:', sitesData);
+    logger.log('Exporting sites to Excel, sites data:', sitesData);
     
     // Check if sites data is available
     if (!sitesData || sitesData.length === 0) {
-      console.error('No sites data available for export');
+      logger.error('No sites data available for export');
       if (typeof window.showAlert === 'function') {
         window.showAlert(
           'Uyarı',
@@ -544,12 +544,12 @@ const SitesExcelHandlers = ({
     XLSX.utils.book_append_sheet(wb, ws, 'Siteler');
     
     // Export to file
-    console.log('Exporting Excel file with data:', exportData);
+      logger.log('Exporting Excel file with data:', exportData);
     try {
       XLSX.writeFile(wb, 'siteler.xlsx');
-      console.log('Excel file exported successfully');
+      logger.log('Excel file exported successfully');
     } catch (error) {
-      console.error('Error exporting Excel file:', error);
+      logger.error('Error exporting Excel file:', error);
       alert('Excel dosyası indirilirken hata oluştu: ' + error.message);
     }
   };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getSites, getAgreements, getCompanies, getPanelImages } from '../services/api';
+import logger from '../utils/logger';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -23,7 +24,7 @@ const CurrentStatus = () => {
           getAgreements(),
           getCompanies(),
           getPanelImages().catch(err => {
-            console.warn('Error fetching panel images (non-critical):', err);
+            logger.warn('Error fetching panel images (non-critical):', err);
             return [];
           })
         ]);
@@ -42,7 +43,7 @@ const CurrentStatus = () => {
         setCompanies(companiesData);
         setPanelImages(Array.isArray(panelImagesData) ? panelImagesData : (panelImagesData?.data || []));
       } catch (error) {
-        console.error('Error fetching data:', error);
+        logger.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
@@ -533,7 +534,7 @@ const CurrentStatus = () => {
         alert('PDF raporu başarıyla oluşturuldu!');
       }
     } catch (error) {
-      console.error('PDF oluşturma hatası:', error);
+      logger.error('PDF oluşturma hatası:', error);
       
       // Clean up any remaining elements
       const loadingAlert = document.querySelector('[style*="position: fixed"]');

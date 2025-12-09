@@ -3,6 +3,8 @@ import { getAgreements, getSites, getCompanies, getPanelImages, uploadPanelImage
 import { getUser } from '../utils/auth';
 import { useNavigate } from 'react-router-dom';
 import { GoogleMap, LoadScript, Marker, InfoWindow, DirectionsRenderer } from '@react-google-maps/api';
+import LazyImage from '../components/LazyImage';
+import logger from '../utils/logger';
 
 // Import helper functions
 const AgreementHelpers = ({
@@ -103,7 +105,7 @@ const PersonnelDashboard = () => {
       try {
         await cleanupExpiredImages();
       } catch (cleanupError) {
-        console.warn('Failed to cleanup expired images:', cleanupError);
+        logger.warn('Failed to cleanup expired images:', cleanupError);
       }
       
       const [allAgreements, allSites, allCompanies] = await Promise.all([
@@ -134,7 +136,7 @@ const PersonnelDashboard = () => {
       await loadPanelImages();
       
     } catch (error) {
-      console.error('Error loading data:', error);
+      logger.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
@@ -242,7 +244,7 @@ const PersonnelDashboard = () => {
       const images = await getPanelImages();
       setPanelImages(images);
     } catch (error) {
-      console.error('Error loading panel images:', error);
+      logger.error('Error loading panel images:', error);
     }
   };
 
@@ -271,7 +273,7 @@ const PersonnelDashboard = () => {
         );
       }
     } catch (error) {
-      console.error('Error resetting panel images:', error);
+      logger.error('Error resetting panel images:', error);
       if (window.showAlert) {
         window.showAlert('Hata', 'Panel fotoğrafları sıfırlanırken bir hata oluştu.', 'error');
       }
@@ -304,10 +306,10 @@ const PersonnelDashboard = () => {
             method: 'DELETE'
           });
           if (!deleteResponse.ok) {
-            console.warn('Failed to delete existing image, continuing with upload');
+            logger.warn('Failed to delete existing image, continuing with upload');
           }
         } catch (deleteError) {
-          console.warn('Error deleting existing image:', deleteError);
+          logger.warn('Error deleting existing image:', deleteError);
         }
       }
 
@@ -333,7 +335,7 @@ const PersonnelDashboard = () => {
         window.showAlert('Başarılı', 'Panel fotoğrafı başarıyla yüklendi!', 'success');
       }
     } catch (error) {
-      console.error('Error uploading panel image:', error);
+      logger.error('Error uploading panel image:', error);
       if (window.showAlert) {
         window.showAlert('Hata', 'Fotoğraf yüklenirken bir hata oluştu.', 'error');
       }
@@ -362,7 +364,7 @@ const PersonnelDashboard = () => {
         throw new Error('Failed to delete image');
       }
     } catch (error) {
-      console.error('Error deleting panel image:', error);
+      logger.error('Error deleting panel image:', error);
       if (window.showAlert) {
         window.showAlert('Hata', 'Fotoğraf silinirken bir hata oluştu.', 'error');
       }
@@ -441,7 +443,7 @@ const PersonnelDashboard = () => {
         throw new Error('Güncelleme başarısız');
       }
     } catch (error) {
-      console.error('Error updating site:', error);
+      logger.error('Error updating site:', error);
       if (window.showAlert) {
         window.showAlert('Hata', 'Site bilgileri güncellenirken bir hata oluştu.', 'error');
       }
@@ -642,7 +644,7 @@ const PersonnelDashboard = () => {
               );
             }
           } else {
-            console.error('Directions request failed:', status);
+            logger.error('Directions request failed:', status);
             let errorMessage = 'Rota oluşturulurken bir hata oluştu.';
             
             if (status === 'REQUEST_DENIED') {
@@ -661,7 +663,7 @@ const PersonnelDashboard = () => {
         }
       );
     } catch (error) {
-      console.error('Error creating route:', error);
+      logger.error('Error creating route:', error);
       if (window.showAlert) {
         window.showAlert('Hata', 'Konumunuz alınamadı. Lütfen tarayıcınızın konum iznini kontrol edin.', 'error');
       }
@@ -752,7 +754,7 @@ const PersonnelDashboard = () => {
         window.showAlert('Başarılı', `Konumunuz alındı: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`, 'success');
       }
     } catch (error) {
-      console.error('Error getting location:', error);
+      logger.error('Error getting location:', error);
       if (window.showAlert) {
         window.showAlert('Hata', 'Konumunuz alınamadı. Lütfen tarayıcınızın konum iznini kontrol edin.', 'error');
       }
@@ -1353,9 +1355,12 @@ const PersonnelDashboard = () => {
                   <div className="mb-3">
                     <h6 className="text-center mb-2">Mevcut Fotoğraf:</h6>
                     <div className="text-center">
-                      <img 
+                      <LazyImage 
                         src={selectedPanel.existingImage.url}
                         alt="Mevcut Panel Fotoğrafı"
+                        width={200}
+                        height={200}
+                        quality={85}
                         style={{ 
                           maxWidth: '200px', 
                           maxHeight: '200px', 
@@ -1490,7 +1495,7 @@ const PersonnelDashboard = () => {
                           input.click();
                         }
                       } catch (error) {
-                        console.error('Camera error:', error);
+                        logger.error('Camera error:', error);
                         // Fallback to file input
                         const input = document.createElement('input');
                         input.type = 'file';
@@ -1653,7 +1658,7 @@ const PersonnelDashboard = () => {
                         }}
                         onLoad={onMapLoad}
                         onError={() => {
-                          console.error('Google Maps load error');
+                          logger.error('Google Maps load error');
                           setMapLoading(false);
                         }}
                       >

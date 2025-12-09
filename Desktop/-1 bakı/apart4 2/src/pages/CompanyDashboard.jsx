@@ -157,7 +157,7 @@ const CompanyDashboard = () => {
           getCompanies(),
           getTransactions(),
           getPanelImages().catch(err => {
-            console.warn('Error fetching panel images (non-critical):', err);
+            logger.warn('Error fetching panel images (non-critical):', err);
             return [];
           })
         ]);
@@ -227,7 +227,7 @@ const CompanyDashboard = () => {
           setLoading(false);
         }
       } catch (error) {
-        console.error('Error fetching company data:', error);
+        logger.error('Error fetching company data:', error);
         
         if (!isRetry) {
           retryCount = 1; // First error

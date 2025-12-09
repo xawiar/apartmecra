@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import logger from '../../utils/logger';
 
 const SiteHelpers = ({
   companies, sites, agreements,
@@ -206,7 +207,7 @@ const SiteHelpers = ({
       return siteMatches;
     });
     
-    console.log('calculatePendingPayments - Site:', site.id, 'Found agreements:', siteAgreements.length, siteAgreements.map(a => ({
+    logger.log('calculatePendingPayments - Site:', site.id, 'Found agreements:', siteAgreements.length, siteAgreements.map(a => ({
       id: a.id,
       status: a.status,
       siteIds: a.siteIds,
@@ -233,7 +234,7 @@ const SiteHelpers = ({
         }
       }
       
-      console.log('calculatePendingPayments - Agreement:', agreement.id, 'Site:', site.id, 'PanelCount:', panelCount, 'MatchedSiteId:', matchedSiteId);
+      logger.log('calculatePendingPayments - Agreement:', agreement.id, 'Site:', site.id, 'PanelCount:', panelCount, 'MatchedSiteId:', matchedSiteId);
       
       if (panelCount > 0) {
         // Calculate weekly rate per panel
@@ -311,7 +312,7 @@ const SiteHelpers = ({
         // Calculate pending amount (if any)
         const pendingAmount = Math.max(0, siteTotalAmount - totalPaid);
         
-        console.log('calculatePendingPayments - Agreement:', agreement.id, {
+        logger.log('calculatePendingPayments - Agreement:', agreement.id, {
           panelCount,
           weeklyRatePerPanel,
           weeklyTotalAmount,
@@ -472,7 +473,7 @@ const SiteHelpers = ({
         );
       };
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      logger.error('Error generating PDF:', error);
       await window.showAlert(
         'Hata',
         'PDF oluşturma sırasında bir hata oluştu.',

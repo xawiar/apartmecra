@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import useResponsive from '../../hooks/useResponsive';
 
 const SitesModals = ({ 
   showModal, 
@@ -21,6 +22,7 @@ const SitesModals = ({
   setProcessedPayments
 }) => {
   const modalContentRef = useRef(null);
+  const { isMobile, isTablet } = useResponsive();
 
   // Site Detail Modal
   const SiteDetailModal = () => {
@@ -32,7 +34,7 @@ const SitesModals = ({
           uiHandlers.handleCloseModal();
         }
       }}>
-        <div className="modal-dialog modal-xl modal-dialog-scrollable" onClick={e => e.stopPropagation()}>
+        <div className={`modal-dialog ${isMobile ? 'modal-fullscreen' : isTablet ? 'modal-lg' : 'modal-xl'} modal-dialog-scrollable`} onClick={e => e.stopPropagation()}>
           <div className="modal-content sites-modal-content">
             <div className="modal-header bg-primary text-white rounded-top">
               <h5 className="modal-title d-flex align-items-center">

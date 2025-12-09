@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 
 /**
  * Lazy loading image component with optimization
@@ -23,23 +23,25 @@ const LazyImage = ({
   const imgRef = useRef(null);
   const observerRef = useRef(null);
 
-  // Optimize image URL for Firebase Storage
-  const optimizeImageUrl = (url, targetWidth, targetQuality = quality) => {
-    if (!url) return '';
-    
-    // Firebase Storage optimization
-    if (url.includes('firebasestorage')) {
-      const params = [];
-      if (targetWidth) params.push(`width=${targetWidth}`);
-      if (targetQuality) params.push(`quality=${targetQuality}`);
-      if (params.length > 0) {
-        const separator = url.includes('?') ? '&' : '?';
-        return `${url}${separator}${params.join('&')}`;
+  // Optimize image URL for Firebase Storage - memoized
+  const optimizeImageUrl = useMemo(() => {
+    return (url, targetWidth, targetQuality = quality) => {
+      if (!url) return '';
+      
+      // Firebase Storage optimization
+      if (url.includes('firebasestorage')) {
+        const params = [];
+        if (targetWidth) params.push(`width=${targetWidth}`);
+        if (targetQuality) params.push(`quality=${targetQuality}`);
+        if (params.length > 0) {
+          const separator = url.includes('?') ? '&' : '?';
+          return `${url}${separator}${params.join('&')}`;
+        }
       }
-    }
-    
-    return url;
-  };
+      
+      return url;
+    };
+  }, [quality]);
 
   useEffect(() => {
     if (!src) {

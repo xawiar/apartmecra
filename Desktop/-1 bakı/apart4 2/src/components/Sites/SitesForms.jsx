@@ -1,4 +1,5 @@
 import React from 'react';
+import useResponsive from '../../hooks/useResponsive';
 import SiteHelpers from './SiteHelpers';
 
 const SitesForms = ({ 
@@ -9,6 +10,8 @@ const SitesForms = ({
   handlers,
   helpers 
 }) => {
+  const { isMobile, isTablet } = useResponsive();
+
   if (!showAddForm) return null;
 
   return (
@@ -17,7 +20,7 @@ const SitesForms = ({
         uiHandlers.handleCloseAddForm();
       }
     }}>
-      <div className="modal-dialog modal-lg" onClick={e => e.stopPropagation()}>
+      <div className={`modal-dialog ${isMobile ? 'modal-fullscreen' : isTablet ? 'modal-lg' : 'modal-xl'}`} onClick={e => e.stopPropagation()}>
         <div className="modal-content sites-modal-content">
           <div className="modal-header bg-primary text-white">
             <h5 className="modal-title">

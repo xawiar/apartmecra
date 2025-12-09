@@ -8,6 +8,7 @@ import SitesTable from './SitesTable';
 import SitesForms from './SitesForms';
 import SitesModals from './SitesModals';
 import SitesExcelHandlers from './SitesExcelHandlers';
+import logger from '../../utils/logger';
 
 const SitesMain = () => {
   const [sites, setSites] = useState([]);
@@ -125,7 +126,7 @@ const SitesMain = () => {
       setAgreements(uniqueAgreements);
       setCompanies(companiesData);
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      logger.error('Error refreshing data:', error);
       hasFetchedRef.current = false; // Reset on error to allow retry
     } finally {
       setLoading(false);
@@ -244,21 +245,24 @@ const SitesMain = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - only run once
 
-  // Filter sites based on search term
-  useEffect(() => {
+  // Filter sites based on search term - memoized for performance
+  const filteredSitesMemo = useMemo(() => {
     if (!searchTerm.trim()) {
-      setFilteredSites(sites);
-    } else {
-      const filtered = sites.filter(site => 
-        site.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        site.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        site.manager.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        site.neighborhood.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        site.phone.includes(searchTerm)
-      );
-      setFilteredSites(filtered);
+      return sites;
     }
+    return sites.filter(site => 
+      site.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      site.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      site.manager.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      site.neighborhood.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      site.phone.includes(searchTerm)
+    );
   }, [sites, searchTerm]);
+
+  // Update filteredSites state when memoized value changes
+  useEffect(() => {
+    setFilteredSites(filteredSitesMemo);
+  }, [filteredSitesMemo]);
 
   if (loading) {
     return (
