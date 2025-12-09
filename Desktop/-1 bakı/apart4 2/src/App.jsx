@@ -18,6 +18,7 @@ import SitesMap from './pages/SitesMap';
 import PrivateRoute from './components/PrivateRoute';
 import BootstrapLayout from './components/BootstrapLayout';
 import withObserverRestrictions from './components/withObserverRestrictions';
+import ErrorBoundary from './components/ErrorBoundary';
 import { getUser } from './utils/auth';
 
 // Apply observer restrictions to pages that need them
@@ -60,9 +61,10 @@ const DashboardRoute = () => {
 function App() {
 
   return (
-    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <div className="App">
-        <Routes>
+    <ErrorBoundary showDetails={import.meta.env.DEV}>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <div className="App">
+          <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={
@@ -140,9 +142,10 @@ function App() {
               <SitesMap />
             </PrivateRoute>
           } />
-        </Routes>
-      </div>
-    </Router>
+          </Routes>
+        </div>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

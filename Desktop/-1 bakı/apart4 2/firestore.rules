@@ -68,22 +68,34 @@ service cloud.firestore {
     
     // Sites collection
     match /sites/{siteId} {
-      // NOTE: Şu an için işlevselliği engellememek adına tüm kullanıcılara açık.
-      // Gerekirse ileride tekrar rol bazlı sıkılaştırılabilir.
-      allow read: if true;
-      allow create, update, delete: if true;
+      // Okuma: Authenticated kullanıcılar (email bazlı login de authenticated olur)
+      // Site kullanıcıları kendi sitelerini görebilir
+      allow read: if isAuthenticated();
+      
+      // Yazma: Sadece admin
+      allow create, update, delete: if isAdmin();
     }
     
     // Companies collection
     match /companies/{companyId} {
-      allow read: if true;
-      allow create, update, delete: if true;
+      // Okuma: Authenticated kullanıcılar
+      allow read: if isAuthenticated();
+      
+      // Yazma: Sadece admin
+      allow create, update, delete: if isAdmin();
     }
     
     // Agreements collection
     match /agreements/{agreementId} {
-      allow read: if true;
-      allow create, update, delete: if true;
+      // Okuma: Authenticated kullanıcılar
+      // Not: Frontend'de role-based filtering yapılacak
+      allow read: if isAuthenticated();
+      
+      // Oluşturma ve güncelleme: Authenticated kullanıcılar
+      allow create, update: if isAuthenticated();
+      
+      // Silme: Sadece admin
+      allow delete: if isAdmin();
     }
     
     // Transactions collection
