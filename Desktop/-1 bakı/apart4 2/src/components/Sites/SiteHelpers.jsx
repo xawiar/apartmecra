@@ -175,29 +175,48 @@ const SiteHelpers = ({
     
     const pendingPayments = [];
     
-    // Find all active agreements that include this site
-    const siteAgreements = agreements.filter(agreement => 
-      agreement.siteIds && 
-      Array.isArray(agreement.siteIds) &&
-      agreement.siteIds.includes(site.id) && 
-      agreement.status === 'active' &&
-      !agreement.isDeleted &&
-      !agreement.isArchived
-    );
+    // Get all possible site IDs for matching
+    const possibleSiteIds = [
+      site.id,
+      site.siteId,
+      site._docId,
+      String(site.id),
+      String(site.siteId),
+      String(site._docId)
+    ].filter(id => id != null && id !== undefined);
     
-    console.log(`Calculating pending payments for site ${site.id}:`, {
-      siteAgreements: siteAgreements.length,
-      transactions: transactions.length
+    // Find all active agreements that include this site
+    const siteAgreements = agreements.filter(agreement => {
+      if (!agreement.siteIds || !Array.isArray(agreement.siteIds)) return false;
+      if (agreement.status !== 'active') return false;
+      if (agreement.isDeleted || agreement.isArchived) return false;
+      
+      // Check if any site ID matches
+      return agreement.siteIds.some(agreementSiteId => {
+        const agreementSiteIdStr = String(agreementSiteId);
+        return possibleSiteIds.some(possibleId => {
+          const possibleIdStr = String(possibleId);
+          return agreementSiteIdStr === possibleIdStr ||
+                 agreementSiteIdStr.toLowerCase() === possibleIdStr.toLowerCase();
+        });
+      });
     });
+    
+    // Calculate pending payments for site
     
     siteAgreements.forEach(agreement => {
       const company = companies.find(c => c.id === agreement.companyId);
       const companyName = company ? company.name : 'Bilinmeyen Firma';
       
       // Get panel count for this site in this agreement
-      const panelCount = agreement.sitePanelCounts && agreement.sitePanelCounts[site.id] 
-        ? parseInt(agreement.sitePanelCounts[site.id]) 
-        : 0;
+      // Try all possible site IDs
+      let panelCount = 0;
+      for (const possibleId of possibleSiteIds) {
+        if (agreement.sitePanelCounts && agreement.sitePanelCounts[possibleId]) {
+          panelCount = parseInt(agreement.sitePanelCounts[possibleId]) || 0;
+          if (panelCount > 0) break;
+        }
+      }
       
       if (panelCount > 0) {
         // Calculate weekly rate per panel
@@ -210,38 +229,70 @@ const SiteHelpers = ({
         const sitePercentage = parseFloat(site.agreementPercentage) || 25;
         
         // Calculate total payment amount for the entire agreement period
-        const startDate = new Date(agreement.startDate);
-        const endDate = new Date(agreement.endDate);
-        const totalWeeks = Math.ceil((endDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+        // Support both old format (startDate/endDate) and new format (dateRanges)
+        let totalWeeks = 0;
+        let agreementStartDate = null;
+        let agreementEndDate = null;
+        
+        if (agreement.dateRanges && Array.isArray(agreement.dateRanges) && agreement.dateRanges.length > 0) {
+          // New format: calculate weeks for all date ranges
+          agreement.dateRanges.forEach(range => {
+            const rangeStart = new Date(range.startDate);
+            const rangeEnd = new Date(range.endDate);
+            const rangeWeeks = Math.ceil((rangeEnd - rangeStart) / (7 * 24 * 60 * 60 * 1000));
+            totalWeeks += rangeWeeks;
+            
+            // Track overall start and end dates
+            if (!agreementStartDate || rangeStart < agreementStartDate) {
+              agreementStartDate = rangeStart;
+            }
+            if (!agreementEndDate || rangeEnd > agreementEndDate) {
+              agreementEndDate = rangeEnd;
+            }
+          });
+        } else {
+          // Old format: use startDate and endDate
+          agreementStartDate = new Date(agreement.startDate);
+          agreementEndDate = new Date(agreement.endDate);
+          totalWeeks = Math.ceil((agreementEndDate - agreementStartDate) / (7 * 24 * 60 * 60 * 1000));
+        }
         
         // Calculate site's total payment amount for the entire agreement
         const siteTotalAmount = (weeklyTotalAmount * sitePercentage * totalWeeks) / 100;
         
         // Check if there are any transactions for this agreement and site
-        const existingTransactions = transactions.filter(transaction => 
-          transaction.agreementId === agreement.id && 
-          transaction.siteId === site.id &&
-          transaction.type === 'expense'
-        );
-        
-        console.log(`Site ${site.id}, Agreement ${agreement.id}:`, {
-          existingTransactions: existingTransactions.length,
-          transactions: existingTransactions.map(t => ({ id: t.id, amount: t.amount, siteId: t.siteId, agreementId: t.agreementId }))
+        // Transaction'lar genellikle 'source' field'ında site ve anlaşma bilgisi içerir
+        const existingTransactions = transactions.filter(transaction => {
+          if (transaction.type !== 'expense') return false;
+          
+          // Check if transaction is for this site
+          const isForSite = transaction.source && (
+            transaction.source.includes('Site Ödemesi') &&
+            transaction.source.includes(site.name)
+          );
+          
+          // Check if transaction is for this agreement
+          const isForAgreement = transaction.source && (
+            transaction.source.includes(agreement.id) ||
+            transaction.source.includes(`Anlaşma ${agreement.id}`) ||
+            (transaction.agreementId && String(transaction.agreementId) === String(agreement.id))
+          );
+          
+          // Also check direct field matches (if they exist)
+          const directMatch = transaction.agreementId && transaction.siteId &&
+            String(transaction.agreementId) === String(agreement.id) &&
+            possibleSiteIds.some(id => String(transaction.siteId) === String(id));
+          
+          return (isForSite && isForAgreement) || directMatch;
         });
         
         // Calculate total paid amount for this agreement and site
         const totalPaid = existingTransactions.reduce((sum, transaction) => 
-          sum + Math.abs(transaction.amount), 0
+          sum + Math.abs(transaction.amount || 0), 0
         );
         
         // Calculate pending amount (if any)
         const pendingAmount = Math.max(0, siteTotalAmount - totalPaid);
-        
-        console.log(`Site ${site.id}, Agreement ${agreement.id}:`, {
-          siteTotalAmount,
-          totalPaid,
-          pendingAmount
-        });
         
         if (pendingAmount > 0) {
           pendingPayments.push({
@@ -254,8 +305,9 @@ const SiteHelpers = ({
             siteTotalAmount: siteTotalAmount,
             totalPaid: totalPaid,
             amount: pendingAmount,
-            startDate: agreement.startDate,
-            endDate: agreement.endDate
+            startDate: agreementStartDate ? agreementStartDate.toISOString().split('T')[0] : agreement.startDate,
+            endDate: agreementEndDate ? agreementEndDate.toISOString().split('T')[0] : agreement.endDate,
+            totalWeeks: totalWeeks
           });
         }
       }
