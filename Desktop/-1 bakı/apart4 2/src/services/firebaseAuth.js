@@ -68,17 +68,26 @@ export const loginWithEmail = async (email, password) => {
     };
     
   } catch (error) {
-    // Only log error details if it's a critical error (not just invalid credentials during multi-attempt login)
-    // Invalid credentials during login attempts are expected and will be handled by the caller
-    if (error.code !== 'auth/invalid-credential') {
-      console.error('❌ Login error:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
+    // Log error details for debugging
+    console.error('❌ Login error:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    
+    // Handle 400 Bad Request specifically
+    if (error.code === 'auth/invalid-credential' || 
+        error.message?.includes('400') || 
+        error.message?.includes('Bad Request')) {
+      // Don't log invalid credentials during multi-attempt login (expected)
+      if (error.code === 'auth/invalid-credential') {
+        // Silent for multi-attempt scenarios
+      } else {
+        console.error('Bad Request error - possible causes: invalid email format, empty password, or API key issue');
+      }
     }
     
     return {
       success: false,
-      error: getErrorMessage(error.code)
+      error: getErrorMessage(error.code) || 'Giriş yapılırken bir hata oluştu. Lütfen bilgilerinizi kontrol edin.'
     };
   }
 };
@@ -175,10 +184,18 @@ const getErrorMessage = (errorCode) => {
     'auth/network-request-failed': 'Ağ bağlantısı hatası',
     'auth/invalid-credential': 'Geçersiz kimlik bilgileri',
     'auth/operation-not-allowed': 'Bu işlem izin verilmiyor',
-    'auth/weak-password': 'Şifre çok zayıf'
+    'auth/weak-password': 'Şifre çok zayıf',
+    'auth/invalid-argument': 'Geçersiz parametre',
+    'auth/missing-password': 'Şifre gereklidir',
+    'auth/email-already-in-use': 'Bu email adresi zaten kullanılıyor'
   };
   
-  return errorMessages[errorCode] || `Bilinmeyen hata: ${errorCode}`;
+  // Handle 400 Bad Request errors
+  if (!errorCode || errorCode.includes('400') || errorCode.includes('Bad Request')) {
+    return 'Geçersiz istek. Lütfen email ve şifrenizi kontrol edin.';
+  }
+  
+  return errorMessages[errorCode] || `Giriş hatası: ${errorCode || 'Bilinmeyen hata'}`;
 };
 
 // Delete user from Firebase Auth
