@@ -490,38 +490,28 @@ const AgreementsMain = () => {
     }
     
     let filteredAgreements = agreements.filter(agreement => {
-      // Skip null/undefined agreements
       if (!agreement) return false;
       
-      // Default status to 'active' if not set
       const status = agreement.status || 'active';
       
-      // Check if endDate exists and is valid
-      if (!agreement.endDate) {
-        // If no endDate, only include if status is explicitly 'expired' or 'terminated' for expired tab
-        if (activeTab === 'expired') {
-          return status === 'expired' || status === 'terminated';
-        }
-        // For active tab, exclude agreements without endDate
-        return false;
-      }
+      // Exclude archived
+      if (status === 'archived') return false;
       
+      // Require valid endDate
+      if (!agreement.endDate) return false;
       const endDate = new Date(agreement.endDate);
-      endDate.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+      endDate.setHours(0, 0, 0, 0);
+      if (isNaN(endDate.getTime())) return false;
       
-      // Check if date is valid
-      if (isNaN(endDate.getTime())) {
-        return false;
-      }
+      const isExpired = endDate < currentDate;
+      const isActiveLike = !isExpired;
       
       if (activeTab === 'active') {
-        // Active agreements: status is 'active' (or default) and end date is in the future or today
-        return status === 'active' && endDate >= currentDate;
+        // Show all non-archived agreements whose end date is today or future (regardless of status)
+        return isActiveLike;
       } else {
-        // Expired agreements: status is 'active' but end date is in the past, or status is 'expired' or 'terminated'
-        return (status === 'active' && endDate < currentDate) || 
-               status === 'expired' || 
-               status === 'terminated';
+        // Expired tab: show past endDate or explicitly expired/terminated/completed
+        return isExpired || status === 'expired' || status === 'terminated' || status === 'completed';
       }
     });
     

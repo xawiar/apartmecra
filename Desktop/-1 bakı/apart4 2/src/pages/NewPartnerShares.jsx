@@ -1741,9 +1741,18 @@ const PartnerShares = () => {
                                           )}
                                         </td>
                                         <td className="py-3 px-4">
-                                          <span className="badge bg-light text-dark border">
-                                            #{record.id}
-                                          </span>
+                                          {(() => {
+                                            const balance = partnerCredit - partnerDebit;
+                                            const isPositive = balance >= 0;
+                                            return (
+                                              <div className={`fw-bold ${isPositive ? 'text-success' : 'text-danger'}`}>
+                                                {formatCurrency(Math.abs(balance))}
+                                                <small className="d-block text-muted">
+                                                  {isPositive ? 'Alacaklı' : 'Borçlu'}
+                                                </small>
+                                              </div>
+                                            );
+                                          })()}
                                         </td>
                                       </tr>
                                     );
