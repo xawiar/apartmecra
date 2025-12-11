@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { getCompanies, createCompany, updateCompany, deleteCompany, archiveCompany, createUser, getAgreements, updateAgreement, getTransactions, createTransaction, getSites } from '../services/api';
 import { createLog } from '../services/api';
+import { isObserver } from '../utils/auth';
 import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
