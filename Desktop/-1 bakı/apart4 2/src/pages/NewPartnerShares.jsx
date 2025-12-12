@@ -629,21 +629,19 @@ const PartnerShares = () => {
 
   // Calculate current status for all partners
   const calculateCurrentStatus = () => {
-    // Calculate total cash balance
+    // Calculate total cash balance (sadece bilgi amaçlı gösterilecek)
     const totalCashBalance = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
     
-    // Calculate total partner expenses (ortakların harcadığı toplam_net_gider)
+    // Calculate total partner expenses (net_gider)
     // Bu, ortakların kendi cebinden yaptığı harcamaların toplamı (originalAmount ile işaretlenmiş)
-    const totalPartnerExpenses = transactions
+    // Kasa dahil edilmiyor
+    const netGider = transactions
       .filter(transaction => 
         transaction.type === 'expense' && 
         transaction.amount === 0 && 
         transaction.originalAmount
       )
       .reduce((sum, transaction) => sum + (transaction.originalAmount || 0), 0);
-    
-    // Calculate net expenses (ortakların harcadığı toplam_net_gider − kasa)
-    const netExpenses = totalPartnerExpenses - totalCashBalance;
     
     // Calculate status for each partner
     const partnerStatuses = partners.map(partner => {
@@ -670,8 +668,8 @@ const PartnerShares = () => {
       const sharePercentage = parseFloat(partner.sharePercentage) || 0;
       
       // 4. Net durum hesaplama
-      // ortak hesabı net durum = yaptığı_harcama − aldığı_avans − ( (ortakların harcadığı toplam_net_gider − kasa) × ortaklık_oranı )
-      const netStatus = partnerExpenses - partnerAdvances - (netExpenses * sharePercentage / 100);
+      // net = yaptığı_harcama − aldığı_avans − (net_gider × ortaklık_oranı)
+      const netStatus = partnerExpenses - partnerAdvances - (netGider * sharePercentage / 100);
       
       return {
         partnerId: partner.id,
@@ -679,15 +677,14 @@ const PartnerShares = () => {
         sharePercentage: sharePercentage,
         expenses: partnerExpenses,
         advances: partnerAdvances,
-        netExpensesShare: netExpenses * sharePercentage / 100,
+        netGiderShare: netGider * sharePercentage / 100,
         netStatus: netStatus
       };
     });
     
     setCurrentStatusResults({
       totalCashBalance,
-      totalPartnerExpenses,
-      netExpenses,
+      netGider,
       partnerStatuses
     });
   };
@@ -1948,7 +1945,7 @@ const PartnerShares = () => {
                             {formatCurrency(status.advances)}
                           </td>
                           <td className="text-end text-info fw-medium">
-                            {formatCurrency(status.netExpensesShare)}
+                            {formatCurrency(status.netGiderShare)}
                           </td>
                           <td className="text-end">
                             <span className={`fw-bold fs-5 ${status.netStatus >= 0 ? 'text-success' : 'text-danger'}`}>
@@ -1971,7 +1968,7 @@ const PartnerShares = () => {
                           {formatCurrency(currentStatusResults.partnerStatuses.reduce((sum, s) => sum + s.advances, 0))}
                         </td>
                         <td className="text-end fw-bold text-info">
-                          {formatCurrency(currentStatusResults.partnerStatuses.reduce((sum, s) => sum + s.netExpensesShare, 0))}
+                          {formatCurrency(currentStatusResults.partnerStatuses.reduce((sum, s) => sum + s.netGiderShare, 0))}
                         </td>
                         <td className="text-end fw-bold">
                           {formatCurrency(currentStatusResults.partnerStatuses.reduce((sum, s) => sum + s.netStatus, 0))}
