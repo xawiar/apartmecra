@@ -31,6 +31,7 @@ const PartnerShares = () => {
   const [withdrawalNotes, setWithdrawalNotes] = useState('');
   const [advanceAmount, setAdvanceAmount] = useState('');
   const [advanceNotes, setAdvanceNotes] = useState('');
+  const [currentStatusResults, setCurrentStatusResults] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
