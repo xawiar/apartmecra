@@ -428,16 +428,49 @@ const Cashier = () => {
               };
             }
 
-            sitePaymentsMap[siteId].totalAmount += paymentAmount;
-            sitePaymentsMap[siteId].payments.push({
-              agreementId: agreement.id,
-              companyId: agreement.companyId,
-              panelCount,
-              weeksInRange,
-              weeklyRatePerPanel,
-              agreementPercentage,
-              amount: paymentAmount
+            // Check if this payment has already been made by checking transactions
+            const possibleSiteIds = [String(site.id), String(site._docId), String(site.siteId)].filter(Boolean);
+            const existingTransactions = transactions.filter(transaction => {
+              if (transaction.type !== 'expense') return false;
+              
+              // Check if transaction is for this site
+              const isForSite = transaction.source && (
+                transaction.source.includes('Site Ödemesi') &&
+                transaction.source.includes(site.name)
+              ) || (transaction.siteId && possibleSiteIds.some(id => String(transaction.siteId) === String(id)));
+              
+              // Check if transaction is for this agreement
+              const isForAgreement = transaction.source && (
+                transaction.source.includes(agreement.id) ||
+                transaction.source.includes(`Anlaşma ${agreement.id}`)
+              ) || (transaction.agreementId && String(transaction.agreementId) === String(agreement.id));
+              
+              return isForSite && isForAgreement;
             });
+            
+            // Calculate total paid amount for this specific payment
+            const totalPaid = existingTransactions.reduce((sum, transaction) => 
+              sum + Math.abs(transaction.amount || 0), 0
+            );
+            
+            // Only add if there's still pending amount
+            const pendingAmount = Math.max(0, paymentAmount - totalPaid);
+            
+            if (pendingAmount > 0) {
+              sitePaymentsMap[siteId].totalAmount += pendingAmount;
+              sitePaymentsMap[siteId].payments.push({
+                agreementId: agreement.id,
+                companyId: agreement.companyId,
+                panelCount,
+                weeksInRange,
+                weeklyRatePerPanel,
+                agreementPercentage,
+                amount: pendingAmount,
+                totalAmount: paymentAmount,
+                paidAmount: totalPaid,
+                isPaid: totalPaid >= paymentAmount
+              });
+            }
           }
         });
       }
@@ -478,14 +511,16 @@ const Cashier = () => {
         return;
       }
 
-      // Create expense transaction
+      // Create expense transaction for each payment to track individual payments
+      // Create one transaction for the total amount with all agreement IDs in description
       const expenseData = {
         date: new Date().toISOString().split('T')[0],
         type: 'expense',
         source: `Site Ödemesi - ${result.siteName}`,
-        description: `${result.siteName} için hesaplanan site ödemesi (${result.payments.length} anlaşma)`,
+        description: `${result.siteName} için hesaplanan site ödemesi (${result.payments.length} anlaşma) - Anlaşmalar: ${result.payments.map(p => p.agreementId).join(', ')}`,
         amount: -Math.abs(result.totalAmount),
-        siteId: result.siteId
+        siteId: result.siteId,
+        agreementIds: result.payments.map(p => p.agreementId) // Store all agreement IDs for tracking
       };
 
       const newTransaction = await createTransaction(expenseData);
