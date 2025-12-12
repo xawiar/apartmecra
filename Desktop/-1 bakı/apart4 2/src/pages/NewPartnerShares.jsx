@@ -629,8 +629,18 @@ const PartnerShares = () => {
 
   // Calculate current status for all partners
   const calculateCurrentStatus = () => {
-    // Calculate total cash balance (sadece bilgi amaçlı gösterilecek)
+    // Calculate total cash balance
     const totalCashBalance = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+    
+    // Calculate total advances (toplam avanslar)
+    const totalAdvances = transactions
+      .filter(transaction => 
+        transaction.source?.includes('Ortak Avans Ödemesi')
+      )
+      .reduce((sum, transaction) => sum + Math.abs(transaction.amount || 0), 0);
+    
+    // Calculate distributable amount (kasa + toplam avanslar)
+    const distributableAmount = totalCashBalance + totalAdvances;
     
     // Calculate total partner expenses (net_gider)
     // Bu, ortakların kendi cebinden yaptığı harcamaların toplamı (originalAmount ile işaretlenmiş)
@@ -671,6 +681,12 @@ const PartnerShares = () => {
       // net = yaptığı_harcama − aldığı_avans − (net_gider × ortaklık_oranı)
       const netStatus = partnerExpenses - partnerAdvances - (netGider * sharePercentage / 100);
       
+      // 5. Dağıtılacak pay (kasa + toplam avanslar) × ortaklık_oranı
+      const distributableShare = distributableAmount * sharePercentage / 100;
+      
+      // 6. Final durum (net durum + dağıtılacak pay)
+      const finalStatus = netStatus + distributableShare;
+      
       return {
         partnerId: partner.id,
         partnerName: partner.name,
@@ -678,12 +694,16 @@ const PartnerShares = () => {
         expenses: partnerExpenses,
         advances: partnerAdvances,
         netGiderShare: netGider * sharePercentage / 100,
-        netStatus: netStatus
+        netStatus: netStatus,
+        distributableShare: distributableShare,
+        finalStatus: finalStatus
       };
     });
     
     setCurrentStatusResults({
       totalCashBalance,
+      totalAdvances,
+      distributableAmount,
       netGider,
       partnerStatuses
     });
@@ -1922,6 +1942,8 @@ const PartnerShares = () => {
                         <th className="text-end">Aldığı Avans</th>
                         <th className="text-end">Net Gider Payı</th>
                         <th className="text-end">Net Durum</th>
+                        <th className="text-end">Dağıtılacak Pay</th>
+                        <th className="text-end">Final Durum</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1939,11 +1961,22 @@ const PartnerShares = () => {
                             {formatCurrency(status.netGiderShare)}
                           </td>
                           <td className="text-end">
-                            <span className={`fw-bold fs-5 ${status.netStatus >= 0 ? 'text-success' : 'text-danger'}`}>
+                            <span className={`fw-bold ${status.netStatus >= 0 ? 'text-success' : 'text-danger'}`}>
                               {formatCurrency(status.netStatus)}
                             </span>
                             <div className="small text-muted">
                               {status.netStatus >= 0 ? 'Alacaklı' : 'Borçlu'}
+                            </div>
+                          </td>
+                          <td className="text-end text-success fw-medium">
+                            {formatCurrency(status.distributableShare)}
+                          </td>
+                          <td className="text-end">
+                            <span className={`fw-bold fs-5 ${status.finalStatus >= 0 ? 'text-success' : 'text-danger'}`}>
+                              {formatCurrency(status.finalStatus)}
+                            </span>
+                            <div className="small text-muted">
+                              {status.finalStatus >= 0 ? 'Alacaklı' : 'Borçlu'}
                             </div>
                           </td>
                         </tr>
@@ -1963,6 +1996,12 @@ const PartnerShares = () => {
                         </td>
                         <td className="text-end fw-bold">
                           {formatCurrency(currentStatusResults.partnerStatuses.reduce((sum, s) => sum + s.netStatus, 0))}
+                        </td>
+                        <td className="text-end fw-bold text-success">
+                          {formatCurrency(currentStatusResults.partnerStatuses.reduce((sum, s) => sum + s.distributableShare, 0))}
+                        </td>
+                        <td className="text-end fw-bold">
+                          {formatCurrency(currentStatusResults.partnerStatuses.reduce((sum, s) => sum + s.finalStatus, 0))}
                         </td>
                       </tr>
                     </tfoot>
