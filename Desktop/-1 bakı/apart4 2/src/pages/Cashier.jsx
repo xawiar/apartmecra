@@ -1925,6 +1925,15 @@ const Cashier = () => {
                       placeholder="Tutarı girin"
                       required
                     />
+                    {/* Ortak giderlerinde önceki harcanan tutarı göster */}
+                    {editingTransaction && editingTransaction.originalAmount && editingTransaction.amount === 0 && (
+                      <div className="mt-2">
+                        <small className="text-info fw-medium">
+                          <i className="bi bi-info-circle me-1"></i>
+                          Önceki Ortak Harcaması: {formatCurrency(editingTransaction.originalAmount)}
+                        </small>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="mb-3">
