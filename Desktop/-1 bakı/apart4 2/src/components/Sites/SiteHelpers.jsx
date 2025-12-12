@@ -290,11 +290,12 @@ const SiteHelpers = ({
           );
           
           // Check if transaction is for this agreement
-          const isForAgreement = transaction.source && (
+          const isForAgreement = (transaction.source && (
             transaction.source.includes(agreement.id) ||
             transaction.source.includes(`Anlaşma ${agreement.id}`) ||
-            (transaction.agreementId && String(transaction.agreementId) === String(agreement.id))
-          );
+            transaction.description?.includes(agreement.id)
+          )) || (transaction.agreementId && String(transaction.agreementId) === String(agreement.id)) ||
+          (transaction.agreementIds && Array.isArray(transaction.agreementIds) && transaction.agreementIds.includes(agreement.id));
           
           // Also check direct field matches (if they exist)
           const directMatch = transaction.agreementId && transaction.siteId &&
