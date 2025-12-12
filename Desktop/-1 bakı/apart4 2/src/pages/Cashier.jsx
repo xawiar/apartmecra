@@ -440,10 +440,12 @@ const Cashier = () => {
               ) || (transaction.siteId && possibleSiteIds.some(id => String(transaction.siteId) === String(id)));
               
               // Check if transaction is for this agreement
-              const isForAgreement = transaction.source && (
+              const isForAgreement = (transaction.source && (
                 transaction.source.includes(agreement.id) ||
-                transaction.source.includes(`Anlaşma ${agreement.id}`)
-              ) || (transaction.agreementId && String(transaction.agreementId) === String(agreement.id));
+                transaction.source.includes(`Anlaşma ${agreement.id}`) ||
+                transaction.description?.includes(agreement.id)
+              )) || (transaction.agreementId && String(transaction.agreementId) === String(agreement.id)) ||
+              (transaction.agreementIds && Array.isArray(transaction.agreementIds) && transaction.agreementIds.includes(agreement.id));
               
               return isForSite && isForAgreement;
             });
