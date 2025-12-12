@@ -429,15 +429,16 @@ const Cashier = () => {
             }
 
             // Check if this payment has already been made by checking transactions
+            // ÖNEMLİ: Tarih aralığına göre spesifik matching yapıyoruz
             const possibleSiteIds = [String(site.id), String(site._docId), String(site.siteId)].filter(Boolean);
             const existingTransactions = transactions.filter(transaction => {
               if (transaction.type !== 'expense') return false;
               
               // Check if transaction is for this site
-              const isForSite = transaction.source && (
+              const isForSite = (transaction.source && (
                 transaction.source.includes('Site Ödemesi') &&
                 transaction.source.includes(site.name)
-              ) || (transaction.siteId && possibleSiteIds.some(id => String(transaction.siteId) === String(id)));
+              )) || (transaction.siteId && possibleSiteIds.some(id => String(transaction.siteId) === String(id)));
               
               // Check if transaction is for this agreement
               const isForAgreement = (transaction.source && (
@@ -447,7 +448,24 @@ const Cashier = () => {
               )) || (transaction.agreementId && String(transaction.agreementId) === String(agreement.id)) ||
               (transaction.agreementIds && Array.isArray(transaction.agreementIds) && transaction.agreementIds.includes(agreement.id));
               
-              return isForSite && isForAgreement;
+              // Check if transaction is for the same date range (paymentPeriod kontrolü)
+              let isForDateRange = true;
+              if (transaction.paymentPeriod) {
+                const transactionDateFrom = new Date(transaction.paymentPeriod.dateFrom);
+                const transactionDateTo = new Date(transaction.paymentPeriod.dateTo);
+                const selectedDateFrom = new Date(sitePaymentFilter.dateFrom);
+                const selectedDateTo = new Date(sitePaymentFilter.dateTo);
+                
+                // Tarih aralıkları eşleşmeli (tam eşleşme veya örtüşme)
+                isForDateRange = (
+                  transactionDateFrom.getTime() === selectedDateFrom.getTime() &&
+                  transactionDateTo.getTime() === selectedDateTo.getTime()
+                ) || (
+                  transactionDateFrom <= selectedDateTo && transactionDateTo >= selectedDateFrom
+                );
+              }
+              
+              return isForSite && isForAgreement && isForDateRange;
             });
             
             // Calculate total paid amount for this specific payment
