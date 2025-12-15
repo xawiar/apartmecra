@@ -226,10 +226,9 @@ export const login = async (username, password) => {
           }
         }
         
-        // Use silent mode for all attempts except the first one
-        // This prevents logging expected auth/invalid-credential errors
-        const isFirstAttempt = loginAttempts.indexOf(attempt) === 0;
-        const result = await loginWithEmail(attempt.email, password, !isFirstAttempt);
+        // Use silent mode for all attempts
+        // Böylece auth/invalid-credential gibi beklenen hatalar konsolu kirletmez
+        const result = await loginWithEmail(attempt.email, password, true);
         
         if (result.success) {
           logger.log('API login successful with role:', attempt.role);
