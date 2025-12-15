@@ -57,6 +57,7 @@ const Cashier = () => {
     type: 'manual', // 'manual' | 'recurring'
     isRecurring: false
   });
+  const [selectedDebtForPayment, setSelectedDebtForPayment] = useState(null);
   
   // Custom confirmation modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -170,6 +171,80 @@ const Cashier = () => {
     });
   };
 
+  // Debt form handlers
+  const handleDebtFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setDebtFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const resetDebtForm = () => {
+    setShowDebtForm(false);
+    setEditingDebt(null);
+    setDebtFormData({
+      name: '',
+      amount: '',
+      dueDate: '',
+      description: '',
+      type: 'manual',
+      isRecurring: false
+    });
+  };
+
+  const handleDebtFormSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!debtFormData.name || !debtFormData.amount || !debtFormData.dueDate) {
+      await window.showAlert?.(
+        'Eksik Bilgi',
+        'Lütfen borç adı, tutar ve ödenecek tarih alanlarını doldurunuz.',
+        'warning'
+      );
+      return;
+    }
+
+    try {
+      const baseAmount = Math.abs(parseFloat(debtFormData.amount) || 0);
+      const isRecurring = !!debtFormData.isRecurring || debtFormData.type === 'recurring';
+
+      const payload = {
+        name: debtFormData.name,
+        amount: baseAmount,
+        dueDate: debtFormData.dueDate,
+        description: debtFormData.description || '',
+        type: debtFormData.type || (isRecurring ? 'recurring' : 'manual'),
+        isRecurring,
+        startDate: isRecurring ? (debtFormData.startDate || debtFormData.dueDate) : null,
+        status: 'open'
+      };
+
+      if (editingDebt) {
+        const updated = await updateDebt(editingDebt.id, payload);
+        if (updated) {
+          setDebts((prev) => prev.map((d) => (d.id === editingDebt.id ? { ...editingDebt, ...payload } : d)));
+          await window.showAlert?.('Başarılı', 'Borç başarıyla güncellendi.', 'success');
+        }
+      } else {
+        const created = await createDebt(payload);
+        if (created) {
+          setDebts((prev) => [...prev, created]);
+          await window.showAlert?.('Başarılı', 'Yeni borç başarıyla eklendi.', 'success');
+        }
+      }
+
+      resetDebtForm();
+    } catch (error) {
+      console.error('Error saving debt:', error);
+      await window.showAlert?.(
+        'Hata',
+        'Borç kaydedilirken bir hata oluştu.',
+        'error'
+      );
+    }
+  };
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     
@@ -201,7 +276,10 @@ const Cashier = () => {
       const transactionData = {
         ...formData,
         amount: formData.partnerId && formData.type === 'expense' ? 0 : transactionAmount,
-        originalAmount: formData.partnerId && formData.type === 'expense' ? Math.abs(parseFloat(formData.amount)) : null
+        originalAmount: formData.partnerId && formData.type === 'expense' ? Math.abs(parseFloat(formData.amount)) : null,
+        debtId: selectedDebtForPayment && formData.type === 'expense'
+          ? selectedDebtForPayment.id
+          : (editingTransaction?.debtId || null)
       };
       
       if (editingTransaction) {
@@ -224,6 +302,10 @@ const Cashier = () => {
         const newTransaction = await createTransaction(transactionData);
         if (newTransaction) {
           setTransactions([...transactions, newTransaction]);
+          // Borca bağlı bir ödeme ise, seçimi temizle
+          if (selectedDebtForPayment && formData.type === 'expense') {
+            setSelectedDebtForPayment(null);
+          }
           
           // Update partner balance if partner is selected
           if (formData.partnerId) {
@@ -1292,6 +1374,7 @@ const Cashier = () => {
                                   disabled={isObserver()}
                                   onClick={async () => {
                                     // Basit ödeme için gider formunu borca göre doldur
+                                    setSelectedDebtForPayment(debt);
                                     setFormData({
                                       date: new Date().toISOString().split('T')[0],
                                       type: 'expense',
@@ -1302,7 +1385,6 @@ const Cashier = () => {
                                     });
                                     setEditingTransaction(null);
                                     setShowExpenseForm(true);
-                                    // form submit'te debtId ilişkilendirmek için editingDebt yerine ayrı state gerekebilir
                                   }}
                                 >
                                   <i className="bi bi-currency-dollar"></i>
@@ -2253,6 +2335,122 @@ const Cashier = () => {
                 >
                   Sıfırla
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Debt Form Modal */}
+      {showDebtForm && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  {editingDebt ? 'Borç Düzenle' : 'Yeni Borç Ekle'}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={resetDebtForm}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <form onSubmit={handleDebtFormSubmit}>
+                  <div className="mb-3">
+                    <label htmlFor="debtName" className="form-label">Borç Adı *</label>
+                    <input
+                      type="text"
+                      id="debtName"
+                      name="name"
+                      value={debtFormData.name}
+                      onChange={handleDebtFormChange}
+                      className="form-control form-control-custom"
+                      placeholder="Borç adını girin (örn: Personel Maaşı, Kira...)"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label htmlFor="debtAmount" className="form-label">Tutar (₺) *</label>
+                    <input
+                      type="number"
+                      id="debtAmount"
+                      name="amount"
+                      value={debtFormData.amount}
+                      onChange={handleDebtFormChange}
+                      className="form-control form-control-custom"
+                      min="0"
+                      step="0.01"
+                      placeholder="Tutarı girin"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label htmlFor="debtDueDate" className="form-label">Ödenecek Tarih *</label>
+                    <input
+                      type="date"
+                      id="debtDueDate"
+                      name="dueDate"
+                      value={debtFormData.dueDate}
+                      onChange={handleDebtFormChange}
+                      className="form-control form-control-custom"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-3 form-check">
+                    <input
+                      type="checkbox"
+                      id="isRecurring"
+                      name="isRecurring"
+                      className="form-check-input"
+                      checked={debtFormData.isRecurring}
+                      onChange={handleDebtFormChange}
+                    />
+                    <label className="form-check-label" htmlFor="isRecurring">
+                      Aylık tekrarlanan borç
+                    </label>
+                    <div className="form-text">
+                      <small className="text-muted">
+                        <i className="bi bi-info-circle me-1"></i>
+                        İşaretlerseniz, bu borç her ay tekrar eden bir borç olarak kabul edilir. Ödenmeyen tutar bir sonraki aya eklenir.
+                      </small>
+                    </div>
+                  </div>
+
+                  <div className="mb-3">
+                    <label htmlFor="debtDescription" className="form-label">Açıklama</label>
+                    <textarea
+                      id="debtDescription"
+                      name="description"
+                      value={debtFormData.description}
+                      onChange={handleDebtFormChange}
+                      className="form-control form-control-custom"
+                      rows="3"
+                      placeholder="Borçla ilgili ek açıklama girin"
+                    ></textarea>
+                  </div>
+
+                  <div className="d-flex justify-content-end gap-2">
+                    <button
+                      type="button"
+                      onClick={resetDebtForm}
+                      className="btn btn-secondary"
+                    >
+                      İptal
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn btn-danger"
+                      disabled={isObserver()}
+                    >
+                      {editingDebt ? 'Güncelle' : 'Ekle'}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>

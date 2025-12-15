@@ -104,6 +104,12 @@ service cloud.firestore {
       allow create, update, delete: if isAuthenticated();
     }
     
+    // Debts collection
+    match /debts/{debtId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAuthenticated();
+    }
+    
     // Partners collection
     match /partners/{partnerId} {
       allow read: if isAuthenticated();
