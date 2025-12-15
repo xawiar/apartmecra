@@ -113,9 +113,16 @@ const PersonnelDashboard = () => {
         getSites(),
         getCompanies()
       ]);
+
+      // Remove duplicate sites (based on id / _docId)
+      const uniqueSites = (allSites || []).filter((site, index, self) => {
+        const key = String(site._docId || site.id || site.siteId || '');
+        if (!key) return true;
+        return index === self.findIndex(s => String(s._docId || s.id || s.siteId || '') === key);
+      });
       
       setAgreements(allAgreements);
-      setSites(allSites);
+      setSites(uniqueSites);
       setCompanies(allCompanies);
       
       // Initialize filtered agreements with active and future agreements
