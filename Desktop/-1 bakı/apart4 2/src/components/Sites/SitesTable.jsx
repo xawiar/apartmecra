@@ -12,6 +12,11 @@ const SitesTable = ({
   const businessCenters = (sites || []).filter(site => site.siteType === 'business_center');
   const regularSites = (sites || []).filter(site => site.siteType !== 'business_center');
 
+  // Mahalle bazlı gruplama için yardımcı fonksiyon
+  const getNeighborhoodKey = (site) => {
+    return (site.neighborhood || 'Diğer').toString().trim() || 'Diğer';
+  };
+
   // Render table rows
   const renderTableRows = (siteList) => {
     return siteList.map((site, index) => (
@@ -188,7 +193,7 @@ const SitesTable = ({
         </div>
       </div>
 
-      {/* Siteler - Altta */}
+      {/* Siteler - Altta (Mahalle bazlı gruplama ile) */}
       <div className="col-12">
         <div className="sites-table-container border-0 shadow-sm">
           <div className="card-header bg-primary bg-opacity-10 border-0">
@@ -216,7 +221,32 @@ const SitesTable = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {renderTableRows(regularSites)}
+                  {regularSites.length > 0 && (
+                    <>
+                      {Array.from(
+                        new Set(regularSites.map(site => getNeighborhoodKey(site)))
+                      )
+                        .sort()
+                        .map(neighborhood => {
+                          const groupSites = regularSites.filter(
+                            site => getNeighborhoodKey(site) === neighborhood
+                          );
+                          return (
+                            <React.Fragment key={neighborhood}>
+                              {/* Mahalle başlık satırı */}
+                              <tr className="table-light">
+                                <td colSpan="11" className="fw-bold text-primary small">
+                                  <i className="bi bi-geo-alt-fill me-1"></i>
+                                  {neighborhood} ({groupSites.length})
+                                </td>
+                              </tr>
+                              {/* Bu mahalledeki siteler */}
+                              {renderTableRows(groupSites)}
+                            </React.Fragment>
+                          );
+                        })}
+                    </>
+                  )}
                   {regularSites.length === 0 && (
                     <tr>
                       <td colSpan="11" className="text-center py-5">
