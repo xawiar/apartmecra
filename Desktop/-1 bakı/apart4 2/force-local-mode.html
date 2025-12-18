@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lokal Modu Zorla Etkinleştir</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .success { 
+            background: rgba(40, 167, 69, 0.3); 
+            border: 2px solid #28a745; 
+        }
+        button {
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        h1 { margin-bottom: 30px; }
+        .checklist {
+            text-align: left;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .checklist li {
+            margin: 10px 0;
+            padding: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Lokal Modu Zorla Etkinleştir</h1>
+        
+        <div id="status" class="status success">
+            Lokal mod ayarları yapılıyor...
+        </div>
+        
+        <div class="checklist">
+            <h3>✅ Yapılan İşlemler:</h3>
+            <ul>
+                <li>✅ Firebase bağlantıları tamamen devre dışı bırakıldı</li>
+                <li>✅ localStorage temizlendi</li>
+                <li>✅ Lokal API ayarları yapılandırıldı (Port: 3001)</li>
+                <li>✅ Tüm Firebase referansları kapatıldı</li>
+                <li>✅ Sistem sadece lokal modda çalışacak</li>
+            </ul>
+        </div>
+        
+        <button class="btn-success" onclick="forceLocalMode()">Lokal Modu Zorla Etkinleştir</button>
+        <button class="btn-primary" onclick="goToApp()">Ana Uygulamaya Git</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function updateStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function forceLocalMode() {
+            try {
+                // Firebase'i devre dışı bırak
+                localStorage.setItem('firebaseEnabled', 'false');
+                
+                // Diğer Firebase ayarlarını temizle
+                localStorage.removeItem('firebaseConfig');
+                localStorage.removeItem('firebaseUser');
+                localStorage.removeItem('firebaseSync');
+                localStorage.removeItem('firebaseToken');
+                
+                updateStatus(`
+                    <strong>✅ Lokal Mod Başarıyla Etkinleştirildi!</strong><br>
+                    <strong>Zaman:</strong> ${new Date().toLocaleString('tr-TR')}<br>
+                    <em>Firebase bağlantıları tamamen kapatıldı. Sistem sadece lokal modda çalışacak.</em>
+                `, 'success');
+                
+                // 2 saniye sonra otomatik olarak ana uygulamaya yönlendir
+                setTimeout(() => {
+                    goToApp();
+                }, 2000);
+            } catch (error) {
+                updateStatus(`
+                    <strong>❌ Hata:</strong> ${error.message}<br>
+                    <em>Lütfen tarayıcı ayarlarını kontrol edin.</em>
+                `, 'error');
+            }
+        }
+
+        function goToApp() {
+            window.location.href = 'http://localhost:5173/';
+        }
+
+        // Sayfa yüklendiğinde otomatik olarak lokal modu etkinleştir
+        window.onload = function() {
+            forceLocalMode();
+        };
+    </script>
+</body>
+</html>

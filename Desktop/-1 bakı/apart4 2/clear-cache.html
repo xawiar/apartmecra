@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cache Temizle</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        button {
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Cache Temizle</h1>
+        <div id="status" class="status">
+            Cache temizleniyor...
+        </div>
+        <button class="btn-primary" onclick="clearAllCache()">Tüm Cache'i Temizle</button>
+        <button class="btn-primary" onclick="unregisterServiceWorker()">Service Worker'ı Kaldır</button>
+        <button class="btn-primary" onclick="goToApp()">Ana Uygulamaya Git</button>
+    </div>
+
+    <script>
+        async function clearAllCache() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = 'Cache temizleniyor...';
+            
+            try {
+                // Clear all caches
+                const cacheNames = await caches.keys();
+                await Promise.all(
+                    cacheNames.map(cacheName => caches.delete(cacheName))
+                );
+                
+                // Clear localStorage
+                localStorage.clear();
+                
+                // Clear sessionStorage
+                sessionStorage.clear();
+                
+                statusDiv.innerHTML = `
+                    <strong>✅ Cache Başarıyla Temizlendi!</strong><br>
+                    - Service Worker cache'leri silindi<br>
+                    - localStorage temizlendi<br>
+                    - sessionStorage temizlendi<br>
+                    <em>Sayfayı yenileyin veya ana uygulamaya gidin.</em>
+                `;
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <strong>❌ Hata:</strong> ${error.message}
+                `;
+            }
+        }
+
+        async function unregisterServiceWorker() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = 'Service Worker kaldırılıyor...';
+            
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(
+                        registrations.map(registration => registration.unregister())
+                    );
+                    statusDiv.innerHTML = `
+                        <strong>✅ Service Worker Kaldırıldı!</strong><br>
+                        <em>Sayfayı yenileyin.</em>
+                    `;
+                } else {
+                    statusDiv.innerHTML = 'Service Worker desteklenmiyor.';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <strong>❌ Hata:</strong> ${error.message}
+                `;
+            }
+        }
+
+        function goToApp() {
+            window.location.href = 'http://localhost:5173/';
+        }
+
+        // Sayfa yüklendiğinde otomatik olarak cache'i temizle
+        window.onload = function() {
+            clearAllCache();
+            unregisterServiceWorker();
+        };
+    </script>
+</body>
+</html>
