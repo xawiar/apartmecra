@@ -163,46 +163,28 @@ const SiteDashboard = () => {
     
     const searchAgreementId = agreementId?.toString();
     const searchPanelId = panelId?.toString();
+    // Extract numeric part from panelId (e.g., "panel-1" -> "1")
+    const searchPanelIdNumeric = searchPanelId?.replace(/^panel-/, '');
     
     const found = panelImages.find(img => {
       const imgAgreementId = img.agreementId?.toString();
       const imgPanelId = img.panelId?.toString();
+      // Extract numeric part from stored panelId
+      const imgPanelIdNumeric = imgPanelId?.replace(/^panel-/, '');
+      
+      // Try both formats: full format (panel-1) and numeric only (1)
+      const panelIdMatch = imgPanelId === searchPanelId || 
+                          imgPanelIdNumeric === searchPanelId ||
+                          imgPanelId === searchPanelIdNumeric ||
+                          imgPanelIdNumeric === searchPanelIdNumeric;
       
       const match = imgAgreementId === searchAgreementId &&
         img.siteId === siteId &&
         img.blockId === blockId &&
-        imgPanelId === searchPanelId;
-      
-      if (match) {
-        console.log('Panel image found:', {
-          imgAgreementId,
-          searchAgreementId,
-          imgSiteId: img.siteId,
-          searchSiteId: siteId,
-          imgBlockId: img.blockId,
-          searchBlockId: blockId,
-          imgPanelId,
-          searchPanelId
-        });
-      }
+        panelIdMatch;
       
       return match;
     });
-    
-    if (!found && agreementId && siteId && blockId && panelId) {
-      console.log('Panel image NOT found. Searching for:', {
-        agreementId: searchAgreementId,
-        siteId,
-        blockId,
-        panelId: searchPanelId
-      });
-      console.log('Available panel images:', panelImages.map(img => ({
-        agreementId: img.agreementId?.toString(),
-        siteId: img.siteId,
-        blockId: img.blockId,
-        panelId: img.panelId?.toString()
-      })));
-    }
     
     return found || null;
   };
