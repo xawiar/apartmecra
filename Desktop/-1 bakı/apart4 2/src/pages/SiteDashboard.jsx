@@ -633,7 +633,12 @@ const SiteDashboard = () => {
                                 const blockLabel = String.fromCharCode(65 + panel.blockIndex);
                                 const blockId = `${siteId}-block-${blockLabel}`;
                                 const panelId = `panel-${panel.panelInBlock + 1}`;
-                                const personnelImage = panelUsageInfo ? getPanelImage(panelUsageInfo.agreementId, siteId, blockId, panelId) : null;
+                                // PersonnelDashboard uses numeric panelId (1, 2, 3...), so try both formats
+                                const panelIdNumeric = (panel.panelInBlock + 1).toString();
+                                const personnelImage = panelUsageInfo ? (
+                                  getPanelImage(panelUsageInfo.agreementId, siteId, blockId, panelId) ||
+                                  getPanelImage(panelUsageInfo.agreementId, siteId, blockId, panelIdNumeric)
+                                ) : null;
                                 
                                 return (
                                   <div
