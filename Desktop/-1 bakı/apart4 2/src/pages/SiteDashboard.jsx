@@ -385,6 +385,15 @@ const SiteDashboard = () => {
     const blockId = `${siteId}-block-${blockLabel}`; // Format: siteId-block-A, siteId-block-B, etc.
     const panelId = `panel-${panelInBlock + 1}`; // Panel IDs are 1-based
     
+    console.log('getPanelUsageInfo: Searching for panel:', {
+      blockIndex,
+      panelInBlock,
+      blockLabel,
+      blockId,
+      panelId,
+      activeAgreementsCount: activeAgreements.length
+    });
+    
     for (const agreement of activeAgreements) {
       // Check if this site has panel selections for this agreement
       if (agreement.sitePanelSelections && agreement.sitePanelSelections[siteId]) {
@@ -399,6 +408,12 @@ const SiteDashboard = () => {
               const rangeKey = `range-${rangeIndex}`;
               const rangePanels = sitePanelData[blockId]?.[rangeKey] || [];
               if (Array.isArray(rangePanels) && rangePanels.includes(panelId)) {
+                console.log('getPanelUsageInfo: FOUND in new format:', {
+                  agreementId: agreement.id,
+                  blockId,
+                  panelId,
+                  rangeKey
+                });
                 return {
                   agreementId: agreement.id,
                   companyName: getCompanyName(agreement.companyId),
@@ -411,6 +426,11 @@ const SiteDashboard = () => {
           } else {
             // Old format: direct array check
             if (Array.isArray(sitePanelData[blockId]) && sitePanelData[blockId].includes(panelId)) {
+              console.log('getPanelUsageInfo: FOUND in old format:', {
+                agreementId: agreement.id,
+                blockId,
+                panelId
+              });
               return {
                 agreementId: agreement.id,
                 companyName: getCompanyName(agreement.companyId),
@@ -424,6 +444,7 @@ const SiteDashboard = () => {
       }
     }
     
+    console.log('getPanelUsageInfo: NOT FOUND for panel:', { blockIndex, panelInBlock, blockId, panelId });
     return null;
   };
 
