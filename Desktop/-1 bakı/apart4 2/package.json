@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build --root .",
+    "build": "vite build",
     "preview": "vite preview",
     "server": "node server.cjs",
     "json-server": "json-server --watch db.json --port 3001",

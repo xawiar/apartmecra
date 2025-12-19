@@ -3,8 +3,7 @@ services:
     name: apartmecra
     env: node
     plan: free
-    rootDir: .
-    buildCommand: npm install --include=dev && npm run build
+    buildCommand: cd /opt/render/project && npm install --include=dev && npm run build
     startCommand: cd /opt/render/project && node server.cjs
     envVars:
       - key: NODE_ENV
