@@ -54,9 +54,19 @@ const SiteDashboard = () => {
         setCompanies(companiesData);
         setPanelImages(allPanelImages);
         
-        // Debug: Log panel images
+        // Debug: Log panel images with full details
         console.log('SiteDashboard - Loaded panel images:', allPanelImages);
         console.log('SiteDashboard - Site ID:', siteId);
+        if (allPanelImages && allPanelImages.length > 0) {
+          console.log('SiteDashboard - Panel images details:', allPanelImages.map(img => ({
+            id: img.id,
+            agreementId: img.agreementId,
+            siteId: img.siteId,
+            blockId: img.blockId,
+            panelId: img.panelId,
+            url: img.url
+          })));
+        }
         
         // Calculate statistics
         if (data.site) {
@@ -676,10 +686,35 @@ const SiteDashboard = () => {
                                 const panelId = `panel-${panel.panelInBlock + 1}`;
                                 // PersonnelDashboard uses numeric panelId (1, 2, 3...), so try both formats
                                 const panelIdNumeric = (panel.panelInBlock + 1).toString();
+                                
+                                // Debug: Log panel info
+                                if (panel.isActive && panelUsageInfo) {
+                                  console.log('SiteDashboard - Panel info:', {
+                                    panelNumber: panel.panelNumber,
+                                    blockIndex: panel.blockIndex,
+                                    panelInBlock: panel.panelInBlock,
+                                    blockLabel,
+                                    blockId,
+                                    panelId,
+                                    panelIdNumeric,
+                                    agreementId: panelUsageInfo.agreementId,
+                                    companyName: panelUsageInfo.companyName
+                                  });
+                                }
+                                
                                 const personnelImage = panelUsageInfo ? (
                                   getPanelImage(panelUsageInfo.agreementId, siteId, blockId, panelId) ||
                                   getPanelImage(panelUsageInfo.agreementId, siteId, blockId, panelIdNumeric)
                                 ) : null;
+                                
+                                // Debug: Log result
+                                if (panel.isActive && panelUsageInfo) {
+                                  console.log('SiteDashboard - Panel image result:', {
+                                    panelNumber: panel.panelNumber,
+                                    found: !!personnelImage,
+                                    imageUrl: personnelImage?.url
+                                  });
+                                }
                                 
                                 return (
                                   <div
