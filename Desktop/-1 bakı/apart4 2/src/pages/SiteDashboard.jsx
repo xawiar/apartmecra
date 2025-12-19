@@ -58,14 +58,20 @@ const SiteDashboard = () => {
         console.log('SiteDashboard - Loaded panel images:', allPanelImages);
         console.log('SiteDashboard - Site ID:', siteId);
         if (allPanelImages && allPanelImages.length > 0) {
-          console.log('SiteDashboard - Panel images details:', allPanelImages.map(img => ({
-            id: img.id,
-            agreementId: img.agreementId,
-            siteId: img.siteId,
-            blockId: img.blockId,
-            panelId: img.panelId,
-            url: img.url
-          })));
+          allPanelImages.forEach((img, index) => {
+            console.log(`SiteDashboard - Panel image ${index + 1}:`, {
+              id: img.id,
+              agreementId: img.agreementId,
+              agreementIdType: typeof img.agreementId,
+              siteId: img.siteId,
+              siteIdType: typeof img.siteId,
+              blockId: img.blockId,
+              blockIdType: typeof img.blockId,
+              panelId: img.panelId,
+              panelIdType: typeof img.panelId,
+              url: img.url
+            });
+          });
         }
         
         // Calculate statistics
