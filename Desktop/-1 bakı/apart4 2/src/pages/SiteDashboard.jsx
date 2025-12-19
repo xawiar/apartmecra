@@ -54,6 +54,10 @@ const SiteDashboard = () => {
         setCompanies(companiesData);
         setPanelImages(allPanelImages);
         
+        // Debug: Log panel images
+        console.log('SiteDashboard - Loaded panel images:', allPanelImages);
+        console.log('SiteDashboard - Site ID:', siteId);
+        
         // Calculate statistics
         if (data.site) {
           const totalPanels = parseInt(data.site.panels) || 0;
@@ -158,6 +162,7 @@ const SiteDashboard = () => {
   // Get panel image from personnel uploads
   const getPanelImage = (agreementId, siteId, blockId, panelId) => {
     if (!panelImages || panelImages.length === 0) {
+      console.log('getPanelImage: No panel images available');
       return null;
     }
     
@@ -165,6 +170,14 @@ const SiteDashboard = () => {
     const searchPanelId = panelId?.toString();
     // Extract numeric part from panelId (e.g., "panel-1" -> "1")
     const searchPanelIdNumeric = searchPanelId?.replace(/^panel-/, '');
+    
+    console.log('getPanelImage: Searching for:', {
+      agreementId: searchAgreementId,
+      siteId,
+      blockId,
+      panelId: searchPanelId,
+      panelIdNumeric: searchPanelIdNumeric
+    });
     
     const found = panelImages.find(img => {
       const imgAgreementId = img.agreementId?.toString();
@@ -178,13 +191,41 @@ const SiteDashboard = () => {
                           imgPanelId === searchPanelIdNumeric ||
                           imgPanelIdNumeric === searchPanelIdNumeric;
       
-      const match = imgAgreementId === searchAgreementId &&
-        img.siteId === siteId &&
-        img.blockId === blockId &&
-        panelIdMatch;
+      const agreementMatch = imgAgreementId === searchAgreementId;
+      const siteMatch = img.siteId === siteId;
+      const blockMatch = img.blockId === blockId;
+      
+      const match = agreementMatch && siteMatch && blockMatch && panelIdMatch;
+      
+      if (match) {
+        console.log('getPanelImage: MATCH FOUND!', {
+          img: {
+            agreementId: imgAgreementId,
+            siteId: img.siteId,
+            blockId: img.blockId,
+            panelId: imgPanelId,
+            url: img.url
+          },
+          search: {
+            agreementId: searchAgreementId,
+            siteId,
+            blockId,
+            panelId: searchPanelId
+          }
+        });
+      }
       
       return match;
     });
+    
+    if (!found) {
+      console.log('getPanelImage: NO MATCH. Available images:', panelImages.map(img => ({
+        agreementId: img.agreementId?.toString(),
+        siteId: img.siteId,
+        blockId: img.blockId,
+        panelId: img.panelId?.toString()
+      })));
+    }
     
     return found || null;
   };
