@@ -1,14 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { resolve, dirname } from 'path'
-import { fileURLToPath } from 'url'
-import { existsSync } from 'fs'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  root: __dirname,
   plugins: [react()],
   publicDir: 'public',
   server: {
@@ -36,9 +30,6 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      input: existsSync(resolve(__dirname, 'index.html')) 
-        ? resolve(__dirname, 'index.html')
-        : './index.html',
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
