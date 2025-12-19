@@ -59,20 +59,37 @@ const SiteDashboard = () => {
         console.log('SiteDashboard - Site ID:', siteId);
         if (allPanelImages && allPanelImages.length > 0) {
           allPanelImages.forEach((img, index) => {
-            console.log(`SiteDashboard - Panel image ${index + 1}:`, {
+            console.log(`SiteDashboard - Panel image ${index + 1} FULL DETAILS:`, {
               id: img.id,
               agreementId: img.agreementId,
               agreementIdType: typeof img.agreementId,
+              agreementIdString: String(img.agreementId),
               siteId: img.siteId,
               siteIdType: typeof img.siteId,
               blockId: img.blockId,
               blockIdType: typeof img.blockId,
               panelId: img.panelId,
               panelIdType: typeof img.panelId,
-              url: img.url
+              panelIdString: String(img.panelId),
+              url: img.url,
+              fullObject: img
             });
           });
         }
+        
+        // Also log agreements to see what we're searching for
+        console.log('SiteDashboard - Active agreements for site:', data.agreements.filter(a => 
+          a.status === 'active' && 
+          (a.paymentReceived || a.creditPaymentReceived) && 
+          Array.isArray(a.siteIds) && a.siteIds.includes(siteId)
+        ).map(a => ({
+          id: a.id,
+          idType: typeof a.id,
+          idString: String(a.id),
+          companyId: a.companyId,
+          siteIds: a.siteIds,
+          sitePanelSelections: a.sitePanelSelections ? Object.keys(a.sitePanelSelections) : null
+        })));
         
         // Calculate statistics
         if (data.site) {
