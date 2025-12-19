@@ -35,6 +35,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      input: resolve(__dirname, 'index.html'),
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
