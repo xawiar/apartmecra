@@ -157,12 +157,54 @@ const SiteDashboard = () => {
 
   // Get panel image from personnel uploads
   const getPanelImage = (agreementId, siteId, blockId, panelId) => {
-    return panelImages.find(img =>
-      img.agreementId === agreementId.toString() &&
-      img.siteId === siteId &&
-      img.blockId === blockId &&
-      img.panelId === panelId.toString()
-    );
+    if (!panelImages || panelImages.length === 0) {
+      return null;
+    }
+    
+    const searchAgreementId = agreementId?.toString();
+    const searchPanelId = panelId?.toString();
+    
+    const found = panelImages.find(img => {
+      const imgAgreementId = img.agreementId?.toString();
+      const imgPanelId = img.panelId?.toString();
+      
+      const match = imgAgreementId === searchAgreementId &&
+        img.siteId === siteId &&
+        img.blockId === blockId &&
+        imgPanelId === searchPanelId;
+      
+      if (match) {
+        console.log('Panel image found:', {
+          imgAgreementId,
+          searchAgreementId,
+          imgSiteId: img.siteId,
+          searchSiteId: siteId,
+          imgBlockId: img.blockId,
+          searchBlockId: blockId,
+          imgPanelId,
+          searchPanelId
+        });
+      }
+      
+      return match;
+    });
+    
+    if (!found && agreementId && siteId && blockId && panelId) {
+      console.log('Panel image NOT found. Searching for:', {
+        agreementId: searchAgreementId,
+        siteId,
+        blockId,
+        panelId: searchPanelId
+      });
+      console.log('Available panel images:', panelImages.map(img => ({
+        agreementId: img.agreementId?.toString(),
+        siteId: img.siteId,
+        blockId: img.blockId,
+        panelId: img.panelId?.toString()
+      })));
+    }
+    
+    return found || null;
   };
 
   // Format currency
