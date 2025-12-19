@@ -609,7 +609,7 @@ const SiteDashboard = () => {
                                 const blockLabel = String.fromCharCode(65 + panel.blockIndex);
                                 const blockId = `${siteId}-block-${blockLabel}`;
                                 const panelId = `panel-${panel.panelInBlock + 1}`;
-                                const personnelImage = panelUsageInfo ? getPanelImage(panelUsageInfo.agreementId, siteId, blockId, (panel.panelInBlock + 1).toString()) : null;
+                                const personnelImage = panelUsageInfo ? getPanelImage(panelUsageInfo.agreementId, siteId, blockId, panelId) : null;
                                 
                                 return (
                                   <div
@@ -689,29 +689,36 @@ const SiteDashboard = () => {
                                     }}
                                   >
                                     {!personnelImage && (
-                                      <div>{panel.panelNumber}</div>
-                                    )}
-                                    {panel.isActive && (
-                                      <div className="position-absolute top-0 end-0" style={{ fontSize: '10px' }}>
-                                        {personnelImage ? (
-                                          <i className="bi bi-camera-fill text-success"></i>
-                                        ) : (
-                                          <i className="bi bi-lock-fill"></i>
+                                      <div className="d-flex flex-column align-items-center justify-content-center h-100">
+                                        <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{panel.panelNumber}</div>
+                                        {panel.isActive && panelUsageInfo?.companyName && (
+                                          <div style={{ 
+                                            fontSize: '9px', 
+                                            lineHeight: '1.2', 
+                                            marginTop: '4px',
+                                            maxWidth: '55px',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            textAlign: 'center',
+                                            padding: '2px 4px',
+                                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                            borderRadius: '4px',
+                                            color: '#000'
+                                          }}>
+                                            {panelUsageInfo.companyName.length > 8 
+                                              ? panelUsageInfo.companyName.substring(0, 8) + '...' 
+                                              : panelUsageInfo.companyName}
+                                          </div>
                                         )}
                                       </div>
                                     )}
-                                    {panel.isActive && panelUsageInfo?.companyName && !personnelImage && (
-                                      <div style={{ 
-                                        fontSize: '8px', 
-                                        lineHeight: '1', 
-                                        marginTop: '2px',
-                                        maxWidth: '50px',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis'
-                                      }}>
-                                        {panelUsageInfo.companyName.length > 6 
-                                          ? panelUsageInfo.companyName.substring(0, 6) + '...' 
-                                          : panelUsageInfo.companyName}
+                                    {panel.isActive && (
+                                      <div className="position-absolute top-0 end-0" style={{ fontSize: '10px', padding: '2px' }}>
+                                        {personnelImage ? (
+                                          <i className="bi bi-camera-fill text-success bg-white rounded-circle p-1"></i>
+                                        ) : (
+                                          <i className="bi bi-lock-fill bg-white rounded-circle p-1"></i>
+                                        )}
                                       </div>
                                     )}
                                     {personnelImage && (
