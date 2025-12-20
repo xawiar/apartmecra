@@ -209,74 +209,22 @@ const SiteDashboard = () => {
   };
 
   // Get panel image from personnel uploads
+  // Same logic as CompanyDashboard - panelId should be numeric string ("1", "2", "3")
   const getPanelImage = (agreementId, siteId, blockId, panelId) => {
     if (!panelImages || panelImages.length === 0) {
-      console.log('getPanelImage: No panel images available');
       return null;
     }
     
+    // Convert panelId to string and extract numeric part (handle both "panel-1" and "1" formats)
+    const searchPanelId = panelId?.toString().replace(/^panel-/, '');
     const searchAgreementId = agreementId?.toString();
-    const searchPanelId = panelId?.toString();
-    // Extract numeric part from panelId (e.g., "panel-1" -> "1")
-    const searchPanelIdNumeric = searchPanelId?.replace(/^panel-/, '');
     
-    console.log('getPanelImage: Searching for:', {
-      agreementId: searchAgreementId,
-      siteId,
-      blockId,
-      panelId: searchPanelId,
-      panelIdNumeric: searchPanelIdNumeric
-    });
-    
-    const found = panelImages.find(img => {
-      const imgAgreementId = img.agreementId?.toString();
-      const imgPanelId = img.panelId?.toString();
-      // Extract numeric part from stored panelId
-      const imgPanelIdNumeric = imgPanelId?.replace(/^panel-/, '');
-      
-      // Try both formats: full format (panel-1) and numeric only (1)
-      const panelIdMatch = imgPanelId === searchPanelId || 
-                          imgPanelIdNumeric === searchPanelId ||
-                          imgPanelId === searchPanelIdNumeric ||
-                          imgPanelIdNumeric === searchPanelIdNumeric;
-      
-      const agreementMatch = imgAgreementId === searchAgreementId;
-      const siteMatch = img.siteId === siteId;
-      const blockMatch = img.blockId === blockId;
-      
-      const match = agreementMatch && siteMatch && blockMatch && panelIdMatch;
-      
-      if (match) {
-        console.log('getPanelImage: MATCH FOUND!', {
-          img: {
-            agreementId: imgAgreementId,
-            siteId: img.siteId,
-            blockId: img.blockId,
-            panelId: imgPanelId,
-            url: img.url
-          },
-          search: {
-            agreementId: searchAgreementId,
-            siteId,
-            blockId,
-            panelId: searchPanelId
-          }
-        });
-      }
-      
-      return match;
-    });
-    
-    if (!found) {
-      console.log('getPanelImage: NO MATCH. Available images:', panelImages.map(img => ({
-        agreementId: img.agreementId?.toString(),
-        siteId: img.siteId,
-        blockId: img.blockId,
-        panelId: img.panelId?.toString()
-      })));
-    }
-    
-    return found || null;
+    return panelImages.find(img => 
+      img.agreementId?.toString() === searchAgreementId && 
+      img.siteId === siteId && 
+      img.blockId === blockId && 
+      img.panelId?.toString().replace(/^panel-/, '') === searchPanelId
+    ) || null;
   };
 
   // Format currency
@@ -762,34 +710,25 @@ const SiteDashboard = () => {
                                   });
                                 }
                                 
-                                // Try to find image - first by agreementId if available, then by siteId/blockId/panelId
+                                // Try to find image - use numeric panelId (same as CompanyDashboard)
                                 let personnelImage = null;
+                                
+                                // First try with agreementId if available
                                 if (panelUsageInfo) {
-                                  personnelImage = getPanelImage(panelUsageInfo.agreementId, siteId, blockId, panelId) ||
-                                                  getPanelImage(panelUsageInfo.agreementId, siteId, blockId, panelIdNumeric);
+                                  personnelImage = getPanelImage(panelUsageInfo.agreementId, siteId, blockId, panelIdNumeric);
                                 }
                                 
-                                // If not found or panelUsageInfo is null, try to find by siteId/blockId/panelId only
+                                // If not found, try without agreementId (just siteId/blockId/panelId)
                                 if (!personnelImage && panel.isActive) {
-                                  const matchingImage = panelImages.find(img => {
+                                  personnelImage = panelImages.find(img => {
                                     const imgSiteId = String(img.siteId || '');
                                     const imgBlockId = String(img.blockId || '');
-                                    const imgPanelId = String(img.panelId || '');
-                                    const imgPanelIdNumeric = imgPanelId.replace(/^panel-/, '');
+                                    const imgPanelId = String(img.panelId || '').replace(/^panel-/, '');
                                     
-                                    const siteMatch = imgSiteId === siteId;
-                                    const blockMatch = imgBlockId === blockId;
-                                    const panelMatch = imgPanelId === panelId || 
-                                                     imgPanelId === panelIdNumeric || 
-                                                     imgPanelIdNumeric === panelIdNumeric ||
-                                                     imgPanelIdNumeric === panelId.replace(/^panel-/, '');
-                                    
-                                    return siteMatch && blockMatch && panelMatch;
-                                  });
-                                  
-                                  if (matchingImage) {
-                                    personnelImage = matchingImage;
-                                  }
+                                    return imgSiteId === siteId && 
+                                           imgBlockId === blockId && 
+                                           imgPanelId === panelIdNumeric;
+                                  }) || null;
                                 }
                                 
                                 // Debug: Log result
