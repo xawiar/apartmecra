@@ -762,10 +762,35 @@ const SiteDashboard = () => {
                                   });
                                 }
                                 
-                                const personnelImage = panelUsageInfo ? (
-                                  getPanelImage(panelUsageInfo.agreementId, siteId, blockId, panelId) ||
-                                  getPanelImage(panelUsageInfo.agreementId, siteId, blockId, panelIdNumeric)
-                                ) : null;
+                                // Try to find image - first by agreementId if available, then by siteId/blockId/panelId
+                                let personnelImage = null;
+                                if (panelUsageInfo) {
+                                  personnelImage = getPanelImage(panelUsageInfo.agreementId, siteId, blockId, panelId) ||
+                                                  getPanelImage(panelUsageInfo.agreementId, siteId, blockId, panelIdNumeric);
+                                }
+                                
+                                // If not found or panelUsageInfo is null, try to find by siteId/blockId/panelId only
+                                if (!personnelImage && panel.isActive) {
+                                  const matchingImage = panelImages.find(img => {
+                                    const imgSiteId = String(img.siteId || '');
+                                    const imgBlockId = String(img.blockId || '');
+                                    const imgPanelId = String(img.panelId || '');
+                                    const imgPanelIdNumeric = imgPanelId.replace(/^panel-/, '');
+                                    
+                                    const siteMatch = imgSiteId === siteId;
+                                    const blockMatch = imgBlockId === blockId;
+                                    const panelMatch = imgPanelId === panelId || 
+                                                     imgPanelId === panelIdNumeric || 
+                                                     imgPanelIdNumeric === panelIdNumeric ||
+                                                     imgPanelIdNumeric === panelId.replace(/^panel-/, '');
+                                    
+                                    return siteMatch && blockMatch && panelMatch;
+                                  });
+                                  
+                                  if (matchingImage) {
+                                    personnelImage = matchingImage;
+                                  }
+                                }
                                 
                                 // Debug: Log result
                                 if (panel.isActive && panelUsageInfo) {
