@@ -209,20 +209,17 @@ const SiteDashboard = () => {
   };
 
   // Get panel image from personnel uploads - EXACT SAME LOGIC AS CompanyDashboard
-  const getPanelImage = (agreementId, siteId, blockId, panelId) => {
-    if (!panelImages || panelImages.length === 0) {
+  const getPanelImage = (agreementId, siteId, blockId, panelId, panelImagesArray) => {
+    const images = panelImagesArray || panelImages;
+    if (!images || images.length === 0) {
       return null;
     }
     
-    // Convert to strings (same as CompanyDashboard)
-    const searchAgreementId = agreementId?.toString();
-    const searchPanelId = panelId?.toString();
-    
-    return panelImages.find(img => 
-      img.agreementId?.toString() === searchAgreementId && 
+    return images.find(img => 
+      img.agreementId?.toString() === agreementId?.toString() && 
       img.siteId === siteId && 
       img.blockId === blockId && 
-      img.panelId?.toString() === searchPanelId
+      img.panelId?.toString() === panelId?.toString()
     ) || null;
   };
 
