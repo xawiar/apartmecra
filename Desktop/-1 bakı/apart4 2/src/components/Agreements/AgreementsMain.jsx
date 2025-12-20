@@ -90,6 +90,9 @@ const AgreementsMain = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentAgreement, setPaymentAgreement] = useState(null);
   
+  // State for check management modal
+  const [showCheckManagement, setShowCheckManagement] = useState(false);
+  
   // State for active/expired/orders tabs
   const [activeTab, setActiveTab] = useState('active'); // 'active', 'expired', or 'orders'
   
