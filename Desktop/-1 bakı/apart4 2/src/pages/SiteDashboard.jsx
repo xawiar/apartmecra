@@ -1129,8 +1129,6 @@ const SiteDashboard = () => {
           </div>
         </div>
       </div>
-        </div>
-      </div>
     </div>
   );
 };
