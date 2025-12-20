@@ -740,7 +740,7 @@ const SiteDashboard = () => {
                                             const panelKey = `panel-${panelId}`;
                                             const isPanelUsed = usedPanels.includes(panelKey);
                                             const fullPanelNumber = `${siteId}${blockLabel}${panelId}`;
-                                            const panelImage = getPanelImage(agreement.id.toString(), siteId, blockId, panelId.toString());
+                                            const panelImage = getPanelImage(agreement.id.toString(), siteId, blockId, panelId.toString(), panelImages);
                                             
                                             return (
                                               <div
