@@ -701,6 +701,14 @@ const AgreementsMain = () => {
           </div>
           <div className="d-flex gap-2 flex-wrap">
             <button 
+              onClick={() => setShowCheckManagement(true)}
+              className="btn btn-outline-primary btn-icon d-flex align-items-center"
+              disabled={isObserver()}
+            >
+              <i className="bi bi-receipt me-2"></i>
+              <span>Çek Yönetimi</span>
+            </button>
+            <button 
               onClick={uiHandlers.handleAddAgreement}
               className="btn btn-page-primary btn-icon d-flex align-items-center"
               disabled={isObserver()}
@@ -978,6 +986,15 @@ const AgreementsMain = () => {
           setPaymentAgreement(null);
         }}
         onPaymentSubmit={handlePaymentSubmit}
+        getCompanyName={helpers.getCompanyName}
+        formatCurrency={helpers.formatCurrency}
+        formatDate={helpers.formatDate}
+      />
+
+      {/* Check Management Modal */}
+      <CheckManagementModal
+        show={showCheckManagement}
+        onClose={() => setShowCheckManagement(false)}
         getCompanyName={helpers.getCompanyName}
         formatCurrency={helpers.formatCurrency}
         formatDate={helpers.formatDate}
