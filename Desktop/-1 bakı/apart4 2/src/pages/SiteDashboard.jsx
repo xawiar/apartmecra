@@ -78,11 +78,27 @@ const SiteDashboard = () => {
         }
         
         // Also log agreements to see what we're searching for
-        console.log('SiteDashboard - Active agreements for site:', data.agreements.filter(a => 
+        console.log('SiteDashboard - ALL agreements:', data.agreements.length);
+        console.log('SiteDashboard - ALL agreements details:', data.agreements.map(a => ({
+          id: a.id,
+          idType: typeof a.id,
+          idString: String(a.id),
+          status: a.status,
+          paymentReceived: a.paymentReceived,
+          creditPaymentReceived: a.creditPaymentReceived,
+          siteIds: a.siteIds,
+          siteIdsType: Array.isArray(a.siteIds) ? 'array' : typeof a.siteIds,
+          siteIdsIncludesADA52: Array.isArray(a.siteIds) ? a.siteIds.includes(siteId) : false
+        })));
+        
+        const activeAgreements = data.agreements.filter(a => 
           a.status === 'active' && 
           (a.paymentReceived || a.creditPaymentReceived) && 
           Array.isArray(a.siteIds) && a.siteIds.includes(siteId)
-        ).map(a => ({
+        );
+        
+        console.log('SiteDashboard - Active agreements for site:', activeAgreements.length);
+        console.log('SiteDashboard - Active agreements details:', activeAgreements.map(a => ({
           id: a.id,
           idType: typeof a.id,
           idString: String(a.id),
