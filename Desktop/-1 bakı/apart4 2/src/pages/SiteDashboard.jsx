@@ -212,15 +212,50 @@ const SiteDashboard = () => {
   const getPanelImage = (agreementId, siteId, blockId, panelId, panelImagesArray) => {
     const images = panelImagesArray || panelImages;
     if (!images || images.length === 0) {
+      console.log('getPanelImage: No images available');
       return null;
     }
     
-    return images.find(img => 
-      img.agreementId?.toString() === agreementId?.toString() && 
-      img.siteId === siteId && 
-      img.blockId === blockId && 
-      img.panelId?.toString() === panelId?.toString()
-    ) || null;
+    const searchAgreementId = agreementId?.toString();
+    const searchSiteId = siteId;
+    const searchBlockId = blockId;
+    const searchPanelId = panelId?.toString();
+    
+    console.log('getPanelImage: Searching for', {
+      agreementId: searchAgreementId,
+      siteId: searchSiteId,
+      blockId: searchBlockId,
+      panelId: searchPanelId
+    });
+    
+    const found = images.find(img => {
+      const imgAgreementId = img.agreementId?.toString();
+      const imgSiteId = img.siteId;
+      const imgBlockId = img.blockId;
+      const imgPanelId = img.panelId?.toString();
+      
+      const match = imgAgreementId === searchAgreementId && 
+                    imgSiteId === searchSiteId && 
+                    imgBlockId === searchBlockId && 
+                    imgPanelId === searchPanelId;
+      
+      if (match) {
+        console.log('getPanelImage: FOUND MATCH', img);
+      }
+      
+      return match;
+    });
+    
+    if (!found) {
+      console.log('getPanelImage: NO MATCH FOUND. Available images:', images.map(img => ({
+        agreementId: img.agreementId?.toString(),
+        siteId: img.siteId,
+        blockId: img.blockId,
+        panelId: img.panelId?.toString()
+      })));
+    }
+    
+    return found || null;
   };
 
   // Format currency
