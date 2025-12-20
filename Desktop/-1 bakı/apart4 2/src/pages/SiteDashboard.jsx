@@ -208,22 +208,21 @@ const SiteDashboard = () => {
     return company ? company.name : 'Unknown';
   };
 
-  // Get panel image from personnel uploads
-  // Same logic as CompanyDashboard - panelId should be numeric string ("1", "2", "3")
+  // Get panel image from personnel uploads - EXACT SAME LOGIC AS CompanyDashboard
   const getPanelImage = (agreementId, siteId, blockId, panelId) => {
     if (!panelImages || panelImages.length === 0) {
       return null;
     }
     
-    // Convert panelId to string and extract numeric part (handle both "panel-1" and "1" formats)
-    const searchPanelId = panelId?.toString().replace(/^panel-/, '');
+    // Convert to strings (same as CompanyDashboard)
     const searchAgreementId = agreementId?.toString();
+    const searchPanelId = panelId?.toString();
     
     return panelImages.find(img => 
       img.agreementId?.toString() === searchAgreementId && 
       img.siteId === siteId && 
       img.blockId === blockId && 
-      img.panelId?.toString().replace(/^panel-/, '') === searchPanelId
+      img.panelId?.toString() === searchPanelId
     ) || null;
   };
 
