@@ -277,11 +277,12 @@ const AgreementHandlers = ({
   };
 
   const handlePaymentAgreement = async (agreement) => {
-    // Check if agreement is active or completed
-    if (agreement.status !== 'active' && agreement.status !== 'completed') {
+    // Allow payment for all agreements except terminated and archived
+    // This allows payment for expired agreements that still have outstanding debt
+    if (agreement.status === 'terminated' || agreement.status === 'archived') {
       await window.showAlert(
         'Hata',
-        'Sadece aktif veya tamamlanmış anlaşmalardan ödeme alınabilir.',
+        'Sonlandırılmış veya arşivlenmiş anlaşmalardan ödeme alınamaz.',
         'error'
       );
       return;

@@ -190,12 +190,29 @@ const AgreementTable = ({ agreements, handlers, uiHandlers, helpers, handleUploa
                       </button>
                     </>
                   ) : (
-                    // Expired agreements - show only view and archive buttons
+                    // Expired agreements - show payment buttons and archive button
                     <>
+                      <button
+                        className="btn btn-sm btn-outline-success"
+                        title="Nakit Ödeme Al"
+                        onClick={() => handlers.handlePaymentAgreement(agreement)}
+                        disabled={agreement.paymentReceived || agreement.creditPaymentReceived || agreement.status === 'terminated' || agreement.status === 'archived'}
+                      >
+                        <i className="bi bi-cash"></i>
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-primary"
+                        title="Kredi ile Ödeme"
+                        onClick={() => handlers.handleCreditPayment(agreement)}
+                        disabled={agreement.paymentReceived || agreement.creditPaymentReceived || agreement.status === 'terminated' || agreement.status === 'archived'}
+                      >
+                        <i className="bi bi-credit-card"></i>
+                      </button>
                       <button
                         className="btn btn-sm btn-outline-danger"
                         title="Arşivle"
                         onClick={() => handlers.handleArchiveAgreement(agreement.id)}
+                        disabled={isObserver()}
                       >
                         <i className="bi bi-archive"></i>
                       </button>
