@@ -639,6 +639,179 @@ const SiteDashboard = () => {
         </div>
       </div>
 
+      {/* Site Panels - Show panels for this site only */}
+      {siteData.agreements.filter(a => 
+        a.status === 'active' && 
+        (a.paymentReceived || a.creditPaymentReceived) && 
+        Array.isArray(a.siteIds) && a.siteIds.includes(siteId)
+      ).length > 0 && (
+        <div className="row g-4 mb-4">
+          <div className="col-md-12">
+            <div className="card custom-card shadow-sm">
+              <div className="card-header bg-primary-subtle">
+                <h5 className="mb-0 fw-bold">
+                  <i className="bi bi-grid-3x3-gap me-2"></i>
+                  Site Panelleri
+                </h5>
+              </div>
+              <div className="card-body">
+                {siteData.agreements
+                  .filter(a => 
+                    a.status === 'active' && 
+                    (a.paymentReceived || a.creditPaymentReceived) && 
+                    Array.isArray(a.siteIds) && a.siteIds.includes(siteId)
+                  )
+                  .map((agreement) => {
+                    const site = siteData.site;
+                    if (!site) return null;
+                    
+                    // Calculate panels based on site type
+                    let blockCount, panelsPerBlock, blockLabels;
+                    
+                    if (site.siteType === 'business_center') {
+                      blockCount = 1;
+                      panelsPerBlock = parseInt(site.panels) || 0;
+                      blockLabels = ['A'];
+                    } else {
+                      blockCount = parseInt(site.blocks) || 0;
+                      const elevatorsPerBlock = parseInt(site.elevatorsPerBlock) || 0;
+                      panelsPerBlock = elevatorsPerBlock * 2;
+                      blockLabels = generateBlockLabels(blockCount);
+                    }
+                    
+                    // Collect blocks and panels from all date ranges
+                    let usedBlocks = [];
+                    let panelSelections = {};
+                    
+                    if (agreement.dateRanges && Array.isArray(agreement.dateRanges) && agreement.dateRanges.length > 0) {
+                      agreement.dateRanges.forEach((range, rangeIndex) => {
+                        const rangeKey = `range-${rangeIndex}`;
+                        const rangeBlocks = agreement.siteBlockSelections?.[rangeKey]?.[siteId] || [];
+                        usedBlocks = [...new Set([...usedBlocks, ...rangeBlocks])];
+                        
+                        const sitePanelData = agreement.sitePanelSelections?.[siteId] || {};
+                        Object.keys(sitePanelData).forEach(blockKey => {
+                          if (!panelSelections[blockKey]) {
+                            panelSelections[blockKey] = [];
+                          }
+                          const rangePanels = sitePanelData[blockKey]?.[rangeKey] || [];
+                          panelSelections[blockKey] = [...new Set([...panelSelections[blockKey], ...rangePanels])];
+                        });
+                      });
+                    } else {
+                      usedBlocks = agreement.siteBlockSelections?.[siteId] || [];
+                      panelSelections = agreement.sitePanelSelections?.[siteId] || {};
+                    }
+                    
+                    if (usedBlocks.length === 0) return null;
+                    
+                    return (
+                      <div key={agreement.id} className="mb-4">
+                        <div className="card border-primary">
+                          <div className="card-header bg-primary-subtle">
+                            <div className="d-flex justify-content-between align-items-center">
+                              <h6 className="mb-0">
+                                <i className="bi bi-building me-2"></i>
+                                {getCompanyName(agreement.companyId)} - Anlaşma #{agreement.id}
+                              </h6>
+                              <span className="badge bg-info-subtle text-info-emphasis">
+                                {agreement.sitePanelCounts?.[siteId] || 0} panel
+                              </span>
+                            </div>
+                          </div>
+                          <div className="card-body">
+                            <div className="row g-3">
+                              {usedBlocks.map((blockId) => {
+                                const blockLabel = blockId.split('-')[2];
+                                const usedPanels = panelSelections[blockId] || [];
+                                
+                                return (
+                                  <div key={blockId} className="col-md-6 col-lg-4">
+                                    <div className="card border-info">
+                                      <div className="card-header bg-info-subtle">
+                                        <h6 className="mb-0 fw-bold">
+                                          <i className="bi bi-grid-3x3-gap me-1"></i>
+                                          {blockLabel} Blok
+                                        </h6>
+                                      </div>
+                                      <div className="card-body">
+                                        <div className="small text-muted mb-2">
+                                          Kullanılan Paneller: {usedPanels.length} / {panelsPerBlock}
+                                        </div>
+                                        <div className="d-flex flex-wrap gap-1">
+                                          {Array.from({ length: panelsPerBlock }, (_, panelIndex) => {
+                                            const panelId = panelIndex + 1;
+                                            const panelKey = `panel-${panelId}`;
+                                            const isPanelUsed = usedPanels.includes(panelKey);
+                                            const fullPanelNumber = `${siteId}${blockLabel}${panelId}`;
+                                            const panelImage = getPanelImage(agreement.id.toString(), siteId, blockId, panelId.toString());
+                                            
+                                            return (
+                                              <div
+                                                key={panelKey}
+                                                className={`d-flex align-items-center justify-content-center ${
+                                                  isPanelUsed ? 'bg-primary text-white' : 'bg-light text-muted'
+                                                } border rounded position-relative`}
+                                                style={{
+                                                  width: panelImage ? '90px' : '60px',
+                                                  height: panelImage ? '120px' : '80px',
+                                                  fontSize: '8px',
+                                                  fontWeight: 'bold',
+                                                  flexDirection: 'column',
+                                                  cursor: 'default',
+                                                  backgroundImage: panelImage ? `url(${panelImage.url})` : 'none',
+                                                  backgroundSize: 'cover',
+                                                  backgroundPosition: 'center',
+                                                  backgroundRepeat: 'no-repeat',
+                                                  minHeight: panelImage ? '120px' : '80px'
+                                                }}
+                                                title={isPanelUsed ? `Panel ${fullPanelNumber} - ${getCompanyName(agreement.companyId)}${panelImage ? ' (Fotoğraf var)' : ''}` : `Panel ${panelId} - Boş`}
+                                              >
+                                                {!panelImage && (
+                                                  <>
+                                                    <div className="fw-bold">{panelId}</div>
+                                                    {isPanelUsed && (
+                                                      <div className="text-truncate" style={{ fontSize: '7px', lineHeight: '1', maxWidth: '50px' }}>
+                                                        {fullPanelNumber}
+                                                      </div>
+                                                    )}
+                                                  </>
+                                                )}
+                                                {isPanelUsed && (
+                                                  <div className="position-absolute top-0 end-0" style={{ fontSize: '8px' }}>
+                                                    {panelImage ? (
+                                                      <i className="bi bi-camera-fill text-success"></i>
+                                                    ) : (
+                                                      <i className="bi bi-lock-fill"></i>
+                                                    )}
+                                                  </div>
+                                                )}
+                                                {panelImage && (
+                                                  <div className="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white text-center" style={{ fontSize: '6px', padding: '2px' }}>
+                                                    Panel {panelId}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Active Agreements with Photos */}
       {siteData.agreements.filter(a => a.status === 'active' && Array.isArray(a.siteIds) && a.siteIds.includes(siteId)).length > 0 && (
         <div className="row g-4 mb-4">
