@@ -15,6 +15,7 @@ import AgreementDetailModal from './AgreementDetailModal';
 import AgreementPhotoModal from './AgreementPhotoModal';
 import AgreementFormModal from './AgreementFormModal';
 import PaymentModal from './PaymentModal';
+import CheckManagementModal from './CheckManagementModal';
 
 const AgreementsMain = () => {
   const [agreements, setAgreements] = useState([]);

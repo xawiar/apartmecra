@@ -26,8 +26,10 @@ const Cashier = () => {
     source: '',
     description: '',
     amount: '',
-    partnerId: ''
+    partnerId: '',
+    agreementId: '' // For partial payment support
   });
+  const [selectedAgreementForPayment, setSelectedAgreementForPayment] = useState(null);
   // Report state
   const [showReport, setShowReport] = useState(false);
   const [reportFilter, setReportFilter] = useState({
@@ -102,8 +104,10 @@ const Cashier = () => {
       source: '',
       description: '',
       amount: '',
-      partnerId: ''
+      partnerId: '',
+      agreementId: ''
     });
+    setSelectedAgreementForPayment(null);
     setEditingTransaction(null);
     setShowIncomeForm(true);
   };
@@ -145,13 +149,16 @@ const Cashier = () => {
     setShowIncomeForm(false);
     setShowExpenseForm(false);
     setEditingTransaction(null);
+    setSelectedDebtForPayment(null);
+    setSelectedAgreementForPayment(null);
     setFormData({
       date: '',
       type: 'income',
       source: '',
       description: '',
       amount: '',
-      partnerId: ''
+      partnerId: '',
+      agreementId: ''
     });
   };
 
@@ -279,8 +286,41 @@ const Cashier = () => {
         originalAmount: formData.partnerId && formData.type === 'expense' ? Math.abs(parseFloat(formData.amount)) : null,
         debtId: selectedDebtForPayment && formData.type === 'expense'
           ? selectedDebtForPayment.id
-          : (editingTransaction?.debtId || null)
+          : (editingTransaction?.debtId || null),
+        agreementId: formData.agreementId && formData.type === 'income'
+          ? formData.agreementId
+          : (editingTransaction?.agreementId || null)
       };
+      
+      // If this is a partial payment for an agreement, update the agreement
+      if (formData.agreementId && formData.type === 'income' && !editingTransaction) {
+        const agreement = agreements.find(a => String(a.id) === String(formData.agreementId));
+        if (agreement) {
+          const paymentAmount = parseFloat(formData.amount);
+          const currentPaidAmount = agreement.paidAmount || 0;
+          const newPaidAmount = currentPaidAmount + paymentAmount;
+          const totalAmount = agreement.totalAmount || 0;
+          const remainingAmount = totalAmount - newPaidAmount;
+          const paymentStatus = remainingAmount <= 0.01 ? 'paid' : (newPaidAmount > 0 ? 'partial' : 'unpaid');
+          
+          const updatedAgreement = {
+            ...agreement,
+            paidAmount: newPaidAmount,
+            remainingAmount: remainingAmount,
+            paymentStatus: paymentStatus,
+            paymentReceived: remainingAmount <= 0.01,
+            paymentDate: remainingAmount <= 0.01 ? formData.date : agreement.paymentDate
+          };
+          
+          try {
+            await updateAgreement(agreement.id, updatedAgreement);
+            // Update local state
+            setAgreements(agreements.map(a => a.id === agreement.id ? updatedAgreement : a));
+          } catch (error) {
+            console.error('Error updating agreement:', error);
+          }
+        }
+      }
       
       if (editingTransaction) {
         // Update existing transaction
@@ -2090,6 +2130,61 @@ const Cashier = () => {
                   </div>
                   
                   <div className="mb-3">
+                    <label htmlFor="agreementId" className="form-label">Anlaşma (Opsiyonel - Kısmi Ödeme için)</label>
+                    <select
+                      id="agreementId"
+                      name="agreementId"
+                      value={formData.agreementId}
+                      onChange={(e) => {
+                        const agreementId = e.target.value;
+                        setFormData({ ...formData, agreementId });
+                        if (agreementId) {
+                          const agreement = agreements.find(a => String(a.id) === String(agreementId));
+                          if (agreement) {
+                            setSelectedAgreementForPayment(agreement);
+                            const remaining = (agreement.totalAmount || 0) - (agreement.paidAmount || 0);
+                            if (remaining > 0) {
+                              setFormData(prev => ({ ...prev, agreementId, amount: remaining.toString() }));
+                            }
+                          }
+                        } else {
+                          setSelectedAgreementForPayment(null);
+                        }
+                      }}
+                      className="form-select form-control-custom"
+                    >
+                      <option value="">Anlaşma seçin (opsiyonel)</option>
+                      {agreements
+                        .filter(a => a.status === 'active' || a.status === 'completed')
+                        .map(agreement => {
+                          const company = companies.find(c => String(c.id) === String(agreement.companyId));
+                          const totalAmount = agreement.totalAmount || 0;
+                          const paidAmount = agreement.paidAmount || 0;
+                          const remainingAmount = totalAmount - paidAmount;
+                          return (
+                            <option key={agreement.id} value={agreement.id}>
+                              {company?.name || 'Bilinmeyen'} - Anlaşma #{agreement.id} 
+                              {remainingAmount > 0 ? ` (Kalan: ${formatCurrency(remainingAmount)})` : ' (Ödendi)'}
+                            </option>
+                          );
+                        })}
+                    </select>
+                    {selectedAgreementForPayment && (
+                      <div className="mt-2 p-2 bg-light rounded">
+                        <small className="text-muted d-block">
+                          <strong>Toplam Tutar:</strong> {formatCurrency(selectedAgreementForPayment.totalAmount || 0)}
+                        </small>
+                        <small className="text-muted d-block">
+                          <strong>Ödenen Tutar:</strong> {formatCurrency(selectedAgreementForPayment.paidAmount || 0)}
+                        </small>
+                        <small className="text-danger d-block">
+                          <strong>Kalan Tutar:</strong> {formatCurrency((selectedAgreementForPayment.totalAmount || 0) - (selectedAgreementForPayment.paidAmount || 0))}
+                        </small>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="mb-3">
                     <label htmlFor="partnerId" className="form-label">Ortak (Opsiyonel)</label>
                     <select
                       id="partnerId"
@@ -2125,8 +2220,16 @@ const Cashier = () => {
                       min="0"
                       step="0.01"
                       placeholder="Tutarı girin"
+                      max={selectedAgreementForPayment ? ((selectedAgreementForPayment.totalAmount || 0) - (selectedAgreementForPayment.paidAmount || 0)) : undefined}
                       required
                     />
+                    {selectedAgreementForPayment && (
+                      <div className="form-text">
+                        <small className="text-muted">
+                          Maksimum: {formatCurrency((selectedAgreementForPayment.totalAmount || 0) - (selectedAgreementForPayment.paidAmount || 0))}
+                        </small>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="mb-3">

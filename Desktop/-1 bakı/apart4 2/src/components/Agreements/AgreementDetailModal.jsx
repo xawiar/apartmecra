@@ -1,6 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { getTransactions } from '../../services/api';
 
 const AgreementDetailModal = ({ showModal, currentAgreement, uiHandlers, helpers, handleUploadPhoto }) => {
+  const [showPaymentHistory, setShowPaymentHistory] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState([]);
+  
+  useEffect(() => {
+    if (showPaymentHistory && currentAgreement) {
+      const fetchPaymentHistory = async () => {
+        try {
+          const allTransactions = await getTransactions();
+          const agreementPayments = allTransactions.filter(t => 
+            t.agreementId && String(t.agreementId) === String(currentAgreement.id) && t.type === 'income'
+          ).sort((a, b) => new Date(b.date) - new Date(a.date));
+          setPaymentHistory(agreementPayments);
+        } catch (error) {
+          console.error('Error fetching payment history:', error);
+          setPaymentHistory([]);
+        }
+      };
+      fetchPaymentHistory();
+    }
+  }, [showPaymentHistory, currentAgreement]);
   if (!showModal || !currentAgreement) return null;
 
   // Format date for display
@@ -114,22 +135,38 @@ const AgreementDetailModal = ({ showModal, currentAgreement, uiHandlers, helpers
                       <div className="row mb-3">
                         <div className="col-6">
                           <small className="text-muted">Toplam Tutar</small>
-                          <div className="fw-medium text-primary">{helpers.formatCurrency(currentAgreement.totalAmount)}</div>
+                          <div className="fw-medium text-primary">{helpers.formatCurrency(currentAgreement.totalAmount || 0)}</div>
                         </div>
                         <div className="col-6">
-                          <small className="text-muted">Ödeme Alındı</small>
+                          <small className="text-muted">Ödeme Durumu</small>
                           <div className="fw-medium">
-                            {currentAgreement.paymentReceived ? (
-                              <span className="text-success">
-                                <i className="bi bi-check-circle-fill me-1"></i>
-                                Evet
-                              </span>
-                            ) : (
-                              <span className="text-danger">
-                                <i className="bi bi-x-circle-fill me-1"></i>
-                                Hayır
-                              </span>
-                            )}
+                            {(() => {
+                              const paymentStatus = currentAgreement.paymentStatus || 
+                                (currentAgreement.paymentReceived ? 'paid' : 
+                                 (currentAgreement.paidAmount > 0 ? 'partial' : 'unpaid'));
+                              if (paymentStatus === 'paid') {
+                                return (
+                                  <span className="text-success">
+                                    <i className="bi bi-check-circle-fill me-1"></i>
+                                    Ödendi
+                                  </span>
+                                );
+                              } else if (paymentStatus === 'partial') {
+                                return (
+                                  <span className="text-warning">
+                                    <i className="bi bi-clock-history me-1"></i>
+                                    Kısmi Ödendi
+                                  </span>
+                                );
+                              } else {
+                                return (
+                                  <span className="text-danger">
+                                    <i className="bi bi-x-circle-fill me-1"></i>
+                                    Ödenmedi
+                                  </span>
+                                );
+                              }
+                            })()}
                           </div>
                         </div>
                       </div>
@@ -175,6 +212,35 @@ const AgreementDetailModal = ({ showModal, currentAgreement, uiHandlers, helpers
                           Bu anlaşma kredi ile oluşturuldu. Ödeme firma kredisi üzerinden yapıldı.
                         </div>
                       )}
+                      
+                      {/* Payment Status for Partial Payments */}
+                      {currentAgreement.paidAmount !== undefined && (
+                        <div className="row mt-3">
+                          <div className="col-6">
+                            <small className="text-muted">Ödenen Tutar</small>
+                            <div className="fw-medium text-success">
+                              {helpers.formatCurrency(currentAgreement.paidAmount || 0)}
+                            </div>
+                          </div>
+                          <div className="col-6">
+                            <small className="text-muted">Kalan Tutar</small>
+                            <div className="fw-medium text-danger">
+                              {helpers.formatCurrency(currentAgreement.remainingAmount || 0)}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Payment History Button */}
+                      <div className="mt-3">
+                        <button
+                          className="btn btn-sm btn-outline-primary w-100"
+                          onClick={() => setShowPaymentHistory(true)}
+                        >
+                          <i className="bi bi-clock-history me-2"></i>
+                          Ödeme Geçmişi
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -275,6 +341,84 @@ const AgreementDetailModal = ({ showModal, currentAgreement, uiHandlers, helpers
           </div>
         </div>
       </div>
+      
+      {/* Payment History Modal */}
+      {showPaymentHistory && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header bg-primary text-white">
+                <h5 className="modal-title">
+                  <i className="bi bi-clock-history me-2"></i>
+                  Ödeme Geçmişi - {helpers.getCompanyName(currentAgreement.companyId)}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setShowPaymentHistory(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {paymentHistory.length === 0 ? (
+                  <div className="text-center py-4">
+                    <i className="bi bi-inbox text-muted fs-1"></i>
+                    <p className="text-muted mt-2">Henüz ödeme kaydı bulunmamaktadır.</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="table table-hover">
+                      <thead>
+                        <tr>
+                          <th>Tarih</th>
+                          <th>Ödeme Yöntemi</th>
+                          <th>Tutar</th>
+                          <th>Açıklama</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paymentHistory.map((payment) => (
+                          <tr key={payment.id || payment._docId}>
+                            <td>{formatDate(payment.date)}</td>
+                            <td>
+                              <span className="badge bg-info">
+                                {payment.paymentMethod === 'check' ? 'Çek' : 'Nakit'}
+                              </span>
+                            </td>
+                            <td className="fw-bold text-success">
+                              {helpers.formatCurrency(payment.amount || 0)}
+                            </td>
+                            <td>{payment.description || payment.source || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="table-primary">
+                          <td colSpan="2" className="fw-bold">Toplam:</td>
+                          <td className="fw-bold">
+                            {helpers.formatCurrency(
+                              paymentHistory.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)
+                            )}
+                          </td>
+                          <td></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowPaymentHistory(false)}
+                >
+                  Kapat
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
