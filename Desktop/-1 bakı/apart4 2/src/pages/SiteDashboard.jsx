@@ -642,7 +642,7 @@ const SiteDashboard = () => {
       {/* Site Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h2 className="h3 fw-bold">{siteData.site?.name || 'Site Panosu'}</h2>
+          <h2 className="h3 fw-bold" style={{ color: 'red' }}>{siteData.site?.name || 'Site Panosu'}</h2>
           <p className="text-muted mb-0">Site ID: {siteData.site?.id || siteId}</p>
         </div>
         <div className="text-end">
