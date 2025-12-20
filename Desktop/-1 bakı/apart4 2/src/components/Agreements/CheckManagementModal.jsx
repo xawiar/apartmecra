@@ -54,26 +54,29 @@ const CheckManagementModal = ({
         if (newStatus === 'cleared' && check.agreementId) {
           const agreement = agreements.find(a => String(a.id) === String(check.agreementId));
           if (agreement) {
-            const currentPaidAmount = agreement.paidAmount || 0;
-            const checkAmount = check.amount || 0;
-            const newPaidAmount = currentPaidAmount + checkAmount;
-            const totalAmount = agreement.totalAmount || 0;
-            const remainingAmount = totalAmount - newPaidAmount;
-            const paymentStatus = remainingAmount <= 0.01 ? 'paid' : (newPaidAmount > 0 ? 'partial' : 'unpaid');
+            // Check if this check was already cleared (prevent double counting)
+            const wasPreviouslyCleared = check.status === 'cleared';
+            
+            if (!wasPreviouslyCleared) {
+              const currentPaidAmount = agreement.paidAmount || 0;
+              const checkAmount = check.amount || 0;
+              const newPaidAmount = currentPaidAmount + checkAmount;
+              const totalAmount = agreement.totalAmount || 0;
+              const remainingAmount = totalAmount - newPaidAmount;
+              const paymentStatus = remainingAmount <= 0.01 ? 'paid' : (newPaidAmount > 0 ? 'partial' : 'unpaid');
 
-            const updatedAgreement = {
-              ...agreement,
-              paidAmount: newPaidAmount,
-              remainingAmount: remainingAmount,
-              paymentStatus: paymentStatus,
-              paymentReceived: remainingAmount <= 0.01,
-              paymentDate: remainingAmount <= 0.01 ? new Date().toISOString().split('T')[0] : agreement.paymentDate
-            };
+              const updatedAgreement = {
+                ...agreement,
+                paidAmount: newPaidAmount,
+                remainingAmount: remainingAmount,
+                paymentStatus: paymentStatus,
+                paymentReceived: remainingAmount <= 0.01,
+                paymentDate: remainingAmount <= 0.01 ? new Date().toISOString().split('T')[0] : agreement.paymentDate
+              };
 
-            await updateAgreement(agreement.id, updatedAgreement);
+              await updateAgreement(agreement.id, updatedAgreement);
 
-            // Create cash transaction when check is cleared
-            if (newStatus === 'cleared') {
+              // Create cash transaction when check is cleared
               const transactionData = {
                 date: new Date().toISOString().split('T')[0],
                 type: 'income',
@@ -86,13 +89,19 @@ const CheckManagementModal = ({
               };
 
               await createTransaction(transactionData);
-            }
 
-            await window.showAlert(
-              'Başarılı',
-              `Çek durumu güncellendi.${newStatus === 'cleared' ? ' Çek tahsil edildi ve anlaşma ödemesi otomatik olarak tamamlandı.' : ''}`,
-              'success'
-            );
+              await window.showAlert(
+                'Başarılı',
+                'Çek durumu güncellendi. Çek tahsil edildi ve anlaşma ödemesi otomatik olarak tamamlandı.',
+                'success'
+              );
+            } else {
+              await window.showAlert(
+                'Bilgi',
+                'Çek durumu güncellendi. Bu çek daha önce tahsil edilmişti.',
+                'info'
+              );
+            }
           }
         } else {
           await window.showAlert(
