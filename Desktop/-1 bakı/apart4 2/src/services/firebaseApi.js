@@ -48,6 +48,12 @@ import {
   updateDebt as updateDebtFromDb,
   deleteDebt as deleteDebtFromDb,
   
+  // Checks
+  getChecks as getChecksFromDb,
+  createCheck as createCheckInDb,
+  updateCheck as updateCheckFromDb,
+  deleteCheck as deleteCheckFromDb,
+  
   // Partners
   getPartners as getPartnersFromDb,
   createPartner as createPartnerInDb,

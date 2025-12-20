@@ -22,10 +22,12 @@ const AgreementHandlers = ({
   updateUser, // Add updateUser function
   getUsers, // Add getUsers function
   createLog, // Add createLog function
-  setShowModal, // Add setShowModal function
-  setCurrentAgreement, // Add setCurrentAgreement function
-  archiveAgreement, // Add archiveAgreement function
-  getAgreements // Add getAgreements function to reload agreements after creation
+    setShowModal, // Add setShowModal function
+    setCurrentAgreement, // Add setCurrentAgreement function
+    archiveAgreement, // Add archiveAgreement function
+    getAgreements, // Add getAgreements function to reload agreements after creation
+    setShowPaymentModal, // Add setShowPaymentModal function
+    setPaymentAgreement // Add setPaymentAgreement function
 }) => {
   // Function to show custom alert modals
   const showAlertModal = (title, message, type = 'info') => {
@@ -295,6 +297,14 @@ const AgreementHandlers = ({
       return;
     }
 
+    // Open payment modal
+    if (setShowPaymentModal && setPaymentAgreement) {
+      setPaymentAgreement(agreement);
+      setShowPaymentModal(true);
+      return;
+    }
+
+    // Fallback to old behavior if modal functions not available
     // Confirm payment
     const result = await window.showConfirm(
       'Ödeme Al',

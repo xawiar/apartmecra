@@ -14,6 +14,7 @@ import AgreementTable from './AgreementTable';
 import AgreementDetailModal from './AgreementDetailModal';
 import AgreementPhotoModal from './AgreementPhotoModal';
 import AgreementFormModal from './AgreementFormModal';
+import PaymentModal from './PaymentModal';
 
 const AgreementsMain = () => {
   const [agreements, setAgreements] = useState([]);
@@ -83,6 +84,10 @@ const AgreementsMain = () => {
     file: null,
     previewUrl: null
   });
+  
+  // State for payment modal
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentAgreement, setPaymentAgreement] = useState(null);
   
   // State for active/expired/orders tabs
   const [activeTab, setActiveTab] = useState('active'); // 'active', 'expired', or 'orders'
@@ -248,7 +253,9 @@ const AgreementsMain = () => {
     setShowModal, // Add setShowModal function
     setCurrentAgreement, // Add setCurrentAgreement function
     archiveAgreement, // Add archiveAgreement function
-    getAgreements // Add getAgreements function to reload agreements after creation
+    getAgreements, // Add getAgreements function to reload agreements after creation
+    setShowPaymentModal, // Add setShowPaymentModal function
+    setPaymentAgreement // Add setPaymentAgreement function
   });
 
   const uiHandlers = AgreementUIHandlers({
@@ -429,6 +436,102 @@ const AgreementsMain = () => {
       reader.onload = () => resolve(reader.result);
       reader.onerror = error => reject(error);
     });
+  };
+
+  // Handle payment submit from PaymentModal
+  const handlePaymentSubmit = async (paymentData) => {
+    if (!paymentAgreement) return;
+
+    try {
+      const { paymentMethod, amount, isPartial, checkData } = paymentData;
+      const agreement = paymentAgreement;
+      const currentPaidAmount = agreement.paidAmount || 0;
+      const newPaidAmount = currentPaidAmount + amount;
+      const totalAmount = agreement.totalAmount || 0;
+      const remainingAmount = totalAmount - newPaidAmount;
+
+      // If check payment, create check record
+      let checkId = null;
+      if (paymentMethod === 'check' && checkData) {
+        const checkRecord = {
+          agreementId: agreement.id,
+          companyId: agreement.companyId,
+          checkNumber: checkData.checkNumber,
+          bankName: checkData.bankName,
+          dueDate: checkData.dueDate,
+          amount: parseFloat(checkData.amount),
+          status: 'pending', // 'pending', 'cleared', 'returned', 'protested'
+          createdAt: new Date().toISOString()
+        };
+        
+        const createdCheck = await createCheck(checkRecord);
+        if (createdCheck) {
+          checkId = createdCheck.id || createdCheck._docId;
+        }
+      }
+
+      // Create transaction
+      const transactionData = {
+        date: new Date().toISOString().split('T')[0],
+        type: 'income',
+        source: `Anlaşma Ödemesi - ${helpers.getCompanyName(agreement.companyId)}`,
+        description: `${helpers.getCompanyName(agreement.companyId)} anlaşmasından ${helpers.formatCurrency(amount)} tutarında ${paymentMethod === 'check' ? 'çek ile' : 'nakit'} ödeme alındı${isPartial ? ' (Kısmi Ödeme)' : ''}`,
+        amount: amount,
+        agreementId: agreement.id,
+        paymentMethod: paymentMethod, // 'cash' or 'check'
+        checkId: checkId
+      };
+
+      const newTransaction = await createTransaction(transactionData);
+
+      if (newTransaction) {
+        // Update agreement with new paid amount
+        const paymentStatus = remainingAmount <= 0.01 ? 'paid' : (newPaidAmount > 0 ? 'partial' : 'unpaid');
+        
+        const updatedAgreement = {
+          ...agreement,
+          paidAmount: newPaidAmount,
+          remainingAmount: remainingAmount,
+          paymentStatus: paymentStatus,
+          paymentReceived: remainingAmount <= 0.01, // Full payment received
+          paymentDate: remainingAmount <= 0.01 ? new Date().toISOString().split('T')[0] : agreement.paymentDate
+        };
+
+        const savedAgreement = await updateAgreement(agreement.id, updatedAgreement);
+        
+        if (savedAgreement) {
+          // Update agreement in state
+          setAgreementsUnique(agreements.map(a => a.id === agreement.id ? savedAgreement : a));
+          
+          // Close modal
+          setShowPaymentModal(false);
+          setPaymentAgreement(null);
+
+          await window.showAlert(
+            'Başarılı',
+            `${helpers.formatCurrency(amount)} tutarında ${paymentMethod === 'check' ? 'çek ile' : 'nakit'} ödeme başarıyla kaydedildi.${isPartial ? ` Kalan tutar: ${helpers.formatCurrency(remainingAmount)}` : ''}`,
+            'success'
+          );
+
+          // Log the action
+          try {
+            await createLog({
+              user: 'Admin',
+              action: `Anlaşma ödemesi alındı: ${helpers.getCompanyName(agreement.companyId)} (${helpers.formatCurrency(amount)}) - ${paymentMethod === 'check' ? 'Çek' : 'Nakit'}${isPartial ? ' - Kısmi Ödeme' : ''}`
+            });
+          } catch (error) {
+            console.error('Error creating log:', error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      await window.showAlert(
+        'Hata',
+        'Ödeme işlemi sırasında bir hata oluştu: ' + (error.message || 'Bilinmeyen hata'),
+        'error'
+      );
+    }
   };
 
   // Handle photo save
@@ -863,6 +966,20 @@ const AgreementsMain = () => {
         setSelectedWeeks={setSelectedWeeks}
         setSiteBlockSelections={setSiteBlockSelections}
         setSitePanelSelections={setSitePanelSelections}
+      />
+
+      {/* Payment Modal */}
+      <PaymentModal
+        show={showPaymentModal}
+        agreement={paymentAgreement}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setPaymentAgreement(null);
+        }}
+        onPaymentSubmit={handlePaymentSubmit}
+        getCompanyName={helpers.getCompanyName}
+        formatCurrency={helpers.formatCurrency}
+        formatDate={helpers.formatDate}
       />
     </div>
   );

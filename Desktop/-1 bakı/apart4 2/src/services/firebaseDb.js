@@ -33,7 +33,8 @@ export const COLLECTIONS = {
   ARCHIVED_COMPANIES: 'archivedCompanies',
   ARCHIVED_AGREEMENTS: 'archivedAgreements',
   LOGS: 'logs',
-  PANEL_IMAGES: 'panelImages'
+  PANEL_IMAGES: 'panelImages',
+  CHECKS: 'checks'
 };
 
 // Generic CRUD operations
@@ -973,6 +974,24 @@ export const updateDebt = async (debtId, debtData) => {
 
 export const deleteDebt = async (debtId) => {
   return await deleteDocument(COLLECTIONS.DEBTS, debtId);
+};
+
+// Checks operations
+export const getChecks = async () => {
+  const result = await getCollection(COLLECTIONS.CHECKS, [], 'dueDate', 'asc');
+  return result.data || [];
+};
+
+export const createCheck = async (checkData) => {
+  return await createDocument(COLLECTIONS.CHECKS, checkData);
+};
+
+export const updateCheck = async (checkId, checkData) => {
+  return await updateDocument(COLLECTIONS.CHECKS, checkId, checkData);
+};
+
+export const deleteCheck = async (checkId) => {
+  return await deleteDocument(COLLECTIONS.CHECKS, checkId);
 };
 
 // Partners operations
