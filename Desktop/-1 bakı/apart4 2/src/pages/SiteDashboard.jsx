@@ -817,41 +817,29 @@ const SiteDashboard = () => {
                                     }}
                                   >
                                     {!personnelImage && (
-                                      <div className="d-flex flex-column align-items-center justify-content-center h-100">
-                                        <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{panel.panelNumber}</div>
+                                      <>
+                                        <div className="fw-bold">{panel.panelNumber}</div>
                                         {panel.isActive && panelUsageInfo?.companyName && (
-                                          <div style={{ 
-                                            fontSize: '9px', 
-                                            lineHeight: '1.2', 
-                                            marginTop: '4px',
-                                            maxWidth: '55px',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            textAlign: 'center',
-                                            padding: '2px 4px',
-                                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                            borderRadius: '4px',
-                                            color: '#000'
-                                          }}>
-                                            {panelUsageInfo.companyName.length > 8 
-                                              ? panelUsageInfo.companyName.substring(0, 8) + '...' 
+                                          <div className="text-truncate" style={{ fontSize: '8px', lineHeight: '1', maxWidth: '50px' }}>
+                                            {panelUsageInfo.companyName.length > 6 
+                                              ? panelUsageInfo.companyName.substring(0, 6) + '...' 
                                               : panelUsageInfo.companyName}
                                           </div>
                                         )}
-                                      </div>
+                                      </>
                                     )}
                                     {panel.isActive && (
-                                      <div className="position-absolute top-0 end-0" style={{ fontSize: '10px', padding: '2px' }}>
+                                      <div className="position-absolute top-0 end-0" style={{ fontSize: '10px' }}>
                                         {personnelImage ? (
-                                          <i className="bi bi-camera-fill text-success bg-white rounded-circle p-1"></i>
+                                          <i className="bi bi-camera-fill text-success"></i>
                                         ) : (
-                                          <i className="bi bi-lock-fill bg-white rounded-circle p-1"></i>
+                                          <i className="bi bi-lock-fill"></i>
                                         )}
                                       </div>
                                     )}
                                     {personnelImage && (
                                       <div className="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white text-center" style={{ fontSize: '6px', padding: '2px' }}>
-                                        Panel {panel.panelInBlock + 1}
+                                        Panel {panelId}
                                       </div>
                                     )}
                                   </div>
