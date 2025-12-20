@@ -561,12 +561,11 @@ const SiteDashboard = () => {
               id="siteMenuDropdown"
               data-bs-toggle="dropdown"
               aria-expanded="false"
-              onClick={() => setMenuOpen(!menuOpen)}
             >
               <i className="bi bi-list me-2"></i>
               Menü
             </button>
-            <ul className={`dropdown-menu dropdown-menu-end ${menuOpen ? 'show' : ''}`} aria-labelledby="siteMenuDropdown">
+            <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="siteMenuDropdown">
               <li>
                 <a className="dropdown-item active" href="#">
                   <i className="bi bi-speedometer2 me-2"></i>
