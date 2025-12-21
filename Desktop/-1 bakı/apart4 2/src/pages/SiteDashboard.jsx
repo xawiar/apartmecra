@@ -30,6 +30,18 @@ const SiteDashboard = () => {
     showUnpaid: true
   });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showEditSiteModal, setShowEditSiteModal] = useState(false);
+  const [siteFormData, setSiteFormData] = useState({
+    name: '',
+    manager: '',
+    phone: '',
+    blocks: '',
+    elevatorsPerBlock: '',
+    apartmentCount: '',
+    bankAccountName: '',
+    iban: '',
+    notes: ''
+  });
 
   const user = getUser();
   const siteId = user?.siteId;
