@@ -384,6 +384,32 @@ const CompanyDashboard = () => {
     filterAgreementsByDate(date);
   };
   
+  // Handle edit company button click
+  const handleEditCompany = () => {
+    if (company) {
+      setCompanyFormData({
+        name: company.name || '',
+        contact: company.contact || '',
+        phone: company.phone || '',
+        email: company.email || '',
+        address: company.address || '',
+        taxOffice: company.taxOffice || '',
+        taxNumber: company.taxNumber || '',
+        notes: company.notes || ''
+      });
+      setShowEditCompanyModal(true);
+    }
+  };
+  
+  // Handle company form change
+  const handleCompanyFormChange = (e) => {
+    const { name, value } = e.target;
+    setCompanyFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
   // Handle company form submit - Create update request instead of direct update
   const handleCompanyFormSubmit = async (e) => {
     e.preventDefault();
