@@ -1272,25 +1272,26 @@ const Cashier = () => {
   const reportData = showReport ? generateReportData() : null;
 
   return (
-    <div className="container-fluid py-4">
-      {/* Header */}
-      <div className="page-header mb-4">
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    <div className="container-fluid px-2 px-md-3 px-lg-4 py-3 py-md-4">
+      {/* Header - Responsive */}
+      <div className="page-header mb-3 mb-md-4">
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
           <div>
-            <h2 className="h3 fw-bold mb-1">Kasa</h2>
-                <p className="mb-0">Gelir, gider ve borç işlemleri</p>
+            <h2 className="h3 h4-md fw-bold mb-1">Kasa</h2>
+                <p className="mb-0 small">Gelir, gider ve borç işlemleri</p>
           </div>
-          <div className="d-flex gap-2 flex-wrap">
+          <div className="d-flex gap-2 flex-wrap w-100 w-md-auto">
                 <button 
                   onClick={() => {
                     setShowDebtsView(!showDebtsView);
                     setShowSitePaymentCalc(false);
                     setShowReport(false);
                   }}
-                  className={`btn ${showDebtsView ? 'btn-page-outline' : 'btn-page-primary'} d-flex align-items-center`}
+                  className={`btn btn-sm ${showDebtsView ? 'btn-page-outline' : 'btn-page-primary'} d-flex align-items-center`}
                 >
-                  <i className="bi bi-journal-text me-2"></i>
-                  {showDebtsView ? 'Borçları Kapat' : 'Borçlar'}
+                  <i className="bi bi-journal-text me-1 me-md-2"></i>
+                  <span className="d-none d-sm-inline">{showDebtsView ? 'Borçları Kapat' : 'Borçlar'}</span>
+                  <span className="d-sm-none">Borçlar</span>
                 </button>
             <button 
               onClick={() => {
@@ -1298,36 +1299,40 @@ const Cashier = () => {
                     setShowReport(false);
                     setShowSitePaymentCalc(!showSitePaymentCalc);
                   }}
-              className={`btn ${showSitePaymentCalc ? 'btn-page-outline' : 'btn-page-primary'} d-flex align-items-center`}
+              className={`btn btn-sm ${showSitePaymentCalc ? 'btn-page-outline' : 'btn-page-primary'} d-flex align-items-center`}
             >
-              <i className="bi bi-calculator me-2"></i>
-              {showSitePaymentCalc ? 'Site Ödemeleri Kapat' : 'Site Ödemeleri Hesapla'}
+              <i className="bi bi-calculator me-1 me-md-2"></i>
+              <span className="d-none d-md-inline">{showSitePaymentCalc ? 'Site Ödemeleri Kapat' : 'Site Ödemeleri Hesapla'}</span>
+              <span className="d-md-none">Site Ödemeleri</span>
             </button>
             <button 
               onClick={() => {
                 setShowSitePaymentCalc(false);
                 setShowReport(!showReport);
               }}
-              className={`btn ${showReport ? 'btn-page-outline' : 'btn-page-primary'} d-flex align-items-center`}
+              className={`btn btn-sm ${showReport ? 'btn-page-outline' : 'btn-page-primary'} d-flex align-items-center`}
             >
-              <i className={`bi ${showReport ? 'bi-currency-dollar' : 'bi-file-earmark-bar-graph'} me-2`}></i>
-              {showReport ? 'İşlemleri Göster' : 'Rapor'}
+              <i className={`bi ${showReport ? 'bi-currency-dollar' : 'bi-file-earmark-bar-graph'} me-1 me-md-2`}></i>
+              <span className="d-none d-sm-inline">{showReport ? 'İşlemleri Göster' : 'Rapor'}</span>
+              <span className="d-sm-none">Rapor</span>
             </button>
             <button 
               onClick={handleAddIncome}
-              className="btn btn-page-primary d-flex align-items-center"
+              className="btn btn-sm btn-page-primary d-flex align-items-center"
               disabled={isObserver()}
             >
-              <i className="bi bi-plus-circle me-2"></i>
-              Gelir Ekle
+              <i className="bi bi-plus-circle me-1 me-md-2"></i>
+              <span className="d-none d-sm-inline">Gelir Ekle</span>
+              <span className="d-sm-none">Gelir</span>
             </button>
             <button 
               onClick={handleAddExpense}
-              className="btn btn-page-outline d-flex align-items-center"
+              className="btn btn-sm btn-page-outline d-flex align-items-center"
               disabled={isObserver()}
             >
-              <i className="bi bi-dash-circle me-2"></i>
-              Gider Ekle
+              <i className="bi bi-dash-circle me-1 me-md-2"></i>
+              <span className="d-none d-sm-inline">Gider Ekle</span>
+              <span className="d-sm-none">Gider</span>
             </button>
           </div>
         </div>

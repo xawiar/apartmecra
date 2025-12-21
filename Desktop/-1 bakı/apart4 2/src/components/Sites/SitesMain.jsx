@@ -277,7 +277,7 @@ const SitesMain = () => {
   }
 
   return (
-    <div className="container-fluid">
+    <div className="container-fluid px-2 px-md-3 px-lg-4 py-3 py-md-4">
       <style>
         {`
           .cursor-pointer {

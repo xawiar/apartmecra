@@ -358,18 +358,18 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container-fluid py-4">
-      {/* Header Section */}
-      <div className="page-header mb-4">
-        <div className="d-flex justify-content-between align-items-center">
+    <div className="container-fluid px-2 px-md-3 px-lg-4 py-3 py-md-4">
+      {/* Header Section - Responsive */}
+      <div className="page-header mb-3 mb-md-4">
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
           <div>
-            <h2 className="h3 fw-bold mb-1">Yönetim Paneli</h2>
-            <p className="mb-0">Sistem durumu ve son aktiviteler</p>
+            <h2 className="h3 h4-md fw-bold mb-1">Yönetim Paneli</h2>
+            <p className="mb-0 small">Sistem durumu ve son aktiviteler</p>
           </div>
           <div className="d-flex align-items-center">
-            <div className="me-3 text-end">
+            <div className="me-2 me-md-3 text-end d-none d-sm-block">
               <p className="mb-0 small" style={{opacity: 0.9}}>Hoş geldiniz</p>
-              <p className="mb-0 fw-medium">Yönetici</p>
+              <p className="mb-0 fw-medium small">Yönetici</p>
             </div>
             <div className="rounded-circle bg-white bg-opacity-25 d-flex align-items-center justify-content-center" 
                  style={{ width: '40px', height: '40px' }}>
@@ -379,79 +379,79 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="row mb-4 g-4">
-        <div className="col-md-3">
+      {/* Summary Cards - Responsive */}
+      <div className="row mb-3 mb-md-4 g-2 g-md-3 g-lg-4">
+        <div className="col-6 col-sm-6 col-md-3">
           <div className="page-stats-card border-0 shadow-sm h-100">
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="card-body p-2 p-md-3">
+              <div className="d-flex justify-content-between align-items-center mb-2 mb-md-3">
                 <div className="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" 
-                     style={{ width: '48px', height: '48px' }}>
-                  <i className="bi bi-geo-alt text-primary fs-4"></i>
+                     style={{ width: '40px', height: '40px' }}>
+                  <i className="bi bi-geo-alt text-primary fs-5 fs-4-md"></i>
                 </div>
                 <div className="text-end">
                   <p className="mb-0 small text-muted">Toplam Site</p>
-                  <h3 className="mb-0 fw-bold text-dark">{summary.activeSites}</h3>
+                  <h3 className="mb-0 fw-bold text-dark fs-5 fs-4-md">{summary.activeSites}</h3>
                 </div>
               </div>
-              <div className="progress" style={{ height: '4px' }}>
+              <div className="progress d-none d-md-block" style={{ height: '4px' }}>
                 <div className="progress-bar bg-primary" role="progressbar" style={{ width: '75%' }}></div>
               </div>
             </div>
           </div>
         </div>
-        <div className="col-md-3">
+        <div className="col-6 col-sm-6 col-md-3">
           <div className="page-stats-card border-0 shadow-sm h-100">
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="card-body p-2 p-md-3">
+              <div className="d-flex justify-content-between align-items-center mb-2 mb-md-3">
                 <div className="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" 
-                     style={{ width: '48px', height: '48px' }}>
-                  <i className="bi bi-building text-success fs-4"></i>
+                     style={{ width: '40px', height: '40px' }}>
+                  <i className="bi bi-building text-success fs-5 fs-4-md"></i>
                 </div>
                 <div className="text-end">
                   <p className="mb-0 small text-muted">Aktif Firma</p>
-                  <h3 className="mb-0 fw-bold text-dark">{summary.activeCompanies}</h3>
+                  <h3 className="mb-0 fw-bold text-dark fs-5 fs-4-md">{summary.activeCompanies}</h3>
                 </div>
               </div>
-              <div className="progress" style={{ height: '4px' }}>
+              <div className="progress d-none d-md-block" style={{ height: '4px' }}>
                 <div className="progress-bar bg-success" role="progressbar" style={{ width: '60%' }}></div>
               </div>
             </div>
           </div>
         </div>
-        <div className="col-md-3">
+        <div className="col-6 col-sm-6 col-md-3">
           <div className="page-stats-card border-0 shadow-sm h-100">
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="card-body p-2 p-md-3">
+              <div className="d-flex justify-content-between align-items-center mb-2 mb-md-3">
                 <div className="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" 
-                     style={{ width: '48px', height: '48px' }}>
-                  <i className="bi bi-file-text text-info fs-4"></i>
+                     style={{ width: '40px', height: '40px' }}>
+                  <i className="bi bi-file-text text-info fs-5 fs-4-md"></i>
                 </div>
                 <div className="text-end">
                   <p className="mb-0 small text-muted">Aktif Anlaşma</p>
-                  <h3 className="mb-0 fw-bold text-dark">{summary.activeAgreements}</h3>
+                  <h3 className="mb-0 fw-bold text-dark fs-5 fs-4-md">{summary.activeAgreements}</h3>
                 </div>
               </div>
-              <div className="progress" style={{ height: '4px' }}>
+              <div className="progress d-none d-md-block" style={{ height: '4px' }}>
                 <div className="progress-bar bg-info" role="progressbar" style={{ width: '85%' }}></div>
               </div>
             </div>
           </div>
         </div>
-        <div className="col-md-3">
+        <div className="col-12 col-sm-6 col-md-3">
           <div className="page-stats-card border-0 shadow-sm h-100">
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="card-body p-2 p-md-3">
+              <div className="d-flex justify-content-between align-items-center mb-2 mb-md-3">
                 <div className="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center" 
-                     style={{ width: '48px', height: '48px' }}>
-                  <i className="bi bi-cash-stack text-warning fs-4"></i>
+                     style={{ width: '40px', height: '40px' }}>
+                  <i className="bi bi-cash-stack text-warning fs-5 fs-4-md"></i>
                 </div>
                 <div className="text-end">
                   <p className="mb-0 small text-muted">Kasa Bakiyesi</p>
-                  <h3 className="mb-0 fw-bold text-dark">{formatCurrency(summary.netCash)}</h3>
+                  <h3 className="mb-0 fw-bold text-dark fs-6 fs-5-md">{formatCurrency(summary.netCash)}</h3>
                 </div>
               </div>
-              <div className="progress" style={{ height: '4px' }}>
+              <div className="progress d-none d-md-block" style={{ height: '4px' }}>
                 <div className="progress-bar bg-warning" role="progressbar" style={{ width: '50%' }}></div>
               </div>
             </div>
@@ -459,71 +459,71 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Quick Actions Panel */}
-      <div className="row mb-4 g-4">
+      {/* Quick Actions Panel - Responsive */}
+      <div className="row mb-3 mb-md-4 g-2 g-md-3">
         <div className="col-12">
           <div className="card border-0 shadow-sm" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-            <div className="card-header bg-white border-0 py-3">
-              <h5 className="mb-0 fw-bold text-dark">Hızlı İşlemler</h5>
+            <div className="card-header bg-white border-0 py-2 py-md-3">
+              <h5 className="mb-0 fw-bold text-dark small">Hızlı İşlemler</h5>
             </div>
-            <div className="card-body">
-              <div className="row g-3">
+            <div className="card-body p-2 p-md-3">
+              <div className="row g-2 g-md-3">
                 {/* Add Income */}
-                <div className="col-md-3 col-6">
+                <div className="col-6 col-md-3">
                   <div className="card border-0 shadow-sm h-100 quick-action-card" 
                        style={{ borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s ease' }}
                        onClick={() => navigate('/cashier')}>
-                    <div className="card-body text-center py-4">
-                      <div className="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-3" 
-                           style={{ width: '50px', height: '50px' }}>
-                        <i className="bi bi-plus-circle text-success fs-4"></i>
+                    <div className="card-body text-center py-2 py-md-4">
+                      <div className="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-2 mb-md-3" 
+                           style={{ width: '40px', height: '40px' }}>
+                        <i className="bi bi-plus-circle text-success fs-5 fs-4-md"></i>
                       </div>
-                      <h6 className="mb-0 fw-medium">Gelir Ekle</h6>
+                      <h6 className="mb-0 fw-medium small">Gelir Ekle</h6>
                     </div>
                   </div>
                 </div>
                 
                 {/* Add Expense */}
-                <div className="col-md-3 col-6">
+                <div className="col-6 col-md-3">
                   <div className="card border-0 shadow-sm h-100 quick-action-card" 
                        style={{ borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s ease' }}
                        onClick={() => navigate('/cashier')}>
-                    <div className="card-body text-center py-4">
-                      <div className="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-3" 
-                           style={{ width: '50px', height: '50px' }}>
-                        <i className="bi bi-dash-circle text-danger fs-4"></i>
+                    <div className="card-body text-center py-2 py-md-4">
+                      <div className="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-2 mb-md-3" 
+                           style={{ width: '40px', height: '40px' }}>
+                        <i className="bi bi-dash-circle text-danger fs-5 fs-4-md"></i>
                       </div>
-                      <h6 className="mb-0 fw-medium">Gider Ekle</h6>
+                      <h6 className="mb-0 fw-medium small">Gider Ekle</h6>
                     </div>
                   </div>
                 </div>
                 
                 {/* Add Agreement */}
-                <div className="col-md-3 col-6">
+                <div className="col-6 col-md-3">
                   <div className="card border-0 shadow-sm h-100 quick-action-card" 
                        style={{ borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s ease' }}
                        onClick={() => navigate('/agreements')}>
-                    <div className="card-body text-center py-4">
-                      <div className="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-3" 
-                           style={{ width: '50px', height: '50px' }}>
-                        <i className="bi bi-file-earmark-text text-primary fs-4"></i>
+                    <div className="card-body text-center py-2 py-md-4">
+                      <div className="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-2 mb-md-3" 
+                           style={{ width: '40px', height: '40px' }}>
+                        <i className="bi bi-file-earmark-text text-primary fs-5 fs-4-md"></i>
                       </div>
-                      <h6 className="mb-0 fw-medium">Anlaşma Ekle</h6>
+                      <h6 className="mb-0 fw-medium small">Anlaşma Ekle</h6>
                     </div>
                   </div>
                 </div>
                 
                 {/* Add Site */}
-                <div className="col-md-3 col-6">
+                <div className="col-6 col-md-3">
                   <div className="card border-0 shadow-sm h-100 quick-action-card" 
                        style={{ borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s ease' }}
                        onClick={() => navigate('/sites')}>
-                    <div className="card-body text-center py-4">
-                      <div className="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-3" 
-                           style={{ width: '50px', height: '50px' }}>
-                        <i className="bi bi-geo-alt text-info fs-4"></i>
+                    <div className="card-body text-center py-2 py-md-4">
+                      <div className="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-2 mb-md-3" 
+                           style={{ width: '40px', height: '40px' }}>
+                        <i className="bi bi-geo-alt text-info fs-5 fs-4-md"></i>
                       </div>
-                      <h6 className="mb-0 fw-medium">Site Ekle</h6>
+                      <h6 className="mb-0 fw-medium small">Site Ekle</h6>
                     </div>
                   </div>
                 </div>

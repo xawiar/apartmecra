@@ -909,22 +909,23 @@ const Companies = () => {
   }, 0);
 
   return (
-    <div className="container-fluid">
-      {/* Header with title and buttons */}
-      <div className="companies-header mb-4">
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    <div className="container-fluid px-2 px-md-3 px-lg-4">
+      {/* Header with title and buttons - Responsive */}
+      <div className="companies-header mb-3 mb-md-4">
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
           <div>
-            <h2 className="h3 fw-bold mb-1">Firmalar</h2>
-            <p className="mb-0">Firma yönetimi ve kredi işlemleri</p>
+            <h2 className="h3 h4-md fw-bold mb-1">Firmalar</h2>
+            <p className="mb-0 small">Firma yönetimi ve kredi işlemleri</p>
           </div>
-          <div className="d-flex gap-2 flex-wrap">
+          <div className="d-flex gap-2 flex-wrap w-100 w-md-auto">
             <button 
               onClick={handleAddCompany}
-              className="btn btn-companies-primary btn-icon d-flex align-items-center"
+              className="btn btn-companies-primary btn-icon btn-sm d-flex align-items-center"
               disabled={isObserver()}
             >
-              <i className="bi bi-plus-lg me-2"></i>
-              <span>Firma Ekle</span>
+              <i className="bi bi-plus-lg me-1 me-md-2"></i>
+              <span className="d-none d-sm-inline">Firma Ekle</span>
+              <span className="d-sm-none">Ekle</span>
             </button>
             <div className="position-relative">
               <button 
@@ -960,63 +961,63 @@ const Companies = () => {
         </div>
       </div>
 
-      {/* Stats Summary Cards */}
-      <div className="row g-3 mb-4">
-        <div className="col-md-3 col-sm-6">
+      {/* Stats Summary Cards - Responsive */}
+      <div className="row g-2 g-md-3 mb-3 mb-md-4">
+        <div className="col-6 col-sm-6 col-md-3">
           <div className="companies-stats-card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-2 p-md-3">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <h6 className="text-muted mb-1">Toplam Firma</h6>
-                  <h3 className="mb-0 fw-bold">{companies.length}</h3>
+                  <h6 className="text-muted mb-1 small">Toplam Firma</h6>
+                  <h3 className="mb-0 fw-bold fs-5 fs-4-md">{companies.length}</h3>
                 </div>
-                <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px' }}>
-                  <i className="bi bi-building text-primary fs-4"></i>
+                <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                  <i className="bi bi-building text-primary fs-5 fs-4-md"></i>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="col-md-3 col-sm-6">
+        <div className="col-6 col-sm-6 col-md-3">
           <div className="companies-stats-card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-2 p-md-3">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <h6 className="text-muted mb-1">Aktif Firma</h6>
-                  <h3 className="mb-0 fw-bold">{activeCompanies}</h3>
+                  <h6 className="text-muted mb-1 small">Aktif Firma</h6>
+                  <h3 className="mb-0 fw-bold fs-5 fs-4-md">{activeCompanies}</h3>
                 </div>
-                <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px' }}>
-                  <i className="bi bi-check-circle text-success fs-4"></i>
+                <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                  <i className="bi bi-check-circle text-success fs-5 fs-4-md"></i>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="col-md-3 col-sm-6">
+        <div className="col-6 col-sm-6 col-md-3">
           <div className="companies-stats-card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-2 p-md-3">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <h6 className="text-muted mb-1">Toplam Kredi</h6>
-                  <h3 className="mb-0 fw-bold">{totalCredit} Panel</h3>
+                  <h6 className="text-muted mb-1 small">Toplam Kredi</h6>
+                  <h3 className="mb-0 fw-bold fs-6 fs-5-md">{totalCredit} Panel</h3>
                 </div>
-                <div className="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px' }}>
-                  <i className="bi bi-credit-card text-info fs-4"></i>
+                <div className="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                  <i className="bi bi-credit-card text-info fs-5 fs-4-md"></i>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="col-md-3 col-sm-6">
+        <div className="col-6 col-sm-6 col-md-3">
           <div className="companies-stats-card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-2 p-md-3">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <h6 className="text-muted mb-1">Anlaşmalı Firma</h6>
-                  <h3 className="mb-0 fw-bold">{companiesWithAgreements}</h3>
+                  <h6 className="text-muted mb-1 small">Anlaşmalı Firma</h6>
+                  <h3 className="mb-0 fw-bold fs-5 fs-4-md">{companiesWithAgreements}</h3>
                 </div>
-                <div className="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px' }}>
-                  <i className="bi bi-handshake text-warning fs-4"></i>
+                <div className="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                  <i className="bi bi-handshake text-warning fs-5 fs-4-md"></i>
                 </div>
               </div>
             </div>
@@ -1024,78 +1025,78 @@ const Companies = () => {
         </div>
       </div>
 
-      {/* Payment Status Cards */}
-      <div className="row g-3 mb-4">
-        <div className="col-md-3 col-sm-6">
+      {/* Payment Status Cards - Responsive */}
+      <div className="row g-2 g-md-3 mb-3 mb-md-4">
+        <div className="col-6 col-sm-6 col-md-3">
           <div className="companies-stats-card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-2 p-md-3">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <h6 className="text-muted mb-1">Ödenmiş Anlaşma</h6>
-                  <h3 className="mb-0 fw-bold">{paidAgreements.length}</h3>
+                  <h6 className="text-muted mb-1 small">Ödenmiş</h6>
+                  <h3 className="mb-0 fw-bold fs-5 fs-4-md">{paidAgreements.length}</h3>
                   <p className="mb-0 small text-success">{new Intl.NumberFormat('tr-TR', {
                     style: 'currency',
                     currency: 'TRY'
                   }).format(paidAmount)}</p>
                 </div>
-                <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px' }}>
-                  <i className="bi bi-check-circle text-success fs-4"></i>
+                <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                  <i className="bi bi-check-circle text-success fs-5 fs-4-md"></i>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="col-md-3 col-sm-6">
+        <div className="col-6 col-sm-6 col-md-3">
           <div className="companies-stats-card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-2 p-md-3">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <h6 className="text-muted mb-1">Ödenmemiş Anlaşma</h6>
-                  <h3 className="mb-0 fw-bold">{unpaidAgreements.length}</h3>
+                  <h6 className="text-muted mb-1 small">Ödenmemiş</h6>
+                  <h3 className="mb-0 fw-bold fs-5 fs-4-md">{unpaidAgreements.length}</h3>
                   <p className="mb-0 small text-warning">{new Intl.NumberFormat('tr-TR', {
                     style: 'currency',
                     currency: 'TRY'
                   }).format(unpaidAmount)}</p>
                 </div>
-                <div className="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px' }}>
-                  <i className="bi bi-clock text-warning fs-4"></i>
+                <div className="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                  <i className="bi bi-clock text-warning fs-5 fs-4-md"></i>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="col-md-3 col-sm-6">
+        <div className="col-6 col-sm-6 col-md-3">
           <div className="companies-stats-card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-2 p-md-3">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <h6 className="text-muted mb-1">Ödeme Oranı</h6>
-                  <h3 className="mb-0 fw-bold">
+                  <h6 className="text-muted mb-1 small">Ödeme Oranı</h6>
+                  <h3 className="mb-0 fw-bold fs-5 fs-4-md">
                     {agreements.length > 0 
                       ? Math.round((paidAgreements.length / agreements.length) * 100) 
                       : 0}%
                   </h3>
                 </div>
-                <div className="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px' }}>
-                  <i className="bi bi-percent text-info fs-4"></i>
+                <div className="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                  <i className="bi bi-percent text-info fs-5 fs-4-md"></i>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="col-md-3 col-sm-6">
+        <div className="col-6 col-sm-6 col-md-3">
           <div className="companies-stats-card border-0 shadow-sm h-100">
-            <div className="card-body">
+            <div className="card-body p-2 p-md-3">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <h6 className="text-muted mb-1">Bekleyen Ödeme</h6>
-                  <h3 className="mb-0 fw-bold">{new Intl.NumberFormat('tr-TR', {
+                  <h6 className="text-muted mb-1 small">Bekleyen</h6>
+                  <h3 className="mb-0 fw-bold fs-6 fs-5-md">{new Intl.NumberFormat('tr-TR', {
                     style: 'currency',
                     currency: 'TRY'
                   }).format(unpaidAmount)}</h3>
                 </div>
-                <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px' }}>
-                  <i className="bi bi-arrow-up-circle text-primary fs-4"></i>
+                <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                  <i className="bi bi-arrow-up-circle text-primary fs-5 fs-4-md"></i>
                 </div>
               </div>
             </div>

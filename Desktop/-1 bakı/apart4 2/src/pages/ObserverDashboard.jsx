@@ -101,12 +101,12 @@ const ObserverDashboard = () => {
   }
 
   return (
-    <div className="container-fluid">
-      {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className="container-fluid px-2 px-md-3 px-lg-4 py-3 py-md-4">
+      {/* Header - Responsive */}
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 mb-md-4 gap-2">
         <div>
-          <h2 className="h3 fw-bold">Gözlemci Panosu</h2>
-          <p className="text-muted mb-0">
+          <h2 className="h3 h4-md fw-bold">Gözlemci Panosu</h2>
+          <p className="text-muted mb-0 small">
             <i className="bi bi-eye me-1"></i>
             Tüm sistem verilerini görüntüleme yetkisi - Düzenleme yetkisi yok
           </p>
@@ -116,59 +116,59 @@ const ObserverDashboard = () => {
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="row g-3 mb-4">
-        <div className="col-md-2">
-          <div className="card custom-card bg-primary text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-building fs-1 mb-2"></i>
-              <h5 className="card-title">Siteler</h5>
-              <h2 className="card-text">{stats.totalSites}</h2>
+      {/* Statistics Cards - Responsive */}
+      <div className="row g-2 g-md-3 mb-3 mb-md-4">
+        <div className="col-6 col-sm-4 col-md-2">
+          <div className="card custom-card bg-primary text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-building fs-2 fs-1-md mb-1 mb-md-2"></i>
+              <h5 className="card-title small mb-1 mb-md-2">Siteler</h5>
+              <h2 className="card-text fs-4 fs-3-md">{stats.totalSites}</h2>
             </div>
           </div>
         </div>
-        <div className="col-md-2">
-          <div className="card custom-card bg-success text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-building-add fs-1 mb-2"></i>
-              <h5 className="card-title">Firmalar</h5>
-              <h2 className="card-text">{stats.totalCompanies}</h2>
+        <div className="col-6 col-sm-4 col-md-2">
+          <div className="card custom-card bg-success text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-building-add fs-2 fs-1-md mb-1 mb-md-2"></i>
+              <h5 className="card-title small mb-1 mb-md-2">Firmalar</h5>
+              <h2 className="card-text fs-4 fs-3-md">{stats.totalCompanies}</h2>
             </div>
           </div>
         </div>
-        <div className="col-md-2">
-          <div className="card custom-card bg-info text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-handshake fs-1 mb-2"></i>
-              <h5 className="card-title">Aktif Anlaşma</h5>
-              <h2 className="card-text">{stats.activeAgreements}</h2>
+        <div className="col-6 col-sm-4 col-md-2">
+          <div className="card custom-card bg-info text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-handshake fs-2 fs-1-md mb-1 mb-md-2"></i>
+              <h5 className="card-title small mb-1 mb-md-2">Aktif Anlaşma</h5>
+              <h2 className="card-text fs-4 fs-3-md">{stats.activeAgreements}</h2>
             </div>
           </div>
         </div>
-        <div className="col-md-2">
-          <div className="card custom-card bg-warning text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-arrow-down-circle fs-1 mb-2"></i>
-              <h5 className="card-title">Toplam Gelir</h5>
-              <h3 className="card-text">{formatCurrency(stats.totalRevenue)}</h3>
+        <div className="col-6 col-sm-4 col-md-2">
+          <div className="card custom-card bg-warning text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-arrow-down-circle fs-2 fs-1-md mb-1 mb-md-2"></i>
+              <h5 className="card-title small mb-1 mb-md-2">Toplam Gelir</h5>
+              <h3 className="card-text fs-6 fs-5-md">{formatCurrency(stats.totalRevenue)}</h3>
             </div>
           </div>
         </div>
-        <div className="col-md-2">
-          <div className="card custom-card bg-danger text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-arrow-up-circle fs-1 mb-2"></i>
-              <h5 className="card-title">Toplam Gider</h5>
-              <h3 className="card-text">{formatCurrency(stats.totalExpenses)}</h3>
+        <div className="col-6 col-sm-4 col-md-2">
+          <div className="card custom-card bg-danger text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-arrow-up-circle fs-2 fs-1-md mb-1 mb-md-2"></i>
+              <h5 className="card-title small mb-1 mb-md-2">Toplam Gider</h5>
+              <h3 className="card-text fs-6 fs-5-md">{formatCurrency(stats.totalExpenses)}</h3>
             </div>
           </div>
         </div>
-        <div className="col-md-2">
-          <div className="card custom-card bg-secondary text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-wallet2 fs-1 mb-2"></i>
-              <h5 className="card-title">Net Bakiye</h5>
-              <h3 className={`card-text ${stats.netBalance >= 0 ? 'text-white' : 'text-warning'}`}>
+        <div className="col-6 col-sm-4 col-md-2">
+          <div className="card custom-card bg-secondary text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-wallet2 fs-2 fs-1-md mb-1 mb-md-2"></i>
+              <h5 className="card-title small mb-1 mb-md-2">Net Bakiye</h5>
+              <h3 className={`card-text fs-6 fs-5-md ${stats.netBalance >= 0 ? 'text-white' : 'text-warning'}`}>
                 {formatCurrency(stats.netBalance)}
               </h3>
             </div>
@@ -225,11 +225,11 @@ const ObserverDashboard = () => {
         </li>
       </ul>
 
-      {/* Tab Content */}
+      {/* Tab Content - Responsive */}
       {activeTab === 'overview' && (
-        <div className="row g-4">
+        <div className="row g-2 g-md-4">
           {/* Recent Agreements */}
-          <div className="col-md-6">
+          <div className="col-12 col-md-6">
             <div className="card custom-card shadow-sm">
               <div className="card-header bg-info-subtle">
                 <h5 className="mb-0 fw-bold">
@@ -269,7 +269,7 @@ const ObserverDashboard = () => {
           </div>
 
           {/* Recent Transactions */}
-          <div className="col-md-6">
+          <div className="col-12 col-md-6">
             <div className="card custom-card shadow-sm">
               <div className="card-header bg-warning-subtle">
                 <h5 className="mb-0 fw-bold">

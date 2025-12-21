@@ -805,9 +805,9 @@ const Settings = () => {
   }
 
   return (
-    <div className="container-fluid">
-      <div className="mb-4">
-        <h2 className="h3 fw-bold">Ayarlar</h2>
+    <div className="container-fluid px-2 px-md-3 px-lg-4 py-3 py-md-4">
+      <div className="mb-3 mb-md-4">
+        <h2 className="h3 h4-md fw-bold">Ayarlar</h2>
       </div>
 
       {/* Tab Navigation */}

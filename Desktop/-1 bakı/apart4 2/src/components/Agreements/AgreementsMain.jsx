@@ -695,7 +695,7 @@ const AgreementsMain = () => {
   const tabStats = getTabStatistics();
 
   return (
-    <div className="container-fluid">
+    <div className="container-fluid px-2 px-md-3 px-lg-4 py-3 py-md-4">
       {/* Header with title and buttons */}
       <div className="page-header mb-4">
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
