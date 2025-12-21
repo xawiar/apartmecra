@@ -118,6 +118,8 @@ const CompanyDashboard = () => {
   const [panelImages, setPanelImages] = useState([]);
   const [checks, setChecks] = useState([]); // Add checks state
   const [showAgreementHistory, setShowAgreementHistory] = useState(false);
+  const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState(false);
+  const [selectedAgreementForHistory, setSelectedAgreementForHistory] = useState(null);
   const [selectedDate, setSelectedDate] = useState('');
   const [filteredAgreements, setFilteredAgreements] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
