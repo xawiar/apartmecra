@@ -51,14 +51,65 @@ const SiteDashboard = () => {
   const user = getUser();
   const siteId = user?.siteId;
   
-  // Listen for service worker messages (for notification sound)
+  // Function to play notification sound
+  const playNotificationSound = () => {
+    try {
+      // Try to play notification sound file first
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.7;
+      audio.play().catch(() => {
+        // If file doesn't exist, use Web Audio API fallback
+        playBeepSound();
+      });
+    } catch (error) {
+      console.warn('Could not play notification sound using HTML5 Audio:', error);
+      playBeepSound();
+    }
+  };
+
+  // Fallback beep sound using Web Audio API
+  const playBeepSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // Resume audio context if suspended (required by some browsers)
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800; // Frequency in Hz
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (e) {
+      console.warn('Could not play notification sound using Web Audio API:', e);
+    }
+  };
+
+  // Listen for service worker messages (for notification sound from push notifications)
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', (event) => {
+      const handleMessage = (event) => {
         if (event.data && event.data.type === 'play-notification-sound') {
           playNotificationSound();
         }
-      });
+      };
+      
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+      
+      return () => {
+        navigator.serviceWorker.removeEventListener('message', handleMessage);
+      };
     }
   }, []);
 
