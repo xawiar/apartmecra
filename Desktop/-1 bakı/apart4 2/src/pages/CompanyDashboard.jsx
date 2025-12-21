@@ -122,7 +122,7 @@ const CompanyDashboard = () => {
   const [selectedAgreementForPaymentHistory, setSelectedAgreementForPaymentHistory] = useState(null);
   const [selectedDate, setSelectedDate] = useState('');
   const [filteredAgreements, setFilteredAgreements] = useState([]);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [showEditCompanyModal, setShowEditCompanyModal] = useState(false);
   const [companyFormData, setCompanyFormData] = useState({
     name: '',
