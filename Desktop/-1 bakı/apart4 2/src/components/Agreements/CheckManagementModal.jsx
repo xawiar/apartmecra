@@ -71,7 +71,8 @@ const CheckManagementModal = ({
                 remainingAmount: remainingAmount,
                 paymentStatus: paymentStatus,
                 paymentReceived: remainingAmount <= 0.01,
-                paymentDate: remainingAmount <= 0.01 ? new Date().toISOString().split('T')[0] : agreement.paymentDate
+                // Only set paymentDate if full payment is received, otherwise keep existing or set to null
+                ...(remainingAmount <= 0.01 ? { paymentDate: new Date().toISOString().split('T')[0] } : (agreement.paymentDate ? { paymentDate: agreement.paymentDate } : {}))
               };
 
               await updateAgreement(agreement.id, updatedAgreement);

@@ -498,7 +498,8 @@ const AgreementsMain = () => {
           remainingAmount: remainingAmount,
           paymentStatus: paymentStatus,
           paymentReceived: remainingAmount <= 0.01, // Full payment received
-          paymentDate: remainingAmount <= 0.01 ? new Date().toISOString().split('T')[0] : agreement.paymentDate
+          // Only set paymentDate if full payment is received, otherwise keep existing or set to null
+          ...(remainingAmount <= 0.01 ? { paymentDate: new Date().toISOString().split('T')[0] } : (agreement.paymentDate ? { paymentDate: agreement.paymentDate } : {}))
         };
 
         const savedAgreement = await updateAgreement(agreement.id, updatedAgreement);
