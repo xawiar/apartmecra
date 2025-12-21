@@ -116,8 +116,16 @@ export const updateDocument = async (collectionName, docId, data) => {
       };
     }
     
+    // Remove undefined values - Firestore doesn't accept undefined
+    const cleanData = {};
+    Object.keys(data).forEach(key => {
+      if (data[key] !== undefined) {
+        cleanData[key] = data[key];
+      }
+    });
+    
     await updateDoc(docRef, {
-      ...data,
+      ...cleanData,
       updatedAt: serverTimestamp()
     });
     
