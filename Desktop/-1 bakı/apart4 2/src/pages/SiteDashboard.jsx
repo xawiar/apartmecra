@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { getSiteData, getSites, getCompanies, getPanelImages, getAgreements, getTransactions, createSiteUpdateRequest } from '../services/api';
+import { getSiteData, getSites, getCompanies, getPanelImages, getAgreements, getTransactions, createSiteUpdateRequest, getNotifications } from '../services/api';
 import logger from '../utils/logger';
 import { getUser } from '../utils/auth';
 import SiteHelpers from '../components/Sites/SiteHelpers';
+import { getCurrentUser } from '../services/firebaseAuth';
+import { auth } from '../config/firebase.js';
 
 const SiteDashboard = () => {
   const [siteData, setSiteData] = useState({
@@ -42,6 +44,8 @@ const SiteDashboard = () => {
     iban: '',
     notes: ''
   });
+  const [notifications, setNotifications] = useState([]);
+  const [showNotificationsSection, setShowNotificationsSection] = useState(true);
 
   const user = getUser();
   const siteId = user?.siteId;
@@ -65,6 +69,19 @@ const SiteDashboard = () => {
         setSiteData(data);
         setCompanies(companiesData);
         setPanelImages(allPanelImages);
+        
+        // Fetch notifications for site user
+        if (auth && auth.currentUser) {
+          const currentUser = getCurrentUser();
+          if (currentUser && currentUser.uid) {
+            try {
+              const userNotifications = await getNotifications(currentUser.uid, false); // Get all notifications, not just unread
+              setNotifications(userNotifications || []);
+            } catch (error) {
+              console.error('Error fetching notifications:', error);
+            }
+          }
+        }
         
         // Set initial site form data
         if (data.site) {
@@ -803,6 +820,71 @@ const SiteDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Notifications Section */}
+      {showNotificationsSection && notifications.length > 0 && (
+        <div className="row g-4 mb-4">
+          <div className="col-md-12">
+            <div className="card custom-card shadow-sm border-primary">
+              <div className="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
+                <h5 className="mb-0 fw-bold">
+                  <i className="bi bi-megaphone me-2"></i>
+                  Duyurular ve Bildirimler
+                  {notifications.filter(n => !n.read).length > 0 && (
+                    <span className="badge bg-danger ms-2">
+                      {notifications.filter(n => !n.read).length} Yeni
+                    </span>
+                  )}
+                </h5>
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => setShowNotificationsSection(false)}
+                  title="Gizle"
+                >
+                  <i className="bi bi-x"></i>
+                </button>
+              </div>
+              <div className="card-body">
+                <div className="list-group list-group-flush">
+                  {notifications.slice(0, 5).map((notification) => (
+                    <div
+                      key={notification.id || notification._docId}
+                      className={`list-group-item ${!notification.read ? 'bg-light border-start border-primary border-3' : ''}`}
+                    >
+                      <div className="d-flex align-items-start">
+                        <div className={`badge ${notification.type === 'payment' ? 'bg-success' : notification.type === 'warning' ? 'bg-warning' : notification.type === 'error' ? 'bg-danger' : 'bg-info'} me-2 mt-1`}>
+                          <i className={`bi ${notification.type === 'payment' ? 'bi-cash-coin' : notification.type === 'warning' ? 'bi-exclamation-triangle' : notification.type === 'error' ? 'bi-x-circle' : 'bi-info-circle'}`}></i>
+                        </div>
+                        <div className="flex-grow-1">
+                          <h6 className="mb-1 fw-bold">{notification.title}</h6>
+                          <p className="mb-1 small">{notification.message}</p>
+                          <small className="text-muted">
+                            {notification.createdAt 
+                              ? new Date(notification.createdAt.seconds * 1000 || notification.createdAt).toLocaleDateString('tr-TR', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : 'Yeni'}
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {notifications.length > 5 && (
+                  <div className="text-center mt-3">
+                    <small className="text-muted">
+                      {notifications.length - 5} bildirim daha var. Tüm bildirimleri görmek için üstteki bildirim ikonuna tıklayın.
+                    </small>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Site Panels - Show all panels for this site */}
       {siteData.site && (

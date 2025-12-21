@@ -231,6 +231,33 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
     
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // Okuma: Kullanıcılar sadece kendi bildirimlerini görebilir
+      allow get: if isAuthenticated() && 
+                    (resource.data.userId == request.auth.uid || 
+                     resource.data.userId == resource.id);
+      
+      // Liste: Kullanıcılar sadece kendi bildirimlerini listeleyebilir (userId filtresi ile)
+      // Frontend'de userId filtresi uygulanacak
+      allow list: if isAuthenticated();
+      
+      // Oluşturma: Admin ve personnel duyuru gönderebilir
+      allow create: if isAdmin() || isPersonnel();
+      
+      // Güncelleme: Kullanıcılar sadece kendi bildirimlerini okuyabilir olarak işaretleyebilir
+      allow update: if isAuthenticated() && 
+                       (resource.data.userId == request.auth.uid || 
+                        resource.data.userId == resource.id) &&
+                       // Sadece read ve readAt alanlarını güncelleyebilir
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']);
+      
+      // Silme: Kullanıcılar sadece kendi bildirimlerini silebilir
+      allow delete: if isAuthenticated() && 
+                       (resource.data.userId == request.auth.uid || 
+                        resource.data.userId == resource.id);
+    }
+    
     // Default: deny all other collections
     match /{document=**} {
       allow read, write: if false;

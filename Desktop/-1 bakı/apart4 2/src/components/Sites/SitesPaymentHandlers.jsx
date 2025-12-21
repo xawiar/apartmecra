@@ -1,6 +1,7 @@
 import { createTransaction } from '../../services/api';
 import { createLog } from '../../services/api';
 import { updateSite } from '../../services/api';
+import { sendNotificationToSite } from '../../services/api';
 
 const SitesPaymentHandlers = ({
   sites, setSites,
@@ -107,6 +108,20 @@ const SitesPaymentHandlers = ({
           user: 'Admin',
           action: `Site ödemesi yapıldı: ${site.name || 'Unknown Site'} (${formatCurrency ? formatCurrency(payment.amount) : payment.amount + '₺'}) - ${payment.companyName || 'Unknown Company'} anlaşması`
         });
+        
+        // Send notification to site users
+        try {
+          await sendNotificationToSite(
+            site.id,
+            'Ödeme Yapıldı',
+            `${site.name} için ${formatCurrency ? formatCurrency(payment.amount) : payment.amount + '₺'} tutarında ödeme yapıldı. (${payment.companyName || 'Unknown Company'} anlaşması)`,
+            'payment',
+            null // No link for now
+          );
+        } catch (notificationError) {
+          console.error('Error sending notification:', notificationError);
+          // Don't fail the payment if notification fails
+        }
         
         // Show success message only if not processing bulk payment
         if (!isBulkPayment) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, createUser, updateUser, deleteUser, getLogs, getSites, getCompanies, getSiteUpdateRequests, getCompanyUpdateRequests, updateSiteUpdateRequest, updateCompanyUpdateRequest, deleteSiteUpdateRequest, deleteCompanyUpdateRequest, updateSite, updateCompany, createLog } from '../services/api';
+import { getUsers, createUser, updateUser, deleteUser, getLogs, getSites, getCompanies, getSiteUpdateRequests, getCompanyUpdateRequests, updateSiteUpdateRequest, updateCompanyUpdateRequest, deleteSiteUpdateRequest, deleteCompanyUpdateRequest, updateSite, updateCompany, createLog, sendNotificationToSite, sendAnnouncementToAllSites } from '../services/api';
 import Archive from './Archive';
 import jsPDF from 'jspdf';
 
@@ -830,6 +830,15 @@ const Settings = () => {
         </li>
         <li className="nav-item">
           <button 
+            className={`nav-link ${activeTab === 'announcements' ? 'active' : ''}`}
+            onClick={() => setActiveTab('announcements')}
+          >
+            <i className="bi bi-megaphone me-1"></i>
+            Duyurular
+          </button>
+        </li>
+        <li className="nav-item">
+          <button 
             className={`nav-link ${activeTab === 'labels' ? 'active' : ''}`}
             onClick={() => setActiveTab('labels')}
           >
@@ -1463,6 +1472,147 @@ const Settings = () => {
       )}
 
       {/* Archive Tab - Moved from separate page */}
+      {/* Announcements Tab */}
+      {activeTab === 'announcements' && (
+        <div className="card custom-card shadow-sm">
+          <div className="card-body">
+            <h5 className="card-title mb-4">
+              <i className="bi bi-megaphone me-2"></i>
+              Site Kullanıcılarına Duyuru Gönder
+            </h5>
+            
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                if (announcementForm.targetSite === 'all') {
+                  const result = await sendAnnouncementToAllSites(
+                    announcementForm.title,
+                    announcementForm.message,
+                    announcementForm.type,
+                    null
+                  );
+                  if (result.success) {
+                    await window.showAlert(
+                      'Başarılı',
+                      `Duyuru ${result.count} site kullanıcısına gönderildi.`,
+                      'success'
+                    );
+                    setAnnouncementForm({ title: '', message: '', type: 'info', targetSite: 'all' });
+                    await createLog({
+                      user: 'Admin',
+                      action: `Duyuru gönderildi: ${announcementForm.title} (Tüm siteler)`
+                    });
+                  }
+                } else {
+                  const result = await sendNotificationToSite(
+                    announcementForm.targetSite,
+                    announcementForm.title,
+                    announcementForm.message,
+                    announcementForm.type,
+                    null
+                  );
+                  if (result.success) {
+                    const site = sites.find(s => s.id === announcementForm.targetSite);
+                    await window.showAlert(
+                      'Başarılı',
+                      `Duyuru ${site?.name || announcementForm.targetSite} sitesine ${result.count} kullanıcıya gönderildi.`,
+                      'success'
+                    );
+                    setAnnouncementForm({ title: '', message: '', type: 'info', targetSite: 'all' });
+                    await createLog({
+                      user: 'Admin',
+                      action: `Duyuru gönderildi: ${announcementForm.title} (${site?.name || announcementForm.targetSite})`
+                    });
+                  }
+                }
+              } catch (error) {
+                console.error('Error sending announcement:', error);
+                await window.showAlert(
+                  'Hata',
+                  'Duyuru gönderilirken bir hata oluştu.',
+                  'error'
+                );
+              }
+            }}>
+              <div className="mb-3">
+                <label htmlFor="announcementTarget" className="form-label">
+                  <i className="bi bi-bullseye me-1"></i>
+                  Hedef
+                </label>
+                <select
+                  id="announcementTarget"
+                  className="form-select"
+                  value={announcementForm.targetSite}
+                  onChange={(e) => setAnnouncementForm({ ...announcementForm, targetSite: e.target.value })}
+                  required
+                >
+                  <option value="all">Tüm Siteler</option>
+                  {sites.map(site => (
+                    <option key={site.id} value={site.id}>{site.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mb-3">
+                <label htmlFor="announcementTitle" className="form-label">
+                  <i className="bi bi-type me-1"></i>
+                  Başlık
+                </label>
+                <input
+                  type="text"
+                  id="announcementTitle"
+                  className="form-control"
+                  value={announcementForm.title}
+                  onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })}
+                  placeholder="Duyuru başlığı"
+                  required
+                />
+              </div>
+
+              <div className="mb-3">
+                <label htmlFor="announcementMessage" className="form-label">
+                  <i className="bi bi-chat-text me-1"></i>
+                  Mesaj
+                </label>
+                <textarea
+                  id="announcementMessage"
+                  className="form-control"
+                  rows="5"
+                  value={announcementForm.message}
+                  onChange={(e) => setAnnouncementForm({ ...announcementForm, message: e.target.value })}
+                  placeholder="Duyuru mesajı"
+                  required
+                ></textarea>
+              </div>
+
+              <div className="mb-3">
+                <label htmlFor="announcementType" className="form-label">
+                  <i className="bi bi-tag me-1"></i>
+                  Bildirim Tipi
+                </label>
+                <select
+                  id="announcementType"
+                  className="form-select"
+                  value={announcementForm.type}
+                  onChange={(e) => setAnnouncementForm({ ...announcementForm, type: e.target.value })}
+                >
+                  <option value="info">Bilgi</option>
+                  <option value="success">Başarı</option>
+                  <option value="warning">Uyarı</option>
+                  <option value="error">Hata</option>
+                  <option value="payment">Ödeme</option>
+                </select>
+              </div>
+
+              <button type="submit" className="btn btn-primary">
+                <i className="bi bi-send me-2"></i>
+                Duyuru Gönder
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'archive' && (
         <div className="card custom-card shadow-sm">
           <div className="card-body">

@@ -93,7 +93,16 @@ import {
   
   // Accounting Records
   getAccountingRecords as getAccountingRecordsFromDb,
-  createAccountingRecord as createAccountingRecordInDb
+  createAccountingRecord as createAccountingRecordInDb,
+  
+  // Notifications
+  getNotifications as getNotificationsFromDb,
+  createNotification as createNotificationInDb,
+  markNotificationAsRead as markNotificationAsReadInDb,
+  markAllNotificationsAsRead as markAllNotificationsAsReadInDb,
+  deleteNotification as deleteNotificationFromDb,
+  sendNotificationToSite as sendNotificationToSiteInDb,
+  sendAnnouncementToAllSites as sendAnnouncementToAllSitesInDb
 } from './firebaseDb.js';
 
 // Initialize Firebase services
@@ -1077,6 +1086,46 @@ export const deleteCompanyUpdateRequest = async (requestId) => {
   await initializeFirebase();
   const result = await deleteCompanyUpdateRequestFromDb(requestId);
   return result.success;
+};
+
+// Notifications endpoints
+export const getNotifications = async (userId = null, unreadOnly = false) => {
+  await initializeFirebase();
+  return await getNotificationsFromDb(userId, unreadOnly);
+};
+
+export const createNotification = async (notificationData) => {
+  await initializeFirebase();
+  const result = await createNotificationInDb(notificationData);
+  return result.success ? result.data : null;
+};
+
+export const markNotificationAsRead = async (notificationId) => {
+  await initializeFirebase();
+  const result = await markNotificationAsReadInDb(notificationId);
+  return result.success;
+};
+
+export const markAllNotificationsAsRead = async (userId) => {
+  await initializeFirebase();
+  const result = await markAllNotificationsAsReadInDb(userId);
+  return result.success;
+};
+
+export const deleteNotification = async (notificationId) => {
+  await initializeFirebase();
+  const result = await deleteNotificationFromDb(notificationId);
+  return result.success;
+};
+
+export const sendNotificationToSite = async (siteId, title, message, type = 'info', link = null) => {
+  await initializeFirebase();
+  return await sendNotificationToSiteInDb(siteId, title, message, type, link);
+};
+
+export const sendAnnouncementToAllSites = async (title, message, type = 'info', link = null) => {
+  await initializeFirebase();
+  return await sendAnnouncementToAllSitesInDb(title, message, type, link);
 };
 
 // Export Firebase-specific functions

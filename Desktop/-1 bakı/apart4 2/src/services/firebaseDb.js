@@ -36,7 +36,8 @@ export const COLLECTIONS = {
   PANEL_IMAGES: 'panelImages',
   CHECKS: 'checks',
   SITE_UPDATE_REQUESTS: 'siteUpdateRequests',
-  COMPANY_UPDATE_REQUESTS: 'companyUpdateRequests'
+  COMPANY_UPDATE_REQUESTS: 'companyUpdateRequests',
+  NOTIFICATIONS: 'notifications'
 };
 
 // Generic CRUD operations
@@ -1512,6 +1513,204 @@ export const batchDelete = async (collectionName, docIds) => {
     return result;
   } catch (error) {
     console.error('Error in batch delete:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Notifications operations
+export const getNotifications = async (userId = null, unreadOnly = false) => {
+  try {
+    let filters = [];
+    
+    // Filter by user if provided
+    if (userId) {
+      filters.push(where('userId', '==', userId));
+    }
+    
+    // Filter unread only if requested
+    if (unreadOnly) {
+      filters.push(where('read', '==', false));
+    }
+    
+    const result = await getCollection(
+      COLLECTIONS.NOTIFICATIONS,
+      filters,
+      'createdAt',
+      'desc'
+    );
+    
+    return result.data || [];
+  } catch (error) {
+    console.error('Error getting notifications:', error);
+    return [];
+  }
+};
+
+export const createNotification = async (notificationData) => {
+  try {
+    const notification = {
+      ...notificationData,
+      read: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+    
+    const result = await createDocument(COLLECTIONS.NOTIFICATIONS, notification);
+    
+    if (result.success) {
+      return { success: true, data: result.data };
+    }
+    
+    return { success: false, error: 'Failed to create notification' };
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const markNotificationAsRead = async (notificationId) => {
+  try {
+    const result = await updateDocument(COLLECTIONS.NOTIFICATIONS, notificationId, {
+      read: true,
+      readAt: serverTimestamp()
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const markAllNotificationsAsRead = async (userId) => {
+  try {
+    // Get all unread notifications for user
+    const queryRef = collection(db, COLLECTIONS.NOTIFICATIONS);
+    const q = query(
+      queryRef,
+      where('userId', '==', userId),
+      where('read', '==', false)
+    );
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return { success: true, message: 'No unread notifications' };
+    }
+    
+    // Batch update all notifications
+    const batch = writeBatch(db);
+    querySnapshot.docs.forEach(doc => {
+      const docRef = doc.ref;
+      batch.update(docRef, {
+        read: true,
+        readAt: serverTimestamp()
+      });
+    });
+    
+    await batch.commit();
+    
+    return { success: true, count: querySnapshot.docs.length };
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const deleteNotification = async (notificationId) => {
+  try {
+    const result = await deleteDocument(COLLECTIONS.NOTIFICATIONS, notificationId);
+    return result;
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send notification to site users
+export const sendNotificationToSite = async (siteId, title, message, type = 'info', link = null) => {
+  try {
+    // Get all users for this site
+    const usersRef = collection(db, COLLECTIONS.USERS);
+    const q = query(usersRef, where('siteId', '==', siteId), where('role', '==', 'site_user'));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return { success: true, count: 0, message: 'No site users found' };
+    }
+    
+    // Create notifications for all site users
+    const batch = writeBatch(db);
+    const notifications = [];
+    
+    querySnapshot.docs.forEach(userDoc => {
+      const userId = userDoc.id;
+      const notificationRef = doc(collection(db, COLLECTIONS.NOTIFICATIONS));
+      
+      batch.set(notificationRef, {
+        userId: userId,
+        siteId: siteId,
+        title: title,
+        message: message,
+        type: type, // 'info', 'success', 'warning', 'error', 'payment'
+        link: link,
+        read: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      
+      notifications.push(notificationRef.id);
+    });
+    
+    await batch.commit();
+    
+    return { success: true, count: querySnapshot.docs.length, notificationIds: notifications };
+  } catch (error) {
+    console.error('Error sending notification to site:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send notification to all site users (announcement)
+export const sendAnnouncementToAllSites = async (title, message, type = 'info', link = null) => {
+  try {
+    // Get all site users
+    const usersRef = collection(db, COLLECTIONS.USERS);
+    const q = query(usersRef, where('role', '==', 'site_user'));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return { success: true, count: 0, message: 'No site users found' };
+    }
+    
+    // Create notifications for all site users
+    const batch = writeBatch(db);
+    const notifications = [];
+    
+    querySnapshot.docs.forEach(userDoc => {
+      const userId = userDoc.id;
+      const userData = userDoc.data();
+      const notificationRef = doc(collection(db, COLLECTIONS.NOTIFICATIONS));
+      
+      batch.set(notificationRef, {
+        userId: userId,
+        siteId: userData.siteId || null,
+        title: title,
+        message: message,
+        type: type,
+        link: link,
+        read: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      
+      notifications.push(notificationRef.id);
+    });
+    
+    await batch.commit();
+    
+    return { success: true, count: querySnapshot.docs.length, notificationIds: notifications };
+  } catch (error) {
+    console.error('Error sending announcement to all sites:', error);
     return { success: false, error: error.message };
   }
 };
