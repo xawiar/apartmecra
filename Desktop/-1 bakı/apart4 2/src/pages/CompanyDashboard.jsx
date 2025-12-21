@@ -506,30 +506,31 @@ const CompanyDashboard = () => {
   }
 
   return (
-    <div className="container-fluid">
+    <div className="container-fluid px-2 px-md-3 px-lg-4">
       <div className="row">
         {/* Main Content */}
         <div className="col-12">
-          {/* Header */}
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <div>
-              <h2 className="h3 fw-bold">{company?.name || user?.name || company?.id || companyId || 'Firma'} - Firma Panosu</h2>
-              <p className="text-muted mb-0">Firma ID: {companyId}</p>
+          {/* Header - Responsive */}
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 mb-md-4 gap-2">
+            <div className="flex-grow-1">
+              <h2 className="h3 h4-md fw-bold mb-1">{company?.name || user?.name || company?.id || companyId || 'Firma'} - Firma Panosu</h2>
+              <p className="text-muted mb-0 small">Firma ID: {companyId}</p>
             </div>
-            <div className="d-flex gap-2">
+            <div className="d-flex flex-wrap align-items-center gap-2 w-100 w-md-auto">
               <button 
-                className="btn btn-outline-primary"
+                className="btn btn-outline-primary btn-sm"
                 onClick={handleEditCompany}
                 title="Firma Bilgilerini Düzenle"
               >
                 <i className="bi bi-pencil me-1"></i>
-                Bilgilerimi Düzenle
+                <span className="d-none d-sm-inline">Bilgilerimi Düzenle</span>
+                <span className="d-sm-none">Düzenle</span>
               </button>
               
               {/* Dropdown Menu */}
               <div className="dropdown">
                 <button
-                  className="btn btn-outline-secondary dropdown-toggle"
+                  className="btn btn-outline-secondary btn-sm dropdown-toggle"
                   type="button"
                   id="companyMenuDropdown"
                   data-bs-toggle="dropdown"
@@ -537,7 +538,7 @@ const CompanyDashboard = () => {
                   onClick={() => setMenuOpen(!menuOpen)}
                 >
                   <i className="bi bi-list me-1"></i>
-                  Menü
+                  <span className="d-none d-sm-inline">Menü</span>
                 </button>
                 <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="companyMenuDropdown">
                   <li>
@@ -568,72 +569,76 @@ const CompanyDashboard = () => {
               </div>
               
               <button 
-                className="btn btn-outline-danger"
-                onClick={() => {
+                className="btn btn-outline-danger btn-sm"
+                onClick={async () => {
+                  const { cleanupKeepAlive } = await import('../utils/keepAlive');
+                  await cleanupKeepAlive();
+                  
                   localStorage.removeItem('token');
                   localStorage.removeItem('user');
                   navigate('/');
                 }}
               >
                 <i className="bi bi-box-arrow-right me-1"></i>
-                Çıkış Yap
+                <span className="d-none d-sm-inline">Çıkış Yap</span>
+                <span className="d-sm-none">Çıkış</span>
               </button>
             </div>
-      </div>
+          </div>
 
-      {/* Credit Information Section */}
+      {/* Credit Information Section - Responsive */}
       {company && (
-        <div className="row g-4 mb-4">
-          <div className="col-md-12">
+        <div className="row g-2 g-md-3 g-lg-4 mb-3 mb-md-4">
+          <div className="col-12">
             <div className="card custom-card shadow-sm">
-              <div className="card-header bg-info-subtle">
-                <h5 className="mb-0 fw-bold">
+              <div className="card-header bg-info-subtle p-2 p-md-3">
+                <h5 className="mb-0 fw-bold small">
                   <i className="bi bi-credit-card me-2"></i>
                   Kredi Bilgileri
                 </h5>
               </div>
-              <div className="card-body">
-                <div className="row g-3">
-                  <div className="col-lg-3 col-md-6">
+              <div className="card-body p-2 p-md-3">
+                <div className="row g-2 g-md-3">
+                  <div className="col-6 col-md-4 col-lg-3">
                     <div className="card h-100 border-info">
-                      <div className="card-body text-center">
-                        <i className="bi bi-wallet fs-1 text-info mb-2"></i>
-                        <h6 className="card-title">Mevcut Kredi</h6>
-                        <h3 className="card-text text-info">{company.credit || 0} Panel</h3>
+                      <div className="card-body text-center p-2 p-md-3">
+                        <i className="bi bi-wallet fs-3 fs-4-md text-info mb-1 mb-md-2"></i>
+                        <h6 className="card-title small mb-1 mb-md-2">Mevcut Kredi</h6>
+                        <h3 className="card-text text-info mb-0 fs-5 fs-4-md">{company.credit || 0} Panel</h3>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="col-lg-3 col-md-6">
+                  <div className="col-6 col-md-4 col-lg-3">
                     <div className="card h-100 border-success">
-                      <div className="card-body text-center">
-                        <i className="bi bi-currency-dollar fs-1 text-success mb-2"></i>
-                        <h6 className="card-title">Toplam Kredi Satın Alımı</h6>
-                        <h3 className="card-text text-success">
+                      <div className="card-body text-center p-2 p-md-3">
+                        <i className="bi bi-currency-dollar fs-3 fs-4-md text-success mb-1 mb-md-2"></i>
+                        <h6 className="card-title small mb-1 mb-md-2">Toplam Satın Alım</h6>
+                        <h3 className="card-text text-success mb-0 fs-5 fs-4-md">
                           {company.creditHistory ? company.creditHistory.length : 0}
                         </h3>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="col-lg-3 col-md-6">
+                  <div className="col-6 col-md-4 col-lg-3">
                     <div className="card h-100 border-warning">
-                      <div className="card-body text-center">
-                        <i className="bi bi-tag fs-1 text-warning mb-2"></i>
-                        <h6 className="card-title">Toplam Kredi Paneli</h6>
-                        <h3 className="card-text text-warning">
+                      <div className="card-body text-center p-2 p-md-3">
+                        <i className="bi bi-tag fs-3 fs-4-md text-warning mb-1 mb-md-2"></i>
+                        <h6 className="card-title small mb-1 mb-md-2">Toplam Panel</h6>
+                        <h3 className="card-text text-warning mb-0 fs-5 fs-4-md">
                           {company.creditHistory ? company.creditHistory.reduce((sum, credit) => sum + (credit.panelCount || 0), 0) : 0} Panel
                         </h3>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="col-lg-3 col-md-6">
+                  <div className="col-6 col-md-4 col-lg-3">
                     <div className="card h-100 border-primary">
-                      <div className="card-body text-center">
-                        <i className="bi bi-cash fs-1 text-primary mb-2"></i>
-                        <h6 className="card-title">Toplam Kredi Tutarı</h6>
-                        <h4 className="card-text text-primary">
+                      <div className="card-body text-center p-2 p-md-3">
+                        <i className="bi bi-cash fs-3 fs-4-md text-primary mb-1 mb-md-2"></i>
+                        <h6 className="card-title small mb-1 mb-md-2">Toplam Tutar</h6>
+                        <h4 className="card-text text-primary mb-0 fs-6 fs-5-md">
                           {formatCurrency(company.creditHistory ? company.creditHistory.reduce((sum, credit) => sum + (credit.totalAmount || 0), 0) : 0)}
                         </h4>
                       </div>
@@ -641,30 +646,30 @@ const CompanyDashboard = () => {
                   </div>
                 </div>
                 
-                {/* Credit History Table */}
+                {/* Credit History Table - Responsive */}
                 {company.creditHistory && company.creditHistory.length > 0 && (
-                  <div className="mt-4">
-                    <h6 className="fw-bold mb-3">
+                  <div className="mt-3 mt-md-4">
+                    <h6 className="fw-bold mb-2 mb-md-3 small">
                       <i className="bi bi-clock-history me-2"></i>
                       Kredi Geçmişi
                     </h6>
                     <div className="table-responsive">
-                      <table className="table custom-table">
+                      <table className="table custom-table table-sm">
                         <thead>
                           <tr>
-                            <th>Tarih</th>
-                            <th>Panel Sayısı</th>
-                            <th>Panel Ücreti</th>
-                            <th>Toplam Tutar</th>
+                            <th className="small">Tarih</th>
+                            <th className="small">Panel</th>
+                            <th className="small d-none d-md-table-cell">Ücret</th>
+                            <th className="small">Toplam</th>
                           </tr>
                         </thead>
                         <tbody>
                           {[...company.creditHistory].reverse().map((credit, index) => (
                             <tr key={index}>
-                              <td>{formatDate(credit.purchaseDate)}</td>
-                              <td>{credit.panelCount} Panel</td>
-                              <td>{formatCurrency(credit.panelPrice)}</td>
-                              <td className="fw-bold">{formatCurrency(credit.totalAmount)}</td>
+                              <td className="small">{formatDate(credit.purchaseDate)}</td>
+                              <td className="small">{credit.panelCount} Panel</td>
+                              <td className="small d-none d-md-table-cell">{formatCurrency(credit.panelPrice)}</td>
+                              <td className="fw-bold small">{formatCurrency(credit.totalAmount)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -678,83 +683,83 @@ const CompanyDashboard = () => {
         </div>
       )}
 
-      {/* Statistics Cards */}
-      <div className="row g-3 mb-4">
-        <div className="col-lg-2 col-md-4">
-          <div className="card custom-card bg-primary text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-file-earmark-text fs-1 mb-2"></i>
-              <h6 className="card-title">Toplam Anlaşma</h6>
-              <h3 className="card-text">{stats.totalAgreements}</h3>
+      {/* Statistics Cards - Responsive */}
+      <div className="row g-2 g-md-3 mb-3 mb-md-4">
+        <div className="col-6 col-sm-4 col-md-3 col-lg-2">
+          <div className="card custom-card bg-primary text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-file-earmark-text fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Toplam Anlaşma</h6>
+              <h3 className="card-text mb-0 fs-5 fs-4-md">{stats.totalAgreements}</h3>
             </div>
           </div>
         </div>
-        <div className="col-lg-2 col-md-4">
-          <div className="card custom-card bg-success text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-check-circle fs-1 mb-2"></i>
-              <h6 className="card-title">Aktif Anlaşma</h6>
-              <h3 className="card-text">{stats.activeAgreements}</h3>
+        <div className="col-6 col-sm-4 col-md-3 col-lg-2">
+          <div className="card custom-card bg-success text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-check-circle fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Aktif Anlaşma</h6>
+              <h3 className="card-text mb-0 fs-5 fs-4-md">{stats.activeAgreements}</h3>
             </div>
           </div>
         </div>
-        <div className="col-lg-2 col-md-4">
-          <div className="card custom-card bg-info text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-building fs-1 mb-2"></i>
-              <h6 className="card-title">Toplam Site</h6>
-              <h3 className="card-text">{stats.totalSites}</h3>
+        <div className="col-6 col-sm-4 col-md-3 col-lg-2">
+          <div className="card custom-card bg-info text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-building fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Toplam Site</h6>
+              <h3 className="card-text mb-0 fs-5 fs-4-md">{stats.totalSites}</h3>
             </div>
           </div>
         </div>
-        <div className="col-lg-3 col-md-6">
-          <div className="card custom-card bg-warning text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-tv fs-1 mb-2"></i>
-              <h6 className="card-title">Toplam Panel</h6>
-              <h3 className="card-text">{stats.totalPanels}</h3>
+        <div className="col-6 col-sm-6 col-md-4 col-lg-3">
+          <div className="card custom-card bg-warning text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-tv fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Toplam Panel</h6>
+              <h3 className="card-text mb-0 fs-5 fs-4-md">{stats.totalPanels}</h3>
             </div>
           </div>
         </div>
-        <div className="col-lg-3 col-md-6">
-          <div className="card custom-card bg-success text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-currency-dollar fs-1 mb-2"></i>
-              <h6 className="card-title">Toplam Tutar</h6>
-              <h4 className="card-text">{formatCurrency(stats.totalRevenue)}</h4>
+        <div className="col-12 col-sm-6 col-md-4 col-lg-3">
+          <div className="card custom-card bg-success text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-currency-dollar fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Toplam Tutar</h6>
+              <h4 className="card-text mb-0 fs-6 fs-5-md">{formatCurrency(stats.totalRevenue)}</h4>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Payment Status Cards */}
-      <div className="row g-3 mb-4">
-        <div className="col-lg-3 col-md-6">
-          <div className="card custom-card bg-success text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-check-circle fs-1 mb-2"></i>
-              <h6 className="card-title">Ödenmiş Anlaşma</h6>
-              <h3 className="card-text">{stats.paidAgreements}</h3>
-              <p className="card-text small">{formatCurrency(stats.paidAmount)}</p>
+      {/* Payment Status Cards - Responsive */}
+      <div className="row g-2 g-md-3 mb-3 mb-md-4">
+        <div className="col-6 col-md-4 col-lg-3">
+          <div className="card custom-card bg-success text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-check-circle fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Ödenmiş</h6>
+              <h3 className="card-text mb-0 fs-5 fs-4-md">{stats.paidAgreements}</h3>
+              <p className="card-text small mb-0">{formatCurrency(stats.paidAmount)}</p>
             </div>
           </div>
         </div>
-        <div className="col-lg-3 col-md-6">
-          <div className="card custom-card bg-warning text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-clock fs-1 mb-2"></i>
-              <h6 className="card-title">Ödenmemiş Anlaşma</h6>
-              <h3 className="card-text">{stats.unpaidAgreements}</h3>
-              <p className="card-text small">{formatCurrency(stats.unpaidAmount)}</p>
+        <div className="col-6 col-md-4 col-lg-3">
+          <div className="card custom-card bg-warning text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-clock fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Ödenmemiş</h6>
+              <h3 className="card-text mb-0 fs-5 fs-4-md">{stats.unpaidAgreements}</h3>
+              <p className="card-text small mb-0">{formatCurrency(stats.unpaidAmount)}</p>
             </div>
           </div>
         </div>
-        <div className="col-lg-3 col-md-6">
-          <div className="card custom-card bg-info text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-percent fs-1 mb-2"></i>
-              <h6 className="card-title">Ödeme Oranı</h6>
-              <h3 className="card-text">
+        <div className="col-6 col-md-4 col-lg-3">
+          <div className="card custom-card bg-info text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-percent fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Ödeme Oranı</h6>
+              <h3 className="card-text mb-0 fs-5 fs-4-md">
                 {stats.totalAgreements > 0 
                   ? Math.round((stats.paidAgreements / stats.totalAgreements) * 100) 
                   : 0}%
@@ -762,28 +767,28 @@ const CompanyDashboard = () => {
             </div>
           </div>
         </div>
-        <div className="col-lg-3 col-md-6">
-          <div className="card custom-card bg-primary text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-arrow-up-circle fs-1 mb-2"></i>
-              <h6 className="card-title">Bekleyen Ödeme</h6>
-              <h3 className="card-text">{formatCurrency(stats.unpaidAmount)}</h3>
+        <div className="col-6 col-md-4 col-lg-3">
+          <div className="card custom-card bg-primary text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-arrow-up-circle fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Bekleyen</h6>
+              <h3 className="card-text mb-0 fs-5 fs-4-md">{formatCurrency(stats.unpaidAmount)}</h3>
             </div>
           </div>
         </div>
       </div>
 
-       {/* Agreement History Section */}
-       <div className="row g-4 mb-4">
-         <div className="col-md-12">
+       {/* Agreement History Section - Responsive */}
+       <div className="row g-2 g-md-3 g-lg-4 mb-3 mb-md-4">
+         <div className="col-12">
            <div className="card custom-card shadow-sm">
              <div 
-               className="card-header bg-primary-subtle cursor-pointer"
+               className="card-header bg-primary-subtle cursor-pointer p-2 p-md-3"
                onClick={() => setShowAgreementHistory(!showAgreementHistory)}
                style={{ cursor: 'pointer' }}
              >
                <div className="d-flex justify-content-between align-items-center">
-                   <h5 className="mb-0 fw-bold">
+                   <h5 className="mb-0 fw-bold small">
                      <i className="bi bi-file-earmark-text me-2"></i>
                      Anlaşma Geçmişi
                    </h5>
@@ -791,21 +796,21 @@ const CompanyDashboard = () => {
                </div>
              </div>
              {showAgreementHistory && (
-               <div className="card-body">
-                 {/* Date Filter */}
-                 <div className="row mb-3">
-                   <div className="col-md-4">
-                     <label className="form-label">Tarihe Göre Filtrele:</label>
+               <div className="card-body p-2 p-md-3">
+                 {/* Date Filter - Responsive */}
+                 <div className="row g-2 mb-3">
+                   <div className="col-12 col-md-4">
+                     <label className="form-label small">Tarihe Göre Filtrele:</label>
                      <input
                        type="date"
-                       className="form-control"
+                       className="form-control form-control-sm"
                        value={selectedDate}
                        onChange={(e) => handleDateFilterChange(e.target.value)}
                      />
                    </div>
-                   <div className="col-md-2 d-flex align-items-end">
+                   <div className="col-12 col-md-2 d-flex align-items-end">
                      <button
-                       className="btn btn-outline-secondary"
+                       className="btn btn-outline-secondary btn-sm w-100"
                        onClick={() => {
                          setSelectedDate('');
                          setFilteredAgreements(agreements);
@@ -816,29 +821,29 @@ const CompanyDashboard = () => {
                    </div>
                  </div>
 
-                 {/* Agreements Table */}
+                 {/* Agreements Table - Responsive */}
                  {filteredAgreements.length === 0 ? (
                    <div className="text-center py-4">
                      <i className="bi bi-file-earmark text-muted fs-1"></i>
-                     <p className="text-muted mt-2">
+                     <p className="text-muted mt-2 small">
                        {selectedDate ? 'Seçilen tarihte anlaşma bulunamadı.' : 'Henüz anlaşma bulunmamaktadır.'}
                      </p>
                    </div>
                  ) : (
                    <div className="table-responsive">
-                     <table className="table custom-table">
+                     <table className="table custom-table table-sm">
                        <thead>
                          <tr>
-                           <th>Başlangıç Tarihi</th>
-                           <th>Bitiş Tarihi</th>
-                           <th>Süre (Hafta)</th>
-                           <th>Toplam Panel</th>
-                           <th>Birim Fiyat (₺)</th>
-                           <th>Toplam Tutar</th>
-                           <th>Ödenen Tutar</th>
-                           <th>Kalan Tutar</th>
-                           <th>Durum</th>
-                           <th>İşlemler</th>
+                           <th className="small">Başlangıç</th>
+                           <th className="small d-none d-md-table-cell">Bitiş</th>
+                           <th className="small d-none d-lg-table-cell">Süre</th>
+                           <th className="small">Panel</th>
+                           <th className="small d-none d-lg-table-cell">Birim</th>
+                           <th className="small">Toplam</th>
+                           <th className="small d-none d-md-table-cell">Ödenen</th>
+                           <th className="small d-none d-md-table-cell">Kalan</th>
+                           <th className="small">Durum</th>
+                           <th className="small">İşlem</th>
                          </tr>
                        </thead>
                        <tbody>
@@ -859,20 +864,26 @@ const CompanyDashboard = () => {
                            
                            return (
                              <tr key={agreement.id}>
-                               <td>{formatDate(agreement.startDate)}</td>
-                               <td>{formatDate(agreement.endDate)}</td>
-                               <td>{agreement.totalWeeks}</td>
-                               <td>{totalPanels}</td>
-                               <td>{formatCurrency(agreement.weeklyRatePerPanel)}</td>
-                               <td className="fw-bold">{formatCurrency(totalAmount)}</td>
-                               <td>
+                               <td className="small">
+                                 <div className="d-md-none">
+                                   <div>{formatDate(agreement.startDate)}</div>
+                                   <small className="text-muted">{formatDate(agreement.endDate)}</small>
+                                 </div>
+                                 <span className="d-none d-md-inline">{formatDate(agreement.startDate)}</span>
+                               </td>
+                               <td className="small d-none d-md-table-cell">{formatDate(agreement.endDate)}</td>
+                               <td className="small d-none d-lg-table-cell">{agreement.totalWeeks} Hafta</td>
+                               <td className="small">{totalPanels}</td>
+                               <td className="small d-none d-lg-table-cell">{formatCurrency(agreement.weeklyRatePerPanel)}</td>
+                               <td className="fw-bold small">{formatCurrency(totalAmount)}</td>
+                               <td className="small d-none d-md-table-cell">
                                  {totalPaid > 0 ? (
                                    <span className="text-success fw-bold">{formatCurrency(totalPaid)}</span>
                                  ) : (
-                                   <span className="text-muted">Ödeme yapılmadı</span>
+                                   <span className="text-muted">-</span>
                                  )}
                                </td>
-                               <td>
+                               <td className="small d-none d-md-table-cell">
                                  {remainingAmount > 0.01 ? (
                                    <span className="text-danger fw-bold">{formatCurrency(remainingAmount)}</span>
                                  ) : (
@@ -880,7 +891,7 @@ const CompanyDashboard = () => {
                                  )}
                                </td>
                                <td>
-                                 <span className={`badge ${
+                                 <span className={`badge small ${
                                    agreement.status === 'active' 
                                      ? 'bg-success-subtle text-success-emphasis' 
                                      : 'bg-danger-subtle text-danger-emphasis'
@@ -913,13 +924,13 @@ const CompanyDashboard = () => {
          </div>
        </div>
 
-       {/* Active Agreement Panels */}
+       {/* Active Agreement Panels - Responsive */}
        {companyAgreements.filter(a => a.status === 'active').length > 0 && (
-         <div className="row g-4 mb-4">
-           <div className="col-md-12">
+         <div className="row g-2 g-md-3 g-lg-4 mb-3 mb-md-4">
+           <div className="col-12">
              <div className="card custom-card shadow-sm">
-               <div className="card-header bg-success-subtle">
-                 <h5 className="mb-0 fw-bold">
+               <div className="card-header bg-success-subtle p-2 p-md-3">
+                 <h5 className="mb-0 fw-bold small">
                    <i className="bi bi-tv me-2"></i>
                    Aktif Anlaşma Panelleri
                  </h5>

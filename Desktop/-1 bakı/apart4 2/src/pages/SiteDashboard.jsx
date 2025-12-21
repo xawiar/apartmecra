@@ -892,33 +892,34 @@ const SiteDashboard = () => {
   }
 
   return (
-    <div className="container-fluid">
-      {/* Site Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 className="h3 fw-bold">{siteData.site?.name || 'Site Panosu'}</h2>
-          <p className="text-muted mb-0">Site ID: {siteData.site?.id || siteId}</p>
+    <div className="container-fluid px-2 px-md-3 px-lg-4">
+      {/* Site Header - Responsive */}
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 mb-md-4 gap-2">
+        <div className="flex-grow-1">
+          <h2 className="h3 h4-md fw-bold mb-1">{siteData.site?.name || 'Site Panosu'}</h2>
+          <p className="text-muted mb-0 small">Site ID: {siteData.site?.id || siteId}</p>
         </div>
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex flex-wrap align-items-center gap-2 w-100 w-md-auto">
           <button 
-            className="btn btn-outline-primary"
+            className="btn btn-outline-primary btn-sm"
             onClick={handleEditSite}
             title="Site Bilgilerini Düzenle"
           >
             <i className="bi bi-pencil me-1"></i>
-            Bilgilerimi Düzenle
+            <span className="d-none d-sm-inline">Bilgilerimi Düzenle</span>
+            <span className="d-sm-none">Düzenle</span>
           </button>
           {/* Dropdown Menu */}
           <div className="dropdown">
             <button
-              className="btn btn-outline-primary dropdown-toggle"
+              className="btn btn-outline-primary btn-sm dropdown-toggle"
               type="button"
               id="siteMenuDropdown"
               data-bs-toggle="dropdown"
               aria-expanded="false"
             >
-              <i className="bi bi-list me-2"></i>
-              Menü
+              <i className="bi bi-list me-1 me-md-2"></i>
+              <span className="d-none d-sm-inline">Menü</span>
             </button>
             <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="siteMenuDropdown">
               <li>
@@ -930,7 +931,7 @@ const SiteDashboard = () => {
             </ul>
           </div>
           <button 
-            className="btn btn-outline-danger"
+            className="btn btn-outline-danger btn-sm"
             onClick={async () => {
               // Stop keep-alive mechanism
               const { cleanupKeepAlive } = await import('../utils/keepAlive');
@@ -942,7 +943,8 @@ const SiteDashboard = () => {
             }}
           >
             <i className="bi bi-box-arrow-right me-1"></i>
-            Çıkış Yap
+            <span className="d-none d-sm-inline">Çıkış Yap</span>
+            <span className="d-sm-none">Çıkış</span>
           </button>
         </div>
       </div>
@@ -1046,50 +1048,50 @@ const SiteDashboard = () => {
         </div>
       )}
 
-      {/* Statistics Cards */}
-      <div className="row g-3 mb-4">
-        <div className="col-lg-2 col-md-4">
-          <div className="card custom-card bg-primary text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-building fs-1 mb-2"></i>
-              <h6 className="card-title">Toplam Panel</h6>
-              <h3 className="card-text">{stats.totalPanels}</h3>
+      {/* Statistics Cards - Responsive */}
+      <div className="row g-2 g-md-3 mb-3 mb-md-4">
+        <div className="col-6 col-sm-4 col-md-3 col-lg-2">
+          <div className="card custom-card bg-primary text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-building fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Toplam Panel</h6>
+              <h3 className="card-text mb-0 fs-5 fs-4-md">{stats.totalPanels}</h3>
             </div>
           </div>
         </div>
-        <div className="col-lg-2 col-md-4">
-          <div className="card custom-card bg-success text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-tv fs-1 mb-2"></i>
-              <h6 className="card-title">Kullanılan Panel</h6>
-              <h3 className="card-text">{stats.usedPanels}</h3>
+        <div className="col-6 col-sm-4 col-md-3 col-lg-2">
+          <div className="card custom-card bg-success text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-tv fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Kullanılan Panel</h6>
+              <h3 className="card-text mb-0 fs-5 fs-4-md">{stats.usedPanels}</h3>
             </div>
           </div>
         </div>
-        <div className="col-lg-2 col-md-4">
-          <div className="card custom-card bg-info text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-file-earmark-text fs-1 mb-2"></i>
-              <h6 className="card-title">Aktif Anlaşma</h6>
-              <h3 className="card-text">{stats.activeAgreements}</h3>
+        <div className="col-6 col-sm-4 col-md-3 col-lg-2">
+          <div className="card custom-card bg-info text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-file-earmark-text fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Aktif Anlaşma</h6>
+              <h3 className="card-text mb-0 fs-5 fs-4-md">{stats.activeAgreements}</h3>
             </div>
           </div>
         </div>
-        <div className="col-lg-3 col-md-6">
-          <div className="card custom-card bg-warning text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-currency-dollar fs-1 mb-2"></i>
-              <h6 className="card-title">Toplam Gelir</h6>
-              <h4 className="card-text">{formatCurrency(stats.totalRevenue)}</h4>
+        <div className="col-6 col-sm-6 col-md-4 col-lg-3">
+          <div className="card custom-card bg-warning text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-currency-dollar fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Toplam Gelir</h6>
+              <h4 className="card-text mb-0 fs-6 fs-5-md">{formatCurrency(stats.totalRevenue)}</h4>
             </div>
           </div>
         </div>
-        <div className="col-lg-3 col-md-6">
-          <div className="card custom-card bg-success text-white">
-            <div className="card-body text-center">
-              <i className="bi bi-arrow-down-circle fs-1 mb-2"></i>
-              <h6 className="card-title">Gelecek Ödeme</h6>
-              <h3 className="card-text">{stats.futurePayments}</h3>
+        <div className="col-12 col-sm-6 col-md-4 col-lg-3">
+          <div className="card custom-card bg-success text-white h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <i className="bi bi-arrow-down-circle fs-3 fs-4-md mb-1 mb-md-2"></i>
+              <h6 className="card-title small mb-1 mb-md-2">Gelecek Ödeme</h6>
+              <h3 className="card-text mb-0 fs-5 fs-4-md">{stats.futurePayments}</h3>
               <div className="small">{formatCurrency(stats.totalFutureAmount)}</div>
             </div>
           </div>
@@ -1097,18 +1099,18 @@ const SiteDashboard = () => {
       </div>
 
 
-      {/* Site Panels - Show all panels for this site */}
+      {/* Site Panels - Show all panels for this site - Responsive */}
       {siteData.site && (
-        <div className="row g-4 mb-4">
-          <div className="col-md-12">
+        <div className="row g-2 g-md-3 g-lg-4 mb-3 mb-md-4">
+          <div className="col-12">
             <div className="card custom-card shadow-sm">
               <div className="card-header bg-primary-subtle">
-                <h5 className="mb-0 fw-bold">
+                <h5 className="mb-0 fw-bold small">
                   <i className="bi bi-grid-3x3-gap me-2"></i>
                   Site Panelleri
                 </h5>
               </div>
-              <div className="card-body">
+              <div className="card-body p-2 p-md-3">
                 {(() => {
                   const site = siteData.site;
                   
@@ -1172,7 +1174,7 @@ const SiteDashboard = () => {
                   const allBlockKeys = blockLabels.map(label => `site-${siteId}-${label}`);
                   
                   return (
-                    <div className="row g-3">
+                    <div className="row g-2 g-md-3">
                       {allBlockKeys.map((blockId) => {
                         const blockLabel = blockId.split('-')[2];
                         const usedPanels = allPanelSelections[blockId] || [];
@@ -1195,22 +1197,23 @@ const SiteDashboard = () => {
                         });
                         
                         return (
-                          <div key={blockId} className="col-md-6 col-lg-4">
-                            <div className="card border-info">
-                              <div className="card-header bg-info-subtle">
-                                <h6 className="mb-0 fw-bold">
+                          <div key={blockId} className="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3">
+                            <div className="card border-info h-100">
+                              <div className="card-header bg-info-subtle p-2 p-md-3">
+                                <h6 className="mb-0 fw-bold small">
                                   <i className="bi bi-grid-3x3-gap me-1"></i>
                                   {blockLabel} Blok
                                   {isBlockUsed && agreementForBlock && (
-                                    <span className="badge bg-primary ms-2">
-                                      {getCompanyName(agreementForBlock.companyId)}
+                                    <span className="badge bg-primary ms-2 small">
+                                      <span className="d-none d-md-inline">{getCompanyName(agreementForBlock.companyId)}</span>
+                                      <span className="d-md-none">Firma</span>
                                     </span>
                                   )}
                                 </h6>
                               </div>
-                              <div className="card-body">
+                              <div className="card-body p-2 p-md-3">
                                 <div className="small text-muted mb-2">
-                                  Kullanılan Paneller: {usedPanels.length} / {panelsPerBlock}
+                                  Kullanılan: {usedPanels.length} / {panelsPerBlock}
                                 </div>
                                 <div className="d-flex flex-wrap gap-1">
                                   {Array.from({ length: panelsPerBlock }, (_, panelIndex) => {
@@ -1241,9 +1244,9 @@ const SiteDashboard = () => {
                                           isPanelUsed ? 'bg-primary text-white' : 'bg-light text-muted'
                                         } border rounded position-relative`}
                                         style={{
-                                          width: panelImage ? '90px' : '60px',
-                                          height: panelImage ? '120px' : '80px',
-                                          fontSize: '8px',
+                                          width: panelImage ? '70px' : '50px',
+                                          height: panelImage ? '100px' : '70px',
+                                          fontSize: '7px',
                                           fontWeight: 'bold',
                                           flexDirection: 'column',
                                           cursor: 'default',
@@ -1251,8 +1254,9 @@ const SiteDashboard = () => {
                                           backgroundSize: 'cover',
                                           backgroundPosition: 'center',
                                           backgroundRepeat: 'no-repeat',
-                                          minHeight: panelImage ? '120px' : '80px'
+                                          minHeight: panelImage ? '100px' : '70px'
                                         }}
+                                        className="panel-box"
                                         title={isPanelUsed ? `Panel ${fullPanelNumber} - ${agreementForBlock ? getCompanyName(agreementForBlock.companyId) : 'Kullanılıyor'}${panelImage ? ' (Fotoğraf var)' : ''}` : `Panel ${panelId} - Boş`}
                                       >
                                         {!panelImage && (
@@ -1297,59 +1301,62 @@ const SiteDashboard = () => {
         </div>
       )}
 
-      {/* Agreements and Payments */}
-      <div className="row g-4">
-        <div className="col-md-12">
+      {/* Agreements and Payments - Responsive */}
+      <div className="row g-2 g-md-3 g-lg-4">
+        <div className="col-12">
           <div className="card custom-card shadow-sm">
-            <div className="card-header bg-info-subtle">
-              <div className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0 fw-bold">
+            <div className="card-header bg-info-subtle p-2 p-md-3">
+              <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                <h5 className="mb-0 fw-bold small">
                   <i className="bi bi-file-earmark-text me-2"></i>
                   Anlaşmalar ve Ödemeler
                 </h5>
-                <div className="d-flex gap-2">
+                <div className="d-flex flex-wrap gap-2 w-100 w-md-auto">
                   <input
                     type="date"
                     className="form-control form-control-sm"
+                    style={{ minWidth: '140px' }}
                     value={paymentFilter.dateFrom}
                     onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                    placeholder="Başlangıç Tarihi"
+                    placeholder="Başlangıç"
                   />
                   <input
                     type="date"
                     className="form-control form-control-sm"
+                    style={{ minWidth: '140px' }}
                     value={paymentFilter.dateTo}
                     onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                    placeholder="Bitiş Tarihi"
+                    placeholder="Bitiş"
                   />
                   <button 
                     className="btn btn-sm btn-outline-secondary"
                     onClick={clearFilters}
+                    title="Filtreleri Temizle"
                   >
                     <i className="bi bi-x-circle"></i>
                   </button>
                 </div>
               </div>
             </div>
-            <div className="card-body">
+            <div className="card-body p-2 p-md-3">
               {getFilteredAgreements().length === 0 ? (
                 <div className="text-center py-4">
                   <i className="bi bi-file-earmark text-muted fs-1"></i>
-                  <p className="text-muted mt-2">Seçilen kriterlere uygun anlaşma bulunmamaktadır.</p>
+                  <p className="text-muted mt-2 small">Seçilen kriterlere uygun anlaşma bulunmamaktadır.</p>
                 </div>
               ) : (
                 <div className="table-responsive">
-                  <table className="table custom-table">
+                  <table className="table custom-table table-sm">
                     <thead>
                       <tr>
-                        <th>Firma</th>
-                        <th>Başlangıç</th>
-                        <th>Bitiş</th>
-                        <th>Panel Sayısı</th>
-                        <th>Haftalık Ücret</th>
-                        <th>Toplam Tutar</th>
-                        <th>Durum</th>
-                        <th>Ödeme</th>
+                        <th className="small">Firma</th>
+                        <th className="small d-none d-md-table-cell">Başlangıç</th>
+                        <th className="small d-none d-md-table-cell">Bitiş</th>
+                        <th className="small">Panel</th>
+                        <th className="small d-none d-lg-table-cell">Haftalık</th>
+                        <th className="small">Toplam</th>
+                        <th className="small">Durum</th>
+                        <th className="small">Ödeme</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1357,16 +1364,24 @@ const SiteDashboard = () => {
                         const isPaid = agreement.paymentReceived || agreement.creditPaymentReceived;
                         return (
                           <tr key={agreement.id}>
-                            <td className="fw-medium">{getCompanyName(agreement.companyId)}</td>
-                            <td>{formatDate(agreement.startDate)}</td>
-                            <td>{formatDate(agreement.endDate)}</td>
-                            <td>{agreement.sitePanelCounts?.[siteId] || 0}</td>
-                            <td>{formatCurrency(agreement.weeklyRatePerPanel || 0)}</td>
-                            <td className={isPaid ? 'text-success fw-bold' : 'text-danger fw-bold'}>
+                            <td className="fw-medium small">
+                              <div className="d-md-none">
+                                <div>{getCompanyName(agreement.companyId)}</div>
+                                <small className="text-muted">
+                                  {formatDate(agreement.startDate)} - {formatDate(agreement.endDate)}
+                                </small>
+                              </div>
+                              <span className="d-none d-md-inline">{getCompanyName(agreement.companyId)}</span>
+                            </td>
+                            <td className="small d-none d-md-table-cell">{formatDate(agreement.startDate)}</td>
+                            <td className="small d-none d-md-table-cell">{formatDate(agreement.endDate)}</td>
+                            <td className="small">{agreement.sitePanelCounts?.[siteId] || 0}</td>
+                            <td className="small d-none d-lg-table-cell">{formatCurrency(agreement.weeklyRatePerPanel || 0)}</td>
+                            <td className={`small ${isPaid ? 'text-success fw-bold' : 'text-danger fw-bold'}`}>
                               {formatCurrency(agreement.totalAmount || 0)}
                             </td>
                             <td>
-                              <span className={`badge ${
+                              <span className={`badge small ${
                                 agreement.status === 'active' 
                                   ? 'bg-success-subtle text-success-emphasis' 
                                   : 'bg-danger-subtle text-danger-emphasis'
@@ -1375,7 +1390,7 @@ const SiteDashboard = () => {
                               </span>
                             </td>
                             <td>
-                              <span className={`badge ${
+                              <span className={`badge small ${
                                 isPaid
                                   ? 'bg-success-subtle text-success-emphasis' 
                                   : 'bg-warning-subtle text-warning-emphasis'
@@ -1416,17 +1431,17 @@ const SiteDashboard = () => {
                 .length === 0 ? (
                 <div className="text-center py-4">
                   <i className="bi bi-clock-history text-muted fs-1"></i>
-                  <p className="text-muted mt-2">Henüz ödeme bulunmamaktadır.</p>
+                  <p className="text-muted mt-2 small">Henüz ödeme bulunmamaktadır.</p>
                 </div>
               ) : (
                 <div className="table-responsive">
-                  <table className="table custom-table">
+                  <table className="table custom-table table-sm">
                     <thead>
                       <tr>
-                        <th>Tarih</th>
-                        <th>Tür</th>
-                        <th>Açıklama</th>
-                        <th>Tutar</th>
+                        <th className="small">Tarih</th>
+                        <th className="small">Tür</th>
+                        <th className="small d-none d-md-table-cell">Açıklama</th>
+                        <th className="small">Tutar</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1463,9 +1478,9 @@ const SiteDashboard = () => {
                           
                           return (
                             <tr key={transaction.id}>
-                              <td>{formatDate(transaction.date)}</td>
+                              <td className="small">{formatDate(transaction.date)}</td>
                               <td>
-                                <span className={`badge ${
+                                <span className={`badge small ${
                                   transaction.type === 'income' 
                                     ? 'bg-success-subtle text-success-emphasis' 
                                     : 'bg-primary-subtle text-primary-emphasis'
@@ -1473,8 +1488,8 @@ const SiteDashboard = () => {
                                   {transactionType}
                                 </span>
                               </td>
-                              <td>{description}</td>
-                              <td className={amountClass}>
+                              <td className="small d-none d-md-table-cell">{description}</td>
+                              <td className={`small ${amountClass}`}>
                                 {formatCurrency(Math.abs(transaction.amount))}
                               </td>
                             </tr>

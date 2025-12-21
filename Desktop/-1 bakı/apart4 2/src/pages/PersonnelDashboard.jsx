@@ -850,13 +850,13 @@ const PersonnelDashboard = () => {
   const activeAndFutureAgreements = getActiveAndFutureAgreements();
 
   return (
-    <div className="container-fluid">
+    <div className="container-fluid px-2 px-md-3 px-lg-4">
       <div className="row">
-        {/* Left Sidebar - Sites List */}
-        <div className={`col-md-3 ${sidebarOpen ? '' : 'd-none'}`}>
+        {/* Left Sidebar - Sites List - Responsive */}
+        <div className={`col-12 col-md-4 col-lg-3 ${sidebarOpen ? '' : 'd-none d-md-none'}`}>
           <div className="card custom-card shadow-sm sticky-top" style={{ top: '20px', maxHeight: 'calc(100vh - 40px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <div className="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
-              <h5 className="mb-0 fw-bold">
+            <div className="card-header bg-primary-subtle d-flex justify-content-between align-items-center p-2 p-md-3">
+              <h5 className="mb-0 fw-bold small">
                 <i className="bi bi-building me-2"></i>
                 Siteler ({sites.length})
               </h5>
@@ -869,7 +869,7 @@ const PersonnelDashboard = () => {
                   <i className="bi bi-map"></i>
                 </button>
                 <button
-                  className="btn btn-sm btn-outline-secondary"
+                  className="btn btn-sm btn-outline-secondary d-none d-md-inline-block"
                   onClick={() => setSidebarOpen(false)}
                   title="Menüyü Kapat"
                 >
@@ -954,12 +954,12 @@ const PersonnelDashboard = () => {
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className={sidebarOpen ? 'col-md-9' : 'col-md-12'}>
+        {/* Main Content - Responsive */}
+        <div className={sidebarOpen ? 'col-12 col-md-8 col-lg-9' : 'col-12'}>
           {/* Sidebar Toggle Button (when closed) */}
           {!sidebarOpen && (
             <button
-              className="btn btn-outline-primary mb-3"
+              className="btn btn-outline-primary btn-sm mb-3"
               onClick={() => setSidebarOpen(true)}
             >
               <i className="bi bi-list me-2"></i>
@@ -967,157 +967,162 @@ const PersonnelDashboard = () => {
             </button>
           )}
 
-      {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 className="h3 fw-bold">Personel Panosu</h2>
-          <p className="text-muted mb-0">Tüm aktif ve gelecek anlaşma panelleri</p>
+      {/* Header - Responsive */}
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 mb-md-4 gap-2">
+        <div className="flex-grow-1">
+          <h2 className="h3 h4-md fw-bold mb-1">Personel Panosu</h2>
+          <p className="text-muted mb-0 small">Tüm aktif ve gelecek anlaşma panelleri</p>
         </div>
-        <div className="text-end">
+        <div className="d-flex flex-wrap gap-2 w-100 w-md-auto">
           <button
-            className="btn btn-outline-warning me-2"
+            className="btn btn-outline-warning btn-sm"
             onClick={handleResetAllPanels}
           >
             <i className="bi bi-trash3 me-1"></i>
-            Tüm Panelleri Sıfırla
+            <span className="d-none d-sm-inline">Tüm Panelleri Sıfırla</span>
+            <span className="d-sm-none">Sıfırla</span>
           </button>
           <button 
-            className="btn btn-outline-danger"
-            onClick={() => {
+            className="btn btn-outline-danger btn-sm"
+            onClick={async () => {
+              const { cleanupKeepAlive } = await import('../utils/keepAlive');
+              await cleanupKeepAlive();
+              
               localStorage.removeItem('token');
               localStorage.removeItem('user');
               navigate('/');
             }}
           >
             <i className="bi bi-box-arrow-right me-1"></i>
-            Çıkış Yap
+            <span className="d-none d-sm-inline">Çıkış Yap</span>
+            <span className="d-sm-none">Çıkış</span>
           </button>
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="row g-4 mb-4">
-        <div className="col-lg-2 col-md-4 col-sm-6">
-          <div className="card custom-card shadow-sm border-0">
-            <div className="card-body text-center">
-              <div className="d-flex align-items-center justify-content-center mb-3">
-                <div className="bg-primary bg-opacity-10 rounded-circle p-3">
-                  <i className="bi bi-file-earmark-text text-primary fs-4"></i>
+      {/* Statistics Cards - Responsive */}
+      <div className="row g-2 g-md-3 g-lg-4 mb-3 mb-md-4">
+        <div className="col-6 col-sm-4 col-md-4 col-lg-2">
+          <div className="card custom-card shadow-sm border-0 h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <div className="d-flex align-items-center justify-content-center mb-2 mb-md-3">
+                <div className="bg-primary bg-opacity-10 rounded-circle p-2 p-md-3">
+                  <i className="bi bi-file-earmark-text text-primary fs-5 fs-4-md"></i>
                 </div>
               </div>
-              <h3 className="fw-bold text-primary mb-1">{filteredAgreements.length}</h3>
-              <p className="text-muted mb-0">Filtrelenmiş Anlaşma</p>
+              <h3 className="fw-bold text-primary mb-1 fs-5 fs-4-md">{filteredAgreements.length}</h3>
+              <p className="text-muted mb-0 small">Filtrelenmiş Anlaşma</p>
             </div>
           </div>
         </div>
         
-        <div className="col-lg-2 col-md-4 col-sm-6">
-          <div className="card custom-card shadow-sm border-0">
-            <div className="card-body text-center">
-              <div className="d-flex align-items-center justify-content-center mb-3">
-                <div className="bg-success bg-opacity-10 rounded-circle p-3">
-                  <i className="bi bi-check-circle text-success fs-4"></i>
+        <div className="col-6 col-sm-4 col-md-4 col-lg-2">
+          <div className="card custom-card shadow-sm border-0 h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <div className="d-flex align-items-center justify-content-center mb-2 mb-md-3">
+                <div className="bg-success bg-opacity-10 rounded-circle p-2 p-md-3">
+                  <i className="bi bi-check-circle text-success fs-5 fs-4-md"></i>
                 </div>
               </div>
-              <h3 className="fw-bold text-success mb-1">
+              <h3 className="fw-bold text-success mb-1 fs-5 fs-4-md">
                 {agreements.filter(a => a.status === 'active').length}
               </h3>
-              <p className="text-muted mb-0">Aktif Anlaşma</p>
+              <p className="text-muted mb-0 small">Aktif Anlaşma</p>
             </div>
           </div>
         </div>
         
-        <div className="col-lg-2 col-md-4 col-sm-6">
-          <div className="card custom-card shadow-sm border-0">
-            <div className="card-body text-center">
-              <div className="d-flex align-items-center justify-content-center mb-3">
-                <div className="bg-info bg-opacity-10 rounded-circle p-3">
-                  <i className="bi bi-building text-info fs-4"></i>
+        <div className="col-6 col-sm-4 col-md-4 col-lg-2">
+          <div className="card custom-card shadow-sm border-0 h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <div className="d-flex align-items-center justify-content-center mb-2 mb-md-3">
+                <div className="bg-info bg-opacity-10 rounded-circle p-2 p-md-3">
+                  <i className="bi bi-building text-info fs-5 fs-4-md"></i>
                 </div>
               </div>
-              <h3 className="fw-bold text-info mb-1">
+              <h3 className="fw-bold text-info mb-1 fs-5 fs-4-md">
                 {sites.filter(site => site.siteType !== 'business_center').length}
               </h3>
-              <p className="text-muted mb-0">Siteler</p>
+              <p className="text-muted mb-0 small">Siteler</p>
             </div>
           </div>
         </div>
         
-        <div className="col-lg-2 col-md-4 col-sm-6">
-          <div className="card custom-card shadow-sm border-0">
-            <div className="card-body text-center">
-              <div className="d-flex align-items-center justify-content-center mb-3">
-                <div className="bg-secondary bg-opacity-10 rounded-circle p-3">
-                  <i className="bi bi-briefcase text-secondary fs-4"></i>
+        <div className="col-6 col-sm-4 col-md-4 col-lg-2">
+          <div className="card custom-card shadow-sm border-0 h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <div className="d-flex align-items-center justify-content-center mb-2 mb-md-3">
+                <div className="bg-secondary bg-opacity-10 rounded-circle p-2 p-md-3">
+                  <i className="bi bi-briefcase text-secondary fs-5 fs-4-md"></i>
                 </div>
               </div>
-              <h3 className="fw-bold text-secondary mb-1">
+              <h3 className="fw-bold text-secondary mb-1 fs-5 fs-4-md">
                 {sites.filter(site => site.siteType === 'business_center').length}
               </h3>
-              <p className="text-muted mb-0">İş Merkezleri</p>
+              <p className="text-muted mb-0 small">İş Merkezleri</p>
             </div>
           </div>
         </div>
         
-        <div className="col-lg-2 col-md-4 col-sm-6">
-          <div className="card custom-card shadow-sm border-0">
-            <div className="card-body text-center">
-              <div className="d-flex align-items-center justify-content-center mb-3">
-                <div className="bg-warning bg-opacity-10 rounded-circle p-3">
-                  <i className="bi bi-grid-3x3-gap text-warning fs-4"></i>
+        <div className="col-6 col-sm-4 col-md-4 col-lg-2">
+          <div className="card custom-card shadow-sm border-0 h-100">
+            <div className="card-body text-center p-2 p-md-3">
+              <div className="d-flex align-items-center justify-content-center mb-2 mb-md-3">
+                <div className="bg-warning bg-opacity-10 rounded-circle p-2 p-md-3">
+                  <i className="bi bi-grid-3x3-gap text-warning fs-5 fs-4-md"></i>
                 </div>
               </div>
-              <h3 className="fw-bold text-warning mb-1">
+              <h3 className="fw-bold text-warning mb-1 fs-5 fs-4-md">
                 {filteredAgreements.reduce((total, agreement) => {
                   return total + Object.values(agreement.sitePanelCounts || {}).reduce((sum, count) => sum + parseInt(count || 0), 0);
                 }, 0)}
               </h3>
-              <p className="text-muted mb-0">Filtrelenmiş Panel</p>
+              <p className="text-muted mb-0 small">Filtrelenmiş Panel</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Date Filter Section */}
-      <div className="row g-4 mb-4">
-        <div className="col-md-12">
+      {/* Date Filter Section - Responsive */}
+      <div className="row g-2 g-md-3 g-lg-4 mb-3 mb-md-4">
+        <div className="col-12">
           <div className="card custom-card shadow-sm">
-            <div className="card-header bg-info-subtle">
-              <h5 className="mb-0 fw-bold">
+            <div className="card-header bg-info-subtle p-2 p-md-3">
+              <h5 className="mb-0 fw-bold small">
                 <i className="bi bi-calendar-range me-2"></i>
                 Tarih Filtresi
               </h5>
             </div>
-            <div className="card-body">
-              <div className="row g-3">
-                <div className="col-md-4">
-                  <label className="form-label fw-medium">Başlangıç Tarihi:</label>
+            <div className="card-body p-2 p-md-3">
+              <div className="row g-2 g-md-3">
+                <div className="col-12 col-md-4">
+                  <label className="form-label fw-medium small">Başlangıç Tarihi:</label>
                   <input
                     type="date"
-                    className="form-control"
+                    className="form-control form-control-sm"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                   />
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label fw-medium">Bitiş Tarihi:</label>
+                <div className="col-12 col-md-4">
+                  <label className="form-label fw-medium small">Bitiş Tarihi:</label>
                   <input
                     type="date"
-                    className="form-control"
+                    className="form-control form-control-sm"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                   />
                 </div>
-                <div className="col-md-4 d-flex align-items-end">
+                <div className="col-12 col-md-4 d-flex align-items-end gap-2">
                   <button
-                    className="btn btn-outline-secondary me-2"
+                    className="btn btn-outline-secondary btn-sm flex-grow-1"
                     onClick={clearDateFilters}
                   >
                     <i className="bi bi-x-circle me-1"></i>
                     Temizle
                   </button>
                   <button
-                    className="btn btn-primary"
+                    className="btn btn-primary btn-sm flex-grow-1"
                     onClick={handleDateFilterChange}
                   >
                     <i className="bi bi-funnel me-1"></i>
@@ -1126,7 +1131,7 @@ const PersonnelDashboard = () => {
                 </div>
               </div>
               {(startDate || endDate) && (
-                <div className="mt-3">
+                <div className="mt-2 mt-md-3">
                   <small className="text-muted">
                     <i className="bi bi-info-circle me-1"></i>
                     Filtre: {startDate ? `Başlangıç: ${formatDate(startDate)}` : ''} 
