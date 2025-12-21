@@ -37,7 +37,8 @@ export const COLLECTIONS = {
   CHECKS: 'checks',
   SITE_UPDATE_REQUESTS: 'siteUpdateRequests',
   COMPANY_UPDATE_REQUESTS: 'companyUpdateRequests',
-  NOTIFICATIONS: 'notifications'
+  NOTIFICATIONS: 'notifications',
+  ANNOUNCEMENTS: 'announcements'
 };
 
 // Generic CRUD operations
@@ -1520,26 +1521,41 @@ export const batchDelete = async (collectionName, docIds) => {
 // Notifications operations
 export const getNotifications = async (userId = null, unreadOnly = false) => {
   try {
-    let filters = [];
-    
-    // Filter by user if provided
-    if (userId) {
-      filters.push({ field: 'userId', operator: '==', value: userId });
+    // If both userId and unreadOnly filters are needed, we need to query separately
+    // to avoid composite index requirement
+    if (userId && unreadOnly) {
+      // First get all notifications for user, then filter by read status in memory
+      const result = await getCollection(
+        COLLECTIONS.NOTIFICATIONS,
+        [{ field: 'userId', operator: '==', value: userId }],
+        'createdAt',
+        'desc'
+      );
+      
+      const allNotifications = result.data || [];
+      return allNotifications.filter(n => !n.read);
+    } else {
+      let filters = [];
+      
+      // Filter by user if provided
+      if (userId) {
+        filters.push({ field: 'userId', operator: '==', value: userId });
+      }
+      
+      // Filter unread only if requested (only if userId is not provided)
+      if (unreadOnly && !userId) {
+        filters.push({ field: 'read', operator: '==', value: false });
+      }
+      
+      const result = await getCollection(
+        COLLECTIONS.NOTIFICATIONS,
+        filters,
+        'createdAt',
+        'desc'
+      );
+      
+      return result.data || [];
     }
-    
-    // Filter unread only if requested
-    if (unreadOnly) {
-      filters.push({ field: 'read', operator: '==', value: false });
-    }
-    
-    const result = await getCollection(
-      COLLECTIONS.NOTIFICATIONS,
-      filters,
-      'createdAt',
-      'desc'
-    );
-    
-    return result.data || [];
   } catch (error) {
     console.error('Error getting notifications:', error);
     return [];
@@ -1627,7 +1643,7 @@ export const deleteNotification = async (notificationId) => {
 };
 
 // Send notification to site users
-export const sendNotificationToSite = async (siteId, title, message, type = 'info', link = null) => {
+export const sendNotificationToSite = async (siteId, title, message, type = 'info', link = null, announcementId = null) => {
   try {
     // Get all users for this site
     const usersRef = collection(db, COLLECTIONS.USERS);
@@ -1653,6 +1669,7 @@ export const sendNotificationToSite = async (siteId, title, message, type = 'inf
         message: message,
         type: type, // 'info', 'success', 'warning', 'error', 'payment'
         link: link,
+        announcementId: announcementId || null, // Link to announcement if it's an announcement
         read: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -1671,7 +1688,7 @@ export const sendNotificationToSite = async (siteId, title, message, type = 'inf
 };
 
 // Send notification to all site users (announcement)
-export const sendAnnouncementToAllSites = async (title, message, type = 'info', link = null) => {
+export const sendAnnouncementToAllSites = async (title, message, type = 'info', link = null, announcementId = null) => {
   try {
     // Get all site users
     const usersRef = collection(db, COLLECTIONS.USERS);
@@ -1698,6 +1715,7 @@ export const sendAnnouncementToAllSites = async (title, message, type = 'info', 
         message: message,
         type: type,
         link: link,
+        announcementId: announcementId, // Link to announcement if it's an announcement
         read: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()

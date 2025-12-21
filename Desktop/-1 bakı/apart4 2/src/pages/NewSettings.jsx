@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, createUser, updateUser, deleteUser, getLogs, getSites, getCompanies, getSiteUpdateRequests, getCompanyUpdateRequests, updateSiteUpdateRequest, updateCompanyUpdateRequest, deleteSiteUpdateRequest, deleteCompanyUpdateRequest, updateSite, updateCompany, createLog, sendNotificationToSite, sendAnnouncementToAllSites } from '../services/api';
+import { getUsers, createUser, updateUser, deleteUser, getLogs, getSites, getCompanies, getSiteUpdateRequests, getCompanyUpdateRequests, updateSiteUpdateRequest, updateCompanyUpdateRequest, deleteSiteUpdateRequest, deleteCompanyUpdateRequest, updateSite, updateCompany, createLog, sendNotificationToSite, sendAnnouncementToAllSites, getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement } from '../services/api';
 import Archive from './Archive';
 import jsPDF from 'jspdf';
 
@@ -37,6 +37,9 @@ const Settings = () => {
     type: 'info',
     targetSite: 'all' // 'all' or specific siteId
   });
+  const [announcements, setAnnouncements] = useState([]);
+  const [editingAnnouncement, setEditingAnnouncement] = useState(null);
+  const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -105,6 +108,22 @@ const Settings = () => {
   useEffect(() => {
     if (activeTab === 'approvals') {
       fetchUpdateRequests();
+    }
+  }, [activeTab]);
+  
+  // Fetch announcements when announcements tab is activated
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const announcementsData = await getAnnouncements();
+        setAnnouncements(announcementsData || []);
+      } catch (error) {
+        console.error('Error fetching announcements:', error);
+      }
+    };
+    
+    if (activeTab === 'announcements') {
+      fetchAnnouncements();
     }
   }, [activeTab]);
 
@@ -1480,62 +1499,233 @@ const Settings = () => {
       {/* Archive Tab - Moved from separate page */}
       {/* Announcements Tab */}
       {activeTab === 'announcements' && (
-        <div className="card custom-card shadow-sm">
-          <div className="card-body">
-            <h5 className="card-title mb-4">
-              <i className="bi bi-megaphone me-2"></i>
-              Site Kullanıcılarına Duyuru Gönder
-            </h5>
+        <div>
+          {/* Announcements List */}
+          <div className="card custom-card shadow-sm mb-4">
+            <div className="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
+              <h5 className="mb-0 fw-bold">
+                <i className="bi bi-list-ul me-2"></i>
+                Yayınlanan Duyurular ({announcements.length})
+              </h5>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  setShowAnnouncementForm(true);
+                  setEditingAnnouncement(null);
+                  setAnnouncementForm({ title: '', message: '', type: 'info', targetSite: 'all' });
+                }}
+              >
+                <i className="bi bi-plus-circle me-1"></i>
+                Yeni Duyuru
+              </button>
+            </div>
+            <div className="card-body">
+              {announcements.length === 0 ? (
+                <div className="text-center text-muted py-4">
+                  <i className="bi bi-megaphone fs-1 d-block mb-2"></i>
+                  <p>Henüz duyuru yayınlanmamış</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Başlık</th>
+                        <th>Hedef</th>
+                        <th>Tip</th>
+                        <th>Tarih</th>
+                        <th>İşlemler</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {announcements.map((announcement) => (
+                        <tr key={announcement.id || announcement._docId}>
+                          <td>{announcement.title}</td>
+                          <td>
+                            {announcement.targetSite === 'all' 
+                              ? 'Tüm Siteler' 
+                              : sites.find(s => s.id === announcement.targetSite)?.name || announcement.targetSite}
+                          </td>
+                          <td>
+                            <span className={`badge ${
+                              announcement.type === 'payment' ? 'bg-success' :
+                              announcement.type === 'warning' ? 'bg-warning' :
+                              announcement.type === 'error' ? 'bg-danger' :
+                              'bg-info'
+                            }`}>
+                              {announcement.type === 'payment' ? 'Ödeme' :
+                               announcement.type === 'warning' ? 'Uyarı' :
+                               announcement.type === 'error' ? 'Hata' :
+                               'Bilgi'}
+                            </span>
+                          </td>
+                          <td>
+                            {announcement.createdAt 
+                              ? new Date(announcement.createdAt.seconds * 1000 || announcement.createdAt).toLocaleDateString('tr-TR', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : 'Bilinmiyor'}
+                          </td>
+                          <td>
+                            <button
+                              className="btn btn-sm btn-outline-primary me-1"
+                              onClick={() => {
+                                setEditingAnnouncement(announcement);
+                                setAnnouncementForm({
+                                  title: announcement.title,
+                                  message: announcement.message,
+                                  type: announcement.type,
+                                  targetSite: announcement.targetSite || 'all'
+                                });
+                                setShowAnnouncementForm(true);
+                              }}
+                              title="Düzenle"
+                            >
+                              <i className="bi bi-pencil"></i>
+                            </button>
+                            <button
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={async () => {
+                                const confirmed = await window.showConfirm(
+                                  'Duyuruyu Sil',
+                                  'Bu duyuruyu silmek istediğinizden emin misiniz?',
+                                  'warning'
+                                );
+                                if (confirmed) {
+                                  try {
+                                    await deleteAnnouncement(announcement.id || announcement._docId);
+                                    setAnnouncements(prev => prev.filter(a => (a.id || a._docId) !== (announcement.id || announcement._docId)));
+                                    await window.showAlert('Başarılı', 'Duyuru silindi.', 'success');
+                                    await createLog({
+                                      user: 'Admin',
+                                      action: `Duyuru silindi: ${announcement.title}`
+                                    });
+                                  } catch (error) {
+                                    console.error('Error deleting announcement:', error);
+                                    await window.showAlert('Hata', 'Duyuru silinirken bir hata oluştu.', 'error');
+                                  }
+                                }
+                              }}
+                              title="Sil"
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Announcement Form */}
+          {showAnnouncementForm && (
+            <div className="card custom-card shadow-sm">
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <h5 className="card-title mb-0">
+                    <i className="bi bi-megaphone me-2"></i>
+                    {editingAnnouncement ? 'Duyuruyu Düzenle' : 'Yeni Duyuru Gönder'}
+                  </h5>
+                  <button
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => {
+                      setShowAnnouncementForm(false);
+                      setEditingAnnouncement(null);
+                      setAnnouncementForm({ title: '', message: '', type: 'info', targetSite: 'all' });
+                    }}
+                  >
+                    <i className="bi bi-x"></i>
+                  </button>
+                </div>
             
             <form onSubmit={async (e) => {
               e.preventDefault();
               try {
-                if (announcementForm.targetSite === 'all') {
-                  const result = await sendAnnouncementToAllSites(
-                    announcementForm.title,
-                    announcementForm.message,
-                    announcementForm.type,
-                    null
+                if (editingAnnouncement) {
+                  // Update existing announcement
+                  const result = await updateAnnouncement(
+                    editingAnnouncement.id || editingAnnouncement._docId,
+                    {
+                      title: announcementForm.title,
+                      message: announcementForm.message,
+                      type: announcementForm.type,
+                      targetSite: announcementForm.targetSite
+                    }
                   );
-                  if (result.success) {
-                    await window.showAlert(
-                      'Başarılı',
-                      `Duyuru ${result.count} site kullanıcısına gönderildi.`,
-                      'success'
-                    );
+                  if (result) {
+                    await window.showAlert('Başarılı', 'Duyuru güncellendi.', 'success');
+                    setAnnouncements(prev => prev.map(a => 
+                      (a.id || a._docId) === (editingAnnouncement.id || editingAnnouncement._docId)
+                        ? { ...a, ...announcementForm }
+                        : a
+                    ));
+                    setShowAnnouncementForm(false);
+                    setEditingAnnouncement(null);
                     setAnnouncementForm({ title: '', message: '', type: 'info', targetSite: 'all' });
                     await createLog({
                       user: 'Admin',
-                      action: `Duyuru gönderildi: ${announcementForm.title} (Tüm siteler)`
+                      action: `Duyuru güncellendi: ${announcementForm.title}`
                     });
                   }
                 } else {
-                  const result = await sendNotificationToSite(
-                    announcementForm.targetSite,
-                    announcementForm.title,
-                    announcementForm.message,
-                    announcementForm.type,
-                    null
-                  );
-                  if (result.success) {
-                    const site = sites.find(s => s.id === announcementForm.targetSite);
-                    await window.showAlert(
-                      'Başarılı',
-                      `Duyuru ${site?.name || announcementForm.targetSite} sitesine ${result.count} kullanıcıya gönderildi.`,
-                      'success'
-                    );
-                    setAnnouncementForm({ title: '', message: '', type: 'info', targetSite: 'all' });
-                    await createLog({
-                      user: 'Admin',
-                      action: `Duyuru gönderildi: ${announcementForm.title} (${site?.name || announcementForm.targetSite})`
-                    });
+                  // Create new announcement
+                  const announcementResult = await createAnnouncement({
+                    title: announcementForm.title,
+                    message: announcementForm.message,
+                    type: announcementForm.type,
+                    targetSite: announcementForm.targetSite
+                  });
+                  
+                  if (announcementResult) {
+                    // Send notifications
+                    let notificationResult;
+                    if (announcementForm.targetSite === 'all') {
+                      notificationResult = await sendAnnouncementToAllSites(
+                        announcementForm.title,
+                        announcementForm.message,
+                        announcementForm.type,
+                        null,
+                        announcementResult.id || announcementResult._docId
+                      );
+                    } else {
+                      notificationResult = await sendNotificationToSite(
+                        announcementForm.targetSite,
+                        announcementForm.title,
+                        announcementForm.message,
+                        announcementForm.type,
+                        null,
+                        announcementResult.id || announcementResult._docId
+                      );
+                    }
+                    
+                    if (notificationResult.success) {
+                      await window.showAlert(
+                        'Başarılı',
+                        `Duyuru ${notificationResult.count} site kullanıcısına gönderildi.`,
+                        'success'
+                      );
+                      setAnnouncements(prev => [announcementResult, ...prev]);
+                      setAnnouncementForm({ title: '', message: '', type: 'info', targetSite: 'all' });
+                      setShowAnnouncementForm(false);
+                      await createLog({
+                        user: 'Admin',
+                        action: `Duyuru gönderildi: ${announcementForm.title} (${announcementForm.targetSite === 'all' ? 'Tüm siteler' : sites.find(s => s.id === announcementForm.targetSite)?.name || announcementForm.targetSite})`
+                      });
+                    }
                   }
                 }
               } catch (error) {
-                console.error('Error sending announcement:', error);
+                console.error('Error saving announcement:', error);
                 await window.showAlert(
                   'Hata',
-                  'Duyuru gönderilirken bir hata oluştu.',
+                  'Duyuru kaydedilirken bir hata oluştu.',
                   'error'
                 );
               }

@@ -258,6 +258,15 @@ service cloud.firestore {
                         resource.data.userId == resource.id);
     }
     
+    // Announcements collection
+    match /announcements/{announcementId} {
+      // Okuma: Tüm authenticated kullanıcılar okuyabilir
+      allow read: if isAuthenticated();
+      
+      // Oluşturma, güncelleme, silme: Sadece admin ve personnel
+      allow create, update, delete: if isAdmin() || isPersonnel();
+    }
+    
     // Default: deny all other collections
     match /{document=**} {
       allow read, write: if false;

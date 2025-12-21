@@ -102,7 +102,13 @@ import {
   markAllNotificationsAsRead as markAllNotificationsAsReadInDb,
   deleteNotification as deleteNotificationFromDb,
   sendNotificationToSite as sendNotificationToSiteInDb,
-  sendAnnouncementToAllSites as sendAnnouncementToAllSitesInDb
+  sendAnnouncementToAllSites as sendAnnouncementToAllSitesInDb,
+  
+  // Announcements
+  getAnnouncements as getAnnouncementsFromDb,
+  createAnnouncement as createAnnouncementInDb,
+  updateAnnouncement as updateAnnouncementInDb,
+  deleteAnnouncement as deleteAnnouncementFromDb
 } from './firebaseDb.js';
 
 // Initialize Firebase services
@@ -1118,14 +1124,38 @@ export const deleteNotification = async (notificationId) => {
   return result.success;
 };
 
-export const sendNotificationToSite = async (siteId, title, message, type = 'info', link = null) => {
+export const sendNotificationToSite = async (siteId, title, message, type = 'info', link = null, announcementId = null) => {
   await initializeFirebase();
-  return await sendNotificationToSiteInDb(siteId, title, message, type, link);
+  return await sendNotificationToSiteInDb(siteId, title, message, type, link, announcementId);
 };
 
-export const sendAnnouncementToAllSites = async (title, message, type = 'info', link = null) => {
+export const sendAnnouncementToAllSites = async (title, message, type = 'info', link = null, announcementId = null) => {
   await initializeFirebase();
-  return await sendAnnouncementToAllSitesInDb(title, message, type, link);
+  return await sendAnnouncementToAllSitesInDb(title, message, type, link, announcementId);
+};
+
+// Announcements endpoints
+export const getAnnouncements = async () => {
+  await initializeFirebase();
+  return await getAnnouncementsFromDb();
+};
+
+export const createAnnouncement = async (announcementData) => {
+  await initializeFirebase();
+  const result = await createAnnouncementInDb(announcementData);
+  return result.success ? result.data : null;
+};
+
+export const updateAnnouncement = async (announcementId, announcementData) => {
+  await initializeFirebase();
+  const result = await updateAnnouncementInDb(announcementId, announcementData);
+  return result.success ? result.data : null;
+};
+
+export const deleteAnnouncement = async (announcementId) => {
+  await initializeFirebase();
+  const result = await deleteAnnouncementFromDb(announcementId);
+  return result.success;
 };
 
 // Export Firebase-specific functions
