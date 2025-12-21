@@ -81,6 +81,25 @@ const Settings = () => {
       fetchLogs();
     }
   }, [activeTab]);
+  
+  // Fetch update requests when approvals tab is activated
+  useEffect(() => {
+    if (activeTab === 'approvals') {
+      const fetchUpdateRequests = async () => {
+        try {
+          const [siteRequests, companyRequests] = await Promise.all([
+            getSiteUpdateRequests(),
+            getCompanyUpdateRequests()
+          ]);
+          setSiteUpdateRequests(siteRequests || []);
+          setCompanyUpdateRequests(companyRequests || []);
+        } catch (error) {
+          console.error('Error fetching update requests:', error);
+        }
+      };
+      fetchUpdateRequests();
+    }
+  }, [activeTab]);
 
   // Filter users by role
   const filteredUsers = users.filter(user => {
@@ -796,6 +815,20 @@ const Settings = () => {
         </li>
         <li className="nav-item">
           <button 
+            className={`nav-link ${activeTab === 'approvals' ? 'active' : ''}`}
+            onClick={() => setActiveTab('approvals')}
+          >
+            <i className="bi bi-check-circle me-1"></i>
+            Onaylar
+            {(siteUpdateRequests.filter(r => r.status === 'pending').length + companyUpdateRequests.filter(r => r.status === 'pending').length) > 0 && (
+              <span className="badge bg-danger ms-2">
+                {siteUpdateRequests.filter(r => r.status === 'pending').length + companyUpdateRequests.filter(r => r.status === 'pending').length}
+              </span>
+            )}
+          </button>
+        </li>
+        <li className="nav-item">
+          <button 
             className={`nav-link ${activeTab === 'labels' ? 'active' : ''}`}
             onClick={() => setActiveTab('labels')}
           >
@@ -1191,6 +1224,239 @@ const Settings = () => {
                 </small>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Approvals Tab */}
+      {activeTab === 'approvals' && (
+        <div className="card custom-card shadow-sm">
+          <div className="card-header bg-primary text-white">
+            <h5 className="mb-0">
+              <i className="bi bi-check-circle me-2"></i>
+              Güncelleme Talepleri
+            </h5>
+          </div>
+          <div className="card-body">
+            {/* Site Update Requests */}
+            <div className="mb-4">
+              <h6 className="mb-3">
+                <i className="bi bi-building me-2"></i>
+                Site Güncelleme Talepleri
+                {siteUpdateRequests.filter(r => r.status === 'pending').length > 0 && (
+                  <span className="badge bg-danger ms-2">
+                    {siteUpdateRequests.filter(r => r.status === 'pending').length} Bekliyor
+                  </span>
+                )}
+              </h6>
+              {siteUpdateRequests.length === 0 ? (
+                <p className="text-muted">Henüz site güncelleme talebi yok.</p>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Site</th>
+                        <th>Talep Eden</th>
+                        <th>Değişiklikler</th>
+                        <th>Durum</th>
+                        <th>Tarih</th>
+                        <th>İşlemler</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {siteUpdateRequests.map(request => (
+                        <tr key={request._docId || request.id}>
+                          <td><strong>{request.siteName || request.siteId}</strong></td>
+                          <td>{request.requestedBy}</td>
+                          <td>
+                            <small>
+                              {Object.keys(request.changes || {}).length > 0 ? (
+                                Object.keys(request.changes).map(key => (
+                                  <div key={key} className="mb-1">
+                                    <strong>{key}:</strong> <span className="text-muted">{request.changes[key].old || '(boş)'}</span> → <span className="text-success">{request.changes[key].new || '(boş)'}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <span className="text-muted">Değişiklik yok</span>
+                              )}
+                            </small>
+                          </td>
+                          <td>
+                            <span className={`badge ${request.status === 'pending' ? 'bg-warning' : request.status === 'approved' ? 'bg-success' : 'bg-danger'}`}>
+                              {request.status === 'pending' ? 'Bekliyor' : request.status === 'approved' ? 'Onaylandı' : 'Reddedildi'}
+                            </span>
+                          </td>
+                          <td>
+                            {request.requestedAt ? (
+                              request.requestedAt.seconds ? 
+                                new Date(request.requestedAt.seconds * 1000).toLocaleDateString('tr-TR') : 
+                                new Date(request.requestedAt).toLocaleDateString('tr-TR')
+                            ) : '-'}
+                          </td>
+                          <td>
+                            {request.status === 'pending' && (
+                              <>
+                                <button
+                                  className="btn btn-sm btn-success me-1"
+                                  onClick={async () => {
+                                    try {
+                                      // Approve request
+                                      await updateSite(request.siteId, request.requestedData);
+                                      await updateSiteUpdateRequest(request._docId || request.id, { status: 'approved', approvedAt: new Date().toISOString() });
+                                      await createLog({
+                                        user: 'Admin',
+                                        action: `Site güncelleme talebi onaylandı: ${request.siteName || request.siteId}`
+                                      });
+                                      await window.showAlert('Başarılı', 'Talep onaylandı ve site güncellendi.', 'success');
+                                      fetchUpdateRequests();
+                                    } catch (error) {
+                                      console.error('Error approving request:', error);
+                                      await window.showAlert('Hata', 'Talep onaylanırken bir hata oluştu: ' + error.message, 'error');
+                                    }
+                                  }}
+                                >
+                                  <i className="bi bi-check"></i> Onayla
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-danger"
+                                  onClick={async () => {
+                                    try {
+                                      await updateSiteUpdateRequest(request._docId || request.id, { status: 'rejected', rejectedAt: new Date().toISOString() });
+                                      await createLog({
+                                        user: 'Admin',
+                                        action: `Site güncelleme talebi reddedildi: ${request.siteName || request.siteId}`
+                                      });
+                                      await window.showAlert('Başarılı', 'Talep reddedildi.', 'success');
+                                      fetchUpdateRequests();
+                                    } catch (error) {
+                                      console.error('Error rejecting request:', error);
+                                      await window.showAlert('Hata', 'Talep reddedilirken bir hata oluştu: ' + error.message, 'error');
+                                    }
+                                  }}
+                                >
+                                  <i className="bi bi-x"></i> Reddet
+                                </button>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            
+            {/* Company Update Requests */}
+            <div>
+              <h6 className="mb-3">
+                <i className="bi bi-briefcase me-2"></i>
+                Firma Güncelleme Talepleri
+                {companyUpdateRequests.filter(r => r.status === 'pending').length > 0 && (
+                  <span className="badge bg-danger ms-2">
+                    {companyUpdateRequests.filter(r => r.status === 'pending').length} Bekliyor
+                  </span>
+                )}
+              </h6>
+              {companyUpdateRequests.length === 0 ? (
+                <p className="text-muted">Henüz firma güncelleme talebi yok.</p>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Firma</th>
+                        <th>Talep Eden</th>
+                        <th>Değişiklikler</th>
+                        <th>Durum</th>
+                        <th>Tarih</th>
+                        <th>İşlemler</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {companyUpdateRequests.map(request => (
+                        <tr key={request._docId || request.id}>
+                          <td><strong>{request.companyName || request.companyId}</strong></td>
+                          <td>{request.requestedBy}</td>
+                          <td>
+                            <small>
+                              {Object.keys(request.changes || {}).length > 0 ? (
+                                Object.keys(request.changes).map(key => (
+                                  <div key={key} className="mb-1">
+                                    <strong>{key}:</strong> <span className="text-muted">{request.changes[key].old || '(boş)'}</span> → <span className="text-success">{request.changes[key].new || '(boş)'}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <span className="text-muted">Değişiklik yok</span>
+                              )}
+                            </small>
+                          </td>
+                          <td>
+                            <span className={`badge ${request.status === 'pending' ? 'bg-warning' : request.status === 'approved' ? 'bg-success' : 'bg-danger'}`}>
+                              {request.status === 'pending' ? 'Bekliyor' : request.status === 'approved' ? 'Onaylandı' : 'Reddedildi'}
+                            </span>
+                          </td>
+                          <td>
+                            {request.requestedAt ? (
+                              request.requestedAt.seconds ? 
+                                new Date(request.requestedAt.seconds * 1000).toLocaleDateString('tr-TR') : 
+                                new Date(request.requestedAt).toLocaleDateString('tr-TR')
+                            ) : '-'}
+                          </td>
+                          <td>
+                            {request.status === 'pending' && (
+                              <>
+                                <button
+                                  className="btn btn-sm btn-success me-1"
+                                  onClick={async () => {
+                                    try {
+                                      // Approve request
+                                      await updateCompany(request.companyId, request.requestedData);
+                                      await updateCompanyUpdateRequest(request._docId || request.id, { status: 'approved', approvedAt: new Date().toISOString() });
+                                      await createLog({
+                                        user: 'Admin',
+                                        action: `Firma güncelleme talebi onaylandı: ${request.companyName || request.companyId}`
+                                      });
+                                      await window.showAlert('Başarılı', 'Talep onaylandı ve firma güncellendi.', 'success');
+                                      fetchUpdateRequests();
+                                    } catch (error) {
+                                      console.error('Error approving request:', error);
+                                      await window.showAlert('Hata', 'Talep onaylanırken bir hata oluştu: ' + error.message, 'error');
+                                    }
+                                  }}
+                                >
+                                  <i className="bi bi-check"></i> Onayla
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-danger"
+                                  onClick={async () => {
+                                    try {
+                                      await updateCompanyUpdateRequest(request._docId || request.id, { status: 'rejected', rejectedAt: new Date().toISOString() });
+                                      await createLog({
+                                        user: 'Admin',
+                                        action: `Firma güncelleme talebi reddedildi: ${request.companyName || request.companyId}`
+                                      });
+                                      await window.showAlert('Başarılı', 'Talep reddedildi.', 'success');
+                                      fetchUpdateRequests();
+                                    } catch (error) {
+                                      console.error('Error rejecting request:', error);
+                                      await window.showAlert('Hata', 'Talep reddedilirken bir hata oluştu: ' + error.message, 'error');
+                                    }
+                                  }}
+                                >
+                                  <i className="bi bi-x"></i> Reddet
+                                </button>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
