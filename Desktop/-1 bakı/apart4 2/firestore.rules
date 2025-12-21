@@ -52,11 +52,25 @@ service cloud.firestore {
     }
 
     function getUserCompanyId() {
-      return hasUserDoc() ? getUserDoc().data.companyId : null;
+      // Önce users koleksiyonundaki companyId field'ını kontrol et
+      return hasUserDoc() && getUserDoc().data.companyId != null 
+        ? getUserDoc().data.companyId
+        : (request.auth.token.email != null && 
+           request.auth.token.email.split('@').size() == 2 && 
+           request.auth.token.email.split('@')[1] == 'company.local')
+          ? request.auth.token.email.split('@')[0]
+          : null;
     }
 
     function getUserSiteId() {
-      return hasUserDoc() ? getUserDoc().data.siteId : null;
+      // Önce users koleksiyonundaki siteId field'ını kontrol et
+      return hasUserDoc() && getUserDoc().data.siteId != null 
+        ? getUserDoc().data.siteId
+        : (request.auth.token.email != null && 
+           request.auth.token.email.split('@').size() == 2 && 
+           request.auth.token.email.split('@')[1] == 'site.local')
+          ? request.auth.token.email.split('@')[0]
+          : null;
     }
     
     // Users collection
@@ -77,11 +91,12 @@ service cloud.firestore {
       
       // Güncelleme: Admin veya site kullanıcısı kendi sitesini güncelleyebilir
       // Site ID karşılaştırması: hem document ID hem de custom 'id' field'ı kontrol edilir
+      // String karşılaştırması için toString() kullan
       allow update: if isAdmin() || 
                     (isSiteUser() && 
-                     (resource.data.id == getUserSiteId() || 
-                      resource.id == getUserSiteId() ||
-                      request.resource.data.id == getUserSiteId()));
+                     getUserSiteId() != null &&
+                     (resource.data.id != null && resource.data.id.toString() == getUserSiteId().toString()) || 
+                     (resource.id != null && resource.id.toString() == getUserSiteId().toString()));
     }
     
     // Companies collection
@@ -96,9 +111,9 @@ service cloud.firestore {
       // Company ID karşılaştırması: hem document ID hem de custom 'id' field'ı kontrol edilir
       allow update: if isAdmin() || 
                     (isCompanyUser() && 
-                     (resource.data.id == getUserCompanyId() || 
-                      resource.id == getUserCompanyId() ||
-                      request.resource.data.id == getUserCompanyId()));
+                     getUserCompanyId() != null &&
+                     ((resource.data.id != null && resource.data.id == getUserCompanyId()) || 
+                      (resource.id != null && resource.id == getUserCompanyId())));
     }
     
     // Agreements collection
