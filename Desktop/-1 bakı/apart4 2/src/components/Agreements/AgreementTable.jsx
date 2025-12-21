@@ -85,10 +85,22 @@ const AgreementTable = ({ agreements, handlers, uiHandlers, helpers, handleUploa
               </td>
               <td className="py-3 px-4">
                 <div className="amount">{helpers.formatCurrency(agreement.totalAmount)}</div>
-                <div className="small text-muted d-lg-none">
+                {(agreement.paidAmount || agreement.paidAmount === 0) && (
+                  <>
+                    <div className="small text-success mt-1">
+                      Ödenen: {helpers.formatCurrency(agreement.paidAmount || 0)}
+                    </div>
+                    {(agreement.remainingAmount || agreement.remainingAmount === 0) && (
+                      <div className="small text-warning">
+                        Kalan: {helpers.formatCurrency(agreement.remainingAmount || 0)}
+                      </div>
+                    )}
+                  </>
+                )}
+                <div className="small text-muted d-lg-none mt-1">
                   {helpers.formatCurrency(agreement.weeklyRatePerPanel)}/hafta
                 </div>
-                <div className="small text-muted d-none d-lg-table-cell">
+                <div className="small text-muted d-none d-lg-table-cell mt-1">
                   {helpers.formatCurrency(agreement.weeklyRatePerPanel)}/hafta
                 </div>
               </td>

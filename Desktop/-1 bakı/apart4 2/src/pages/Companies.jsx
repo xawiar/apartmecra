@@ -861,11 +861,52 @@ const Companies = () => {
   const totalCredit = companies.reduce((sum, company) => sum + (company.credit || 0), 0);
   const companiesWithAgreements = [...new Set(agreements.map(a => a.companyId))].length;
   
-  // Calculate payment statistics
-  const paidAgreements = agreements.filter(a => a.paymentReceived || a.creditPaymentReceived);
-  const unpaidAgreements = agreements.filter(a => !a.paymentReceived && !a.creditPaymentReceived);
-  const paidAmount = paidAgreements.reduce((sum, agreement) => sum + (agreement.totalAmount || 0), 0);
-  const unpaidAmount = unpaidAgreements.reduce((sum, agreement) => sum + (agreement.totalAmount || 0), 0);
+  // Calculate payment statistics using new payment fields
+  const paidAgreements = agreements.filter(a => {
+    // Check if fully paid using new payment status
+    if (a.paymentStatus === 'paid') return true;
+    // Fallback to old fields for backward compatibility
+    if (a.paymentReceived || a.creditPaymentReceived) return true;
+    // Check if remainingAmount is 0 or very small
+    if (a.remainingAmount !== undefined && a.remainingAmount <= 0.01) return true;
+    return false;
+  });
+  
+  const unpaidAgreements = agreements.filter(a => {
+    // Check if unpaid using new payment status
+    if (a.paymentStatus === 'unpaid') return true;
+    // Fallback to old fields for backward compatibility
+    if (!a.paymentReceived && !a.creditPaymentReceived && !a.paidAmount) return true;
+    // Check if no payment has been made
+    if (a.paidAmount === undefined || a.paidAmount === 0) return true;
+    return false;
+  });
+  
+  // Calculate paid amount from actual paidAmount field
+  const paidAmount = agreements.reduce((sum, agreement) => {
+    // Use paidAmount if available, otherwise use totalAmount for fully paid agreements
+    if (agreement.paidAmount !== undefined && agreement.paidAmount > 0) {
+      return sum + (agreement.paidAmount || 0);
+    }
+    // Fallback: if fully paid (old way), use totalAmount
+    if (agreement.paymentStatus === 'paid' || agreement.paymentReceived || agreement.creditPaymentReceived) {
+      return sum + (agreement.totalAmount || 0);
+    }
+    return sum;
+  }, 0);
+  
+  // Calculate unpaid amount from remainingAmount field
+  const unpaidAmount = agreements.reduce((sum, agreement) => {
+    // Use remainingAmount if available
+    if (agreement.remainingAmount !== undefined && agreement.remainingAmount > 0) {
+      return sum + (agreement.remainingAmount || 0);
+    }
+    // Fallback: if unpaid (old way), use totalAmount
+    if (agreement.paymentStatus === 'unpaid' || (!agreement.paymentReceived && !agreement.creditPaymentReceived && !agreement.paidAmount)) {
+      return sum + (agreement.totalAmount || 0);
+    }
+    return sum;
+  }, 0);
 
   return (
     <div className="container-fluid">
