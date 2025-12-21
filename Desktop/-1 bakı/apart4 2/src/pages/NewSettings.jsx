@@ -1806,6 +1806,7 @@ const Settings = () => {
               </button>
             </form>
           </div>
+        </div>
           )}
         </div>
       )}
