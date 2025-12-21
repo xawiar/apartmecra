@@ -378,22 +378,33 @@ const CompanyDashboard = () => {
     
     try {
       // Create update request instead of direct update
+      // Helper function to remove undefined values (Firestore doesn't accept undefined)
+      const cleanData = (data) => {
+        const cleaned = {};
+        Object.keys(data).forEach(key => {
+          if (data[key] !== undefined) {
+            cleaned[key] = data[key] ?? null; // Convert undefined to null
+          }
+        });
+        return cleaned;
+      };
+      
       const requestData = {
         companyId: company.id,
         companyName: company.name,
         requestedBy: user?.email || user?.username || 'Company User',
         requestedByRole: 'company_user',
-        currentData: {
-          name: company.name,
-          contact: company.contact,
-          phone: company.phone,
-          email: company.email,
-          address: company.address,
-          taxOffice: company.taxOffice,
-          taxNumber: company.taxNumber,
-          notes: company.notes
-        },
-        requestedData: companyFormData,
+        currentData: cleanData({
+          name: company.name || '',
+          contact: company.contact || '',
+          phone: company.phone || '',
+          email: company.email || '',
+          address: company.address || '',
+          taxOffice: company.taxOffice || '',
+          taxNumber: company.taxNumber || '',
+          notes: company.notes || ''
+        }),
+        requestedData: cleanData(companyFormData),
         changes: {} // Will be calculated
       };
       

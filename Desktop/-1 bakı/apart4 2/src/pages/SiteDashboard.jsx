@@ -332,23 +332,34 @@ const SiteDashboard = () => {
     
     try {
       // Create update request instead of direct update
+      // Helper function to remove undefined values (Firestore doesn't accept undefined)
+      const cleanData = (data) => {
+        const cleaned = {};
+        Object.keys(data).forEach(key => {
+          if (data[key] !== undefined) {
+            cleaned[key] = data[key] ?? null; // Convert undefined to null
+          }
+        });
+        return cleaned;
+      };
+      
       const requestData = {
         siteId: siteData.site.id,
         siteName: siteData.site.name,
         requestedBy: user?.email || user?.username || 'Site User',
         requestedByRole: 'site_user',
-        currentData: {
-          name: siteData.site.name,
-          manager: siteData.site.manager,
-          phone: siteData.site.phone,
-          blocks: siteData.site.blocks,
-          elevatorsPerBlock: siteData.site.elevatorsPerBlock,
-          apartmentCount: siteData.site.apartmentCount,
-          bankAccountName: siteData.site.bankAccountName,
-          iban: siteData.site.iban,
-          notes: siteData.site.notes
-        },
-        requestedData: siteFormData,
+        currentData: cleanData({
+          name: siteData.site.name || '',
+          manager: siteData.site.manager || '',
+          phone: siteData.site.phone || '',
+          blocks: siteData.site.blocks || 0,
+          elevatorsPerBlock: siteData.site.elevatorsPerBlock || 0,
+          apartmentCount: siteData.site.apartmentCount || 0,
+          bankAccountName: siteData.site.bankAccountName || '',
+          iban: siteData.site.iban || '',
+          notes: siteData.site.notes || ''
+        }),
+        requestedData: cleanData(siteFormData),
         changes: {} // Will be calculated
       };
       
