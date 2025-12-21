@@ -508,85 +508,77 @@ const CompanyDashboard = () => {
   return (
     <div className="container-fluid">
       <div className="row">
-        {/* Left Sidebar - Menu */}
-        <div className={`col-md-3 ${sidebarOpen ? '' : 'd-none'}`}>
-          <div className="card custom-card shadow-sm sticky-top" style={{ top: '20px', maxHeight: 'calc(100vh - 40px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <div className="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
-              <h5 className="mb-0 fw-bold">
-                <i className="bi bi-menu-button-wide me-2"></i>
-                Menü
-              </h5>
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => setSidebarOpen(false)}
-                title="Menüyü Kapat"
-              >
-                <i className="bi bi-chevron-left"></i>
-              </button>
-            </div>
-            <div className="card-body p-0" style={{ overflowY: 'auto', flex: 1 }}>
-              <div className="list-group list-group-flush">
-                <button
-                  type="button"
-                  className={`list-group-item list-group-item-action ${window.location.pathname === '/company-dashboard' ? 'active' : ''}`}
-                  onClick={() => navigate('/company-dashboard')}
-                >
-                  <i className="bi bi-speedometer2 me-2"></i>
-                  Firma Panosu
-                </button>
-                <button
-                  type="button"
-                  className={`list-group-item list-group-item-action ${window.location.pathname === '/company-orders' ? 'active' : ''}`}
-                  onClick={() => navigate('/company-orders')}
-                >
-                  <i className="bi bi-cart-plus me-2"></i>
-                  Sipariş Oluştur
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Main Content */}
-        <div className={sidebarOpen ? 'col-md-9' : 'col-md-12'}>
-          {/* Sidebar Toggle Button (when closed) */}
-          {!sidebarOpen && (
-            <button
-              className="btn btn-outline-primary mb-3"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <i className="bi bi-list me-2"></i>
-              Menüyü Aç
-            </button>
-          )}
-
+        <div className="col-12">
           {/* Header */}
           <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 className="h3 fw-bold">{company?.name || user?.name || company?.id || companyId || 'Firma'} - Firma Panosu</h2>
-          <p className="text-muted mb-0">Firma ID: {companyId}</p>
-        </div>
-        <div className="d-flex gap-2">
-          <button 
-            className="btn btn-outline-primary"
-            onClick={handleEditCompany}
-            title="Firma Bilgilerini Düzenle"
-          >
-            <i className="bi bi-pencil me-1"></i>
-            Bilgilerimi Düzenle
-          </button>
-          <button 
-            className="btn btn-outline-danger"
-            onClick={() => {
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              navigate('/');
-            }}
-          >
-            <i className="bi bi-box-arrow-right me-1"></i>
-            Çıkış Yap
-          </button>
-        </div>
+            <div>
+              <h2 className="h3 fw-bold">{company?.name || user?.name || company?.id || companyId || 'Firma'} - Firma Panosu</h2>
+              <p className="text-muted mb-0">Firma ID: {companyId}</p>
+            </div>
+            <div className="d-flex gap-2">
+              <button 
+                className="btn btn-outline-primary"
+                onClick={handleEditCompany}
+                title="Firma Bilgilerini Düzenle"
+              >
+                <i className="bi bi-pencil me-1"></i>
+                Bilgilerimi Düzenle
+              </button>
+              
+              {/* Dropdown Menu */}
+              <div className="dropdown">
+                <button
+                  className="btn btn-outline-secondary dropdown-toggle"
+                  type="button"
+                  id="companyMenuDropdown"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  onClick={() => setMenuOpen(!menuOpen)}
+                >
+                  <i className="bi bi-list me-1"></i>
+                  Menü
+                </button>
+                <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="companyMenuDropdown">
+                  <li>
+                    <button
+                      className={`dropdown-item ${window.location.pathname === '/company-dashboard' ? 'active' : ''}`}
+                      onClick={() => {
+                        navigate('/company-dashboard');
+                        setMenuOpen(false);
+                      }}
+                    >
+                      <i className="bi bi-speedometer2 me-2"></i>
+                      Firma Panosu
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      className={`dropdown-item ${window.location.pathname === '/company-orders' ? 'active' : ''}`}
+                      onClick={() => {
+                        navigate('/company-orders');
+                        setMenuOpen(false);
+                      }}
+                    >
+                      <i className="bi bi-cart-plus me-2"></i>
+                      Sipariş Oluştur
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              
+              <button 
+                className="btn btn-outline-danger"
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('user');
+                  navigate('/');
+                }}
+              >
+                <i className="bi bi-box-arrow-right me-1"></i>
+                Çıkış Yap
+              </button>
+            </div>
       </div>
 
       {/* Credit Information Section */}
