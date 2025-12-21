@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getSiteData, getSites, getCompanies, getPanelImages, getAgreements, getTransactions } from '../services/api';
+import { getSiteData, getSites, getCompanies, getPanelImages, getAgreements, getTransactions, updateSite } from '../services/api';
 import logger from '../utils/logger';
 import { getUser } from '../utils/auth';
 import SiteHelpers from '../components/Sites/SiteHelpers';
@@ -53,6 +53,21 @@ const SiteDashboard = () => {
         setSiteData(data);
         setCompanies(companiesData);
         setPanelImages(allPanelImages);
+        
+        // Set initial site form data
+        if (data.site) {
+          setSiteFormData({
+            name: data.site.name || '',
+            manager: data.site.manager || '',
+            phone: data.site.phone || '',
+            blocks: data.site.blocks || '',
+            elevatorsPerBlock: data.site.elevatorsPerBlock || '',
+            apartmentCount: data.site.apartmentCount || '',
+            bankAccountName: data.site.bankAccountName || '',
+            iban: data.site.iban || '',
+            notes: data.site.notes || ''
+          });
+        }
         
         // Debug: Log panel images with full details
         console.log('SiteDashboard - Loaded panel images:', allPanelImages);
@@ -269,6 +284,51 @@ const SiteDashboard = () => {
   // Format date
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('tr-TR');
+  };
+  
+  // Handle edit site
+  const handleEditSite = () => {
+    if (siteData.site) {
+      setSiteFormData({
+        name: siteData.site.name || '',
+        manager: siteData.site.manager || '',
+        phone: siteData.site.phone || '',
+        blocks: siteData.site.blocks || '',
+        elevatorsPerBlock: siteData.site.elevatorsPerBlock || '',
+        apartmentCount: siteData.site.apartmentCount || '',
+        bankAccountName: siteData.site.bankAccountName || '',
+        iban: siteData.site.iban || '',
+        notes: siteData.site.notes || ''
+      });
+      setShowEditSiteModal(true);
+    }
+  };
+  
+  // Handle site form change
+  const handleSiteFormChange = (e) => {
+    const { name, value } = e.target;
+    setSiteFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Handle site form submit
+  const handleSiteFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!siteData.site) return;
+    
+    try {
+      const updatedSite = await updateSite(siteData.site.id, siteFormData);
+      if (updatedSite) {
+        setSiteData(prev => ({ ...prev, site: updatedSite }));
+        setShowEditSiteModal(false);
+        await window.showAlert('Başarılı', 'Site bilgileri başarıyla güncellendi.', 'success');
+      }
+    } catch (error) {
+      console.error('Error updating site:', error);
+      await window.showAlert('Hata', 'Site bilgileri güncellenirken bir hata oluştu.', 'error');
+    }
   };
 
   // Generate block labels (A, B, C, etc.)
@@ -585,6 +645,14 @@ const SiteDashboard = () => {
           <p className="text-muted mb-0">Site ID: {siteData.site?.id || siteId}</p>
         </div>
         <div className="d-flex align-items-center gap-2">
+          <button 
+            className="btn btn-outline-primary"
+            onClick={handleEditSite}
+            title="Site Bilgilerini Düzenle"
+          >
+            <i className="bi bi-pencil me-1"></i>
+            Bilgilerimi Düzenle
+          </button>
           {/* Dropdown Menu */}
           <div className="dropdown">
             <button
@@ -1100,6 +1168,142 @@ const SiteDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Site Modal */}
+      {showEditSiteModal && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header bg-primary text-white">
+                <h5 className="modal-title">
+                  <i className="bi bi-pencil me-2"></i>
+                  Site Bilgilerini Düzenle
+                </h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setShowEditSiteModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <form onSubmit={handleSiteFormSubmit}>
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label htmlFor="siteName" className="form-label">Site Adı *</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="siteName"
+                        name="name"
+                        value={siteFormData.name}
+                        onChange={handleSiteFormChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label htmlFor="siteManager" className="form-label">Yönetici</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="siteManager"
+                        name="manager"
+                        value={siteFormData.manager}
+                        onChange={handleSiteFormChange}
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label htmlFor="sitePhone" className="form-label">Telefon *</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="sitePhone"
+                        name="phone"
+                        value={siteFormData.phone}
+                        onChange={handleSiteFormChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label htmlFor="siteBlocks" className="form-label">Blok Sayısı</label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        id="siteBlocks"
+                        name="blocks"
+                        value={siteFormData.blocks}
+                        onChange={handleSiteFormChange}
+                        min="0"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label htmlFor="siteElevatorsPerBlock" className="form-label">Blok Başına Asansör Sayısı</label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        id="siteElevatorsPerBlock"
+                        name="elevatorsPerBlock"
+                        value={siteFormData.elevatorsPerBlock}
+                        onChange={handleSiteFormChange}
+                        min="0"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label htmlFor="siteApartmentCount" className="form-label">Daire Sayısı</label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        id="siteApartmentCount"
+                        name="apartmentCount"
+                        value={siteFormData.apartmentCount}
+                        onChange={handleSiteFormChange}
+                        min="0"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label htmlFor="siteBankAccountName" className="form-label">Banka Hesap Adı</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="siteBankAccountName"
+                        name="bankAccountName"
+                        value={siteFormData.bankAccountName}
+                        onChange={handleSiteFormChange}
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label htmlFor="siteIban" className="form-label">IBAN Numarası</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="siteIban"
+                        name="iban"
+                        value={siteFormData.iban}
+                        onChange={handleSiteFormChange}
+                        placeholder="TR00 0000 0000 0000 0000 0000 00"
+                      />
+                    </div>
+                    <div className="col-md-12">
+                      <label htmlFor="siteNotes" className="form-label">Notlar</label>
+                      <textarea
+                        className="form-control"
+                        id="siteNotes"
+                        name="notes"
+                        value={siteFormData.notes}
+                        onChange={handleSiteFormChange}
+                        rows="3"
+                      />
+                    </div>
+                  </div>
+                  <div className="d-flex justify-content-end gap-2 mt-3">
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowEditSiteModal(false)}>
+                      İptal
+                    </button>
+                    <button type="submit" className="btn btn-primary">
+                      Kaydet
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

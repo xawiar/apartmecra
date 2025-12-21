@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { getAgreements, getSites, getCompanies, getTransactions, getPanelImages } from '../services/api';
+import { getAgreements, getSites, getCompanies, getTransactions, getPanelImages, getChecks, updateCompany } from '../services/api';
 import { getUser } from '../utils/auth';
 import { useNavigate } from 'react-router-dom';
 
@@ -151,13 +151,17 @@ const CompanyDashboard = () => {
       }
 
       try {
-        const [allAgreements, allSites, allCompanies, allTransactions, panelImagesResult] = await Promise.all([
+        const [allAgreements, allSites, allCompanies, allTransactions, panelImagesResult, allChecks] = await Promise.all([
           getAgreements(),
           getSites(),
           getCompanies(),
           getTransactions(),
           getPanelImages().catch(err => {
             logger.warn('Error fetching panel images (non-critical):', err);
+            return [];
+          }),
+          getChecks().catch(err => {
+            logger.warn('Error fetching checks (non-critical):', err);
             return [];
           })
         ]);
@@ -188,7 +192,22 @@ const CompanyDashboard = () => {
         setCompany(companyInfo);
         setTransactions(allTransactions);
         setPanelImages(allPanelImages);
+        setChecks(allChecks);
         setFilteredAgreements(companyAgreements);
+        
+        // Set initial company form data
+        if (companyInfo) {
+          setCompanyFormData({
+            name: companyInfo.name || '',
+            contact: companyInfo.contact || '',
+            phone: companyInfo.phone || '',
+            email: companyInfo.email || '',
+            address: companyInfo.address || '',
+            taxOffice: companyInfo.taxOffice || '',
+            taxNumber: companyInfo.taxNumber || '',
+            notes: companyInfo.notes || ''
+          });
+        }
         
         // Calculate statistics
         const activeAgreements = companyAgreements.filter(a => a.status === 'active').length;
@@ -435,7 +454,15 @@ const CompanyDashboard = () => {
           <h2 className="h3 fw-bold">{company?.name || user?.name || company?.id || companyId || 'Firma'} - Firma Panosu</h2>
           <p className="text-muted mb-0">Firma ID: {companyId}</p>
         </div>
-        <div className="text-end">
+        <div className="d-flex gap-2">
+          <button 
+            className="btn btn-outline-primary"
+            onClick={handleEditCompany}
+            title="Firma Bilgilerini Düzenle"
+          >
+            <i className="bi bi-pencil me-1"></i>
+            Bilgilerimi Düzenle
+          </button>
           <button 
             className="btn btn-outline-danger"
             onClick={() => {
@@ -705,7 +732,9 @@ const CompanyDashboard = () => {
                            <th>Birim Fiyat (₺)</th>
                            <th>Toplam Tutar</th>
                            <th>Ödenen Tutar</th>
+                           <th>Kalan Tutar</th>
                            <th>Durum</th>
+                           <th>İşlemler</th>
                          </tr>
                        </thead>
                        <tbody>
@@ -715,10 +744,14 @@ const CompanyDashboard = () => {
                              (sum, count) => sum + parseInt(count || 0), 0
                            );
                            
-                           // Find payment for this agreement
-                           const payment = companyPayments.find(p => 
-                             p.description && p.description.includes(agreement.id)
-                           );
+                           // Get all payments for this agreement
+                           const agreementPayments = getAgreementPaymentHistory(agreement.id);
+                           const totalPaid = agreementPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+                           const totalAmount = agreement.totalAmount || 0;
+                           const remainingAmount = totalAmount - totalPaid;
+                           
+                           // Get checks for this agreement
+                           const agreementChecks = getAgreementChecks(agreement.id);
                            
                            return (
                              <tr key={agreement.id}>
@@ -727,12 +760,19 @@ const CompanyDashboard = () => {
                                <td>{agreement.totalWeeks}</td>
                                <td>{totalPanels}</td>
                                <td>{formatCurrency(agreement.weeklyRatePerPanel)}</td>
-                               <td className="fw-bold">{formatCurrency(agreement.totalAmount)}</td>
+                               <td className="fw-bold">{formatCurrency(totalAmount)}</td>
                                <td>
-                                 {payment ? (
-                                   <span className="text-success fw-bold">{formatCurrency(payment.amount)}</span>
+                                 {totalPaid > 0 ? (
+                                   <span className="text-success fw-bold">{formatCurrency(totalPaid)}</span>
                                  ) : (
                                    <span className="text-muted">Ödeme yapılmadı</span>
+                                 )}
+                               </td>
+                               <td>
+                                 {remainingAmount > 0.01 ? (
+                                   <span className="text-danger fw-bold">{formatCurrency(remainingAmount)}</span>
+                                 ) : (
+                                   <span className="text-success">Ödendi</span>
                                  )}
                                </td>
                                <td>
@@ -743,6 +783,18 @@ const CompanyDashboard = () => {
                                  }`}>
                                    {agreement.status === 'active' ? 'Aktif' : 'Pasif'}
                                  </span>
+                               </td>
+                               <td>
+                                 <button
+                                   className="btn btn-sm btn-outline-info"
+                                   onClick={() => {
+                                     setSelectedAgreementForPaymentHistory(agreement);
+                                     setShowPaymentHistory(true);
+                                   }}
+                                   title="Ödeme Geçmişi"
+                                 >
+                                   <i className="bi bi-clock-history"></i>
+                                 </button>
                                </td>
                              </tr>
                            );
@@ -957,6 +1009,268 @@ const CompanyDashboard = () => {
 
         </div>
       </div>
+
+      {/* Payment History Modal */}
+      {showPaymentHistory && selectedAgreementForPaymentHistory && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header bg-info text-white">
+                <h5 className="modal-title">
+                  <i className="bi bi-clock-history me-2"></i>
+                  Ödeme Geçmişi - Anlaşma #{selectedAgreementForPaymentHistory.id}
+                </h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => {
+                  setShowPaymentHistory(false);
+                  setSelectedAgreementForPaymentHistory(null);
+                }}></button>
+              </div>
+              <div className="modal-body">
+                {(() => {
+                  const paymentHistory = getAgreementPaymentHistory(selectedAgreementForPaymentHistory.id);
+                  const agreementChecks = getAgreementChecks(selectedAgreementForPaymentHistory.id);
+                  
+                  if (paymentHistory.length === 0) {
+                    return (
+                      <div className="text-center py-4">
+                        <i className="bi bi-info-circle text-muted fs-1 mb-3"></i>
+                        <p className="text-muted">Bu anlaşma için henüz ödeme bulunmamaktadır.</p>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <>
+                      <div className="table-responsive">
+                        <table className="table table-hover custom-table">
+                          <thead>
+                            <tr>
+                              <th>Tarih</th>
+                              <th>Ödeme Yöntemi</th>
+                              <th>Tutar</th>
+                              <th>Açıklama</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paymentHistory.map((payment, index) => {
+                              const relatedCheck = agreementChecks.find(c => 
+                                c.id === payment.checkId || c._docId === payment.checkId
+                              );
+                              
+                              return (
+                                <tr key={payment.id || index}>
+                                  <td>{formatDate(payment.date)}</td>
+                                  <td>
+                                    {payment.paymentMethod === 'check' ? (
+                                      <span className="badge bg-primary">
+                                        <i className="bi bi-receipt me-1"></i>
+                                        Çek
+                                        {relatedCheck && (
+                                          <span className="ms-1">#{relatedCheck.checkNumber}</span>
+                                        )}
+                                      </span>
+                                    ) : (
+                                      <span className="badge bg-success">
+                                        <i className="bi bi-cash me-1"></i>
+                                        Nakit
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="fw-bold">{formatCurrency(payment.amount)}</td>
+                                  <td>{payment.description}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="mt-3 p-3 bg-light rounded">
+                        <div className="row">
+                          <div className="col-6">
+                            <strong>Toplam Ödenen:</strong> {formatCurrency(paymentHistory.reduce((sum, p) => sum + p.amount, 0))}
+                          </div>
+                          <div className="col-6">
+                            <strong>Kalan Tutar:</strong> {formatCurrency((selectedAgreementForPaymentHistory.totalAmount || 0) - paymentHistory.reduce((sum, p) => sum + p.amount, 0))}
+                          </div>
+                        </div>
+                      </div>
+                      {agreementChecks.length > 0 && (
+                        <div className="mt-3">
+                          <h6 className="fw-bold">Çek Bilgileri:</h6>
+                          <div className="table-responsive">
+                            <table className="table table-sm">
+                              <thead>
+                                <tr>
+                                  <th>Çek No</th>
+                                  <th>Banka</th>
+                                  <th>Vade Tarihi</th>
+                                  <th>Tutar</th>
+                                  <th>Durum</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {agreementChecks.map(check => (
+                                  <tr key={check.id || check._docId}>
+                                    <td>{check.checkNumber}</td>
+                                    <td>{check.bankName}</td>
+                                    <td>{formatDate(check.dueDate)}</td>
+                                    <td>{formatCurrency(check.amount)}</td>
+                                    <td>
+                                      <span className={`badge ${
+                                        check.status === 'cleared' ? 'bg-success' :
+                                        check.status === 'returned' || check.status === 'protested' ? 'bg-danger' :
+                                        'bg-warning'
+                                      }`}>
+                                        {check.status === 'cleared' ? 'Tahsil Edildi' :
+                                         check.status === 'returned' ? 'İade Edildi' :
+                                         check.status === 'protested' ? 'Protesto' :
+                                         'Bekliyor'}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+              <div className="modal-footer bg-light">
+                <button type="button" className="btn btn-secondary" onClick={() => {
+                  setShowPaymentHistory(false);
+                  setSelectedAgreementForPaymentHistory(null);
+                }}>
+                  Kapat
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Company Modal */}
+      {showEditCompanyModal && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header bg-primary text-white">
+                <h5 className="modal-title">
+                  <i className="bi bi-pencil me-2"></i>
+                  Firma Bilgilerini Düzenle
+                </h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setShowEditCompanyModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <form onSubmit={handleCompanyFormSubmit}>
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label htmlFor="companyName" className="form-label">Firma Adı *</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="companyName"
+                        name="name"
+                        value={companyFormData.name}
+                        onChange={handleCompanyFormChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label htmlFor="companyContact" className="form-label">İletişim Kişisi</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="companyContact"
+                        name="contact"
+                        value={companyFormData.contact}
+                        onChange={handleCompanyFormChange}
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label htmlFor="companyPhone" className="form-label">Telefon *</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="companyPhone"
+                        name="phone"
+                        value={companyFormData.phone}
+                        onChange={handleCompanyFormChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label htmlFor="companyEmail" className="form-label">E-posta</label>
+                      <input
+                        type="email"
+                        className="form-control"
+                        id="companyEmail"
+                        name="email"
+                        value={companyFormData.email}
+                        onChange={handleCompanyFormChange}
+                      />
+                    </div>
+                    <div className="col-md-12">
+                      <label htmlFor="companyAddress" className="form-label">Adres</label>
+                      <textarea
+                        className="form-control"
+                        id="companyAddress"
+                        name="address"
+                        value={companyFormData.address}
+                        onChange={handleCompanyFormChange}
+                        rows="2"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label htmlFor="companyTaxOffice" className="form-label">Vergi Dairesi</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="companyTaxOffice"
+                        name="taxOffice"
+                        value={companyFormData.taxOffice}
+                        onChange={handleCompanyFormChange}
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label htmlFor="companyTaxNumber" className="form-label">Vergi Numarası</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="companyTaxNumber"
+                        name="taxNumber"
+                        value={companyFormData.taxNumber}
+                        onChange={handleCompanyFormChange}
+                      />
+                    </div>
+                    <div className="col-md-12">
+                      <label htmlFor="companyNotes" className="form-label">Notlar</label>
+                      <textarea
+                        className="form-control"
+                        id="companyNotes"
+                        name="notes"
+                        value={companyFormData.notes}
+                        onChange={handleCompanyFormChange}
+                        rows="3"
+                      />
+                    </div>
+                  </div>
+                  <div className="d-flex justify-content-end gap-2 mt-3">
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowEditCompanyModal(false)}>
+                      İptal
+                    </button>
+                    <button type="submit" className="btn btn-primary">
+                      Kaydet
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
