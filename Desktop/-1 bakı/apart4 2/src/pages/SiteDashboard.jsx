@@ -865,6 +865,37 @@ const SiteDashboard = () => {
         </div>
       </div>
 
+      {/* Notification Permission Request */}
+      {typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default' && (
+        <div className="alert alert-info border-0 shadow-sm mb-4" style={{ borderRadius: '12px' }}>
+          <div className="d-flex align-items-center justify-content-between">
+            <div className="d-flex align-items-center">
+              <i className="bi bi-bell fs-4 me-3"></i>
+              <div>
+                <h6 className="mb-1 fw-bold">Bildirim İzni</h6>
+                <p className="mb-0 small">Yeni duyuruları anında almak için bildirim izni verin.</p>
+              </div>
+            </div>
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={async () => {
+                const result = await requestNotificationPermission();
+                if (result.granted) {
+                  await initializePushNotifications();
+                  await window.showAlert('Başarılı', 'Bildirim izni verildi. Artık yeni duyuruları anında alacaksınız.', 'success');
+                  window.location.reload();
+                } else {
+                  await window.showAlert('Bildirim İzni', 'Bildirim izni verilmedi. Lütfen tarayıcı ayarlarından izin verin.', 'warning');
+                }
+              }}
+            >
+              <i className="bi bi-check-circle me-1"></i>
+              İzin Ver
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Notifications Section - Modern Design */}
       {notifications.length > 0 && (
         <div className={`alert alert-${notifications.filter(n => !n.read).length > 0 ? 'primary' : 'info'} border-0 shadow-sm mb-4`} style={{ borderRadius: '12px' }}>
