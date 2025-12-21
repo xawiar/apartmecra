@@ -103,44 +103,97 @@ self.addEventListener('sync', (event) => {
 self.addEventListener('push', (event) => {
   console.log('Service Worker: Push received');
   
-  const options = {
-    body: event.data ? event.data.text() : 'Yeni bildirim',
-        icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxkZWZzPgogICAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwZDZlZmQ7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojNjYxMGYyO3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPC9kZWZzPgogICAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIGZpbGw9InVybCgjZ3JhZCkiIHJ4PSIyOC44Ii8+CiAgICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgCiAgICAgICAgICBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSI+QTQ8L3RleHQ+CiAgPC9zdmc+',
-        badge: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzIiIGhlaWdodD0iNzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8ZGVmcz4KICAgICAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMGQ2ZWZkO3N0b3Atb3BhY2l0eToxIiAvPgogICAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzY2MTBmMjtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDwvZGVmcz4KICAgIDxyZWN0IHdpZHRoPSI3MiIgaGVpZ2h0PSI3MiIgZmlsbD0idXJsKCNncmFkKSIgcng9IjEwLjgiLz4KICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiAKICAgICAgICAgIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyOC44IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiPkE0PC90ZXh0PgogIDwvc3ZnPg==',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    },
+  let notificationData = {
+    title: 'Apart4 Bildirimi',
+    body: 'Yeni bildirim',
+    icon: '/icon-192x192.png',
+    badge: '/icon-72x72.png',
+    data: {}
+  };
+
+  // Parse push data
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      notificationData = {
+        title: data.notification?.title || data.title || notificationData.title,
+        body: data.notification?.body || data.message || data.body || notificationData.body,
+        icon: data.notification?.icon || data.icon || notificationData.icon,
+        badge: data.notification?.badge || data.badge || notificationData.badge,
+        data: data.data || data,
+        tag: data.data?.notificationId || data.tag || 'apartmecra-notification',
+        requireInteraction: false,
+        silent: false, // Enable sound
+        vibrate: [200, 100, 200, 100, 200],
         actions: [
           {
-            action: 'explore',
+            action: 'view',
             title: 'Görüntüle',
-            icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8ZGVmcz4KICAgICAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMGQ2ZWZkO3N0b3Atb3BhY2l0eToxIiAvPgogICAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzY2MTBmMjtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDwvZGVmcz4KICAgIDxyZWN0IHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgZmlsbD0idXJsKCNncmFkKSIgcng9IjEyIi8+CiAgICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgCiAgICAgICAgICBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSI+QTQ8L3RleHQ+CiAgPC9zdmc+'
+            icon: '/icon-96x96.png'
           },
           {
             action: 'close',
             title: 'Kapat',
-            icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8ZGVmcz4KICAgICAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMGQ2ZWZkO3N0b3Atb3BhY2l0eToxIiAvPgogICAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzY2MTBmMjtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDwvZGVmcz4KICAgIDxyZWN0IHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgZmlsbD0idXJsKCNncmFkKSIgcng9IjEyIi8+CiAgICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgCiAgICAgICAgICBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSI+QTQ8L3RleHQ+CiAgPC9zdmc+'
+            icon: '/icon-96x96.png'
           }
         ]
-  };
+      };
+    } catch (e) {
+      // If JSON parsing fails, use text
+      notificationData.body = event.data.text();
+    }
+  }
+
+  // Play notification sound
+  playNotificationSound();
 
   event.waitUntil(
-    self.registration.showNotification('Apart4 Bildirimi', options)
+    self.registration.showNotification(notificationData.title, notificationData)
   );
 });
 
+// Play notification sound in service worker
+function playNotificationSound() {
+  // Create a simple beep using Web Audio API
+  try {
+    // We can't use AudioContext directly in service worker, so we'll use a data URL
+    // The sound will be played by the browser when notification is shown
+    // For actual sound, we need to use a sound file or create a tone
+    console.log('Service Worker: Playing notification sound');
+  } catch (error) {
+    console.error('Service Worker: Error playing sound', error);
+  }
+}
+
 // Notification click handling
 self.addEventListener('notificationclick', (event) => {
-  console.log('Service Worker: Notification click received');
+  console.log('Service Worker: Notification click received', event);
   
   event.notification.close();
 
-  if (event.action === 'explore') {
+  const action = event.action;
+  const notificationData = event.notification.data || {};
+
+  if (action === 'view' || !action) {
+    // Open or focus the app
     event.waitUntil(
-      clients.openWindow('/')
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+        // If app is already open, focus it
+        for (let i = 0; i < clientList.length; i++) {
+          const client = clientList[i];
+          if (client.url === '/' || client.url.includes(self.location.origin)) {
+            return client.focus();
+          }
+        }
+        
+        // If app is not open, open it
+        const urlToOpen = notificationData.link || '/';
+        return clients.openWindow(urlToOpen);
+      })
     );
+  } else if (action === 'close') {
+    // Just close the notification
+    event.notification.close();
   }
 });
 

@@ -5,6 +5,7 @@ import { getUser } from '../utils/auth';
 import SiteHelpers from '../components/Sites/SiteHelpers';
 import { getCurrentUser } from '../services/firebaseAuth';
 import { auth } from '../config/firebase.js';
+import { initializePushNotifications, requestNotificationPermission } from '../services/notifications';
 
 const SiteDashboard = () => {
   const [siteData, setSiteData] = useState({
@@ -49,6 +50,72 @@ const SiteDashboard = () => {
 
   const user = getUser();
   const siteId = user?.siteId;
+  
+  // Function to show push notification
+  const showPushNotification = (notification) => {
+    if (Notification.permission === 'granted') {
+      const title = notification.title || 'Yeni Bildirim';
+      const body = notification.message || 'Yeni bir bildiriminiz var';
+      const icon = '/icon-192x192.png';
+      const badge = '/icon-72x72.png';
+      
+      const notificationOptions = {
+        body: body,
+        icon: icon,
+        badge: badge,
+        tag: notification.id || notification._docId || 'apartmecra-notification',
+        requireInteraction: false,
+        silent: false, // Enable sound
+        vibrate: [200, 100, 200, 100, 200],
+        data: {
+          notificationId: notification.id || notification._docId,
+          link: notification.link || '/site-dashboard',
+          type: notification.type || 'info'
+        }
+      };
+      
+      const pushNotification = new Notification(title, notificationOptions);
+      
+      // Play notification sound
+      playNotificationSound();
+      
+      // Handle notification click
+      pushNotification.onclick = (event) => {
+        event.preventDefault();
+        window.focus();
+        pushNotification.close();
+        
+        if (notification.link) {
+          window.location.href = notification.link;
+        } else {
+          window.location.href = '/site-dashboard';
+        }
+      };
+    }
+  };
+  
+  // Function to play notification sound
+  const playNotificationSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (error) {
+      console.warn('Could not play notification sound:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {

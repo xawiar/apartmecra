@@ -4,6 +4,7 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import logger from '../utils/logger';
 
 // Firebase configuration
@@ -33,9 +34,19 @@ if (typeof window !== 'undefined') {
   analytics = getAnalytics(app);
 }
 
+// Initialize Firebase Cloud Messaging (FCM) only in browser environment
+let messaging = null;
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  try {
+    messaging = getMessaging(app);
+  } catch (error) {
+    console.warn('Firebase Messaging initialization failed:', error);
+  }
+}
+
 logger.log('✅ Firebase initialized successfully');
 logger.log('📊 Project:', firebaseConfig.projectId);
 
 // Export Firebase services
-export { auth, db, storage, analytics };
+export { auth, db, storage, analytics, messaging };
 export default app;
