@@ -158,49 +158,6 @@ const SiteDashboard = () => {
     }
   };
   
-  // Function to play notification sound
-  const playNotificationSound = () => {
-    try {
-      // Try to play a notification sound using HTML5 Audio
-      // This works better than Web Audio API for notifications
-      const audio = new Audio('/notification-sound.mp3');
-      audio.volume = 0.7;
-      
-      // Play sound
-      audio.play().catch(error => {
-        console.warn('Could not play notification sound file, trying fallback:', error);
-        
-        // Fallback: Use Web Audio API to create a beep
-        try {
-          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-          
-          // Resume audio context if suspended (required by some browsers)
-          if (audioContext.state === 'suspended') {
-            audioContext.resume();
-          }
-          
-          const oscillator = audioContext.createOscillator();
-          const gainNode = audioContext.createGain();
-          
-          oscillator.connect(gainNode);
-          gainNode.connect(audioContext.destination);
-          
-          oscillator.frequency.value = 800;
-          oscillator.type = 'sine';
-          
-          gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-          
-          oscillator.start(audioContext.currentTime);
-          oscillator.stop(audioContext.currentTime + 0.5);
-        } catch (fallbackError) {
-          console.warn('Could not play notification sound with fallback:', fallbackError);
-        }
-      });
-    } catch (error) {
-      console.warn('Could not play notification sound:', error);
-    }
-  };
 
   useEffect(() => {
     const fetchData = async () => {
