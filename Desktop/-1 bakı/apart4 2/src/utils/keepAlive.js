@@ -40,9 +40,10 @@ export const startKeepAlive = async () => {
         
         // Also ping the service worker by making a fetch request
         // This ensures the service worker stays active
+        // Use GET instead of HEAD to avoid cache errors
         try {
           await fetch('/sw.js', { 
-            method: 'HEAD',
+            method: 'GET',
             cache: 'no-cache'
           });
         } catch (error) {
@@ -56,16 +57,27 @@ export const startKeepAlive = async () => {
     console.log('Keep-alive mechanism started');
   }
   
-  // Register periodic background sync (if supported)
+  // Register periodic background sync (if supported and service worker is active)
   if ('serviceWorker' in navigator && 'periodicSync' in window.ServiceWorkerRegistration.prototype) {
     try {
       const registration = await navigator.serviceWorker.ready;
-      await registration.periodicSync.register('keep-alive', {
-        minInterval: 60000 // 1 minute
-      });
-      console.log('Periodic background sync registered');
+      
+      // Only register if service worker is active
+      if (registration.active) {
+        try {
+          await registration.periodicSync.register('keep-alive', {
+            minInterval: 60000 // 1 minute
+          });
+          console.log('Periodic background sync registered');
+        } catch (error) {
+          // Permission denied or not supported - this is OK
+          if (error.name !== 'NotAllowedError') {
+            console.warn('Periodic background sync not available:', error);
+          }
+        }
+      }
     } catch (error) {
-      console.warn('Periodic background sync not available:', error);
+      // Ignore errors - periodic sync is optional
     }
   }
   

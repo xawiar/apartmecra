@@ -38,35 +38,30 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
+    }).then(() => {
+      // Only claim clients when service worker is active
+      return self.clients.claim();
+    }).then(() => {
+      // Start keep-alive mechanism after activation
+      startKeepAlive();
     })
   );
-  self.clients.claim();
-  
-  // Start keep-alive mechanism
-  startKeepAlive();
 });
 
 // Keep-alive mechanism to ensure service worker stays active
 function startKeepAlive() {
-  // Periodic background sync to keep service worker alive
-  if ('periodicSync' in self.registration) {
-    setInterval(async () => {
-      try {
-        await self.registration.periodicSync.register('keep-alive', {
-          minInterval: 60000 // 1 minute
-        });
-      } catch (error) {
-        console.log('Service Worker: Periodic sync not supported or failed:', error);
-      }
-    }, KEEP_ALIVE_INTERVAL);
-  }
-  
   // Alternative: Use message channel to keep service worker alive
   setInterval(() => {
     self.clients.matchAll().then(clients => {
       clients.forEach(client => {
-        client.postMessage({ type: 'keep-alive', timestamp: Date.now() });
+        try {
+          client.postMessage({ type: 'keep-alive', timestamp: Date.now() });
+        } catch (error) {
+          // Ignore errors when posting messages
+        }
       });
+    }).catch((error) => {
+      // Ignore errors
     });
   }, KEEP_ALIVE_INTERVAL);
   
@@ -77,6 +72,11 @@ function startKeepAlive() {
 self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
+  // Skip HEAD requests - they cannot be cached
+  if (event.request.method === 'HEAD') {
     return;
   }
 
@@ -92,17 +92,23 @@ self.addEventListener('fetch', (event) => {
         console.log('Service Worker: Fetching from network', event.request.url);
         return fetch(event.request)
           .then((response) => {
-            // Don't cache non-successful responses
-            if (!response || response.status !== 200 || response.type !== 'basic') {
+            // Don't cache non-successful responses, HEAD requests, or non-GET requests
+            if (!response || 
+                response.status !== 200 || 
+                response.type !== 'basic' ||
+                event.request.method !== 'GET') {
               return response;
             }
 
             // Clone the response
             const responseToCache = response.clone();
 
+            // Cache the response (only for GET requests)
             caches.open(CACHE_NAME)
               .then((cache) => {
-                cache.put(event.request, responseToCache);
+                cache.put(event.request, responseToCache).catch((error) => {
+                  console.log('Service Worker: Cache put failed', error);
+                });
               });
 
             return response;
@@ -155,7 +161,6 @@ self.addEventListener('push', (event) => {
         tag: data.data?.notificationId || data.tag || 'apartmecra-notification',
         requireInteraction: false,
         silent: false, // Enable sound - browser will play default notification sound
-        sound: '/notification-sound.mp3', // Custom sound file (if supported)
         vibrate: [200, 100, 200, 100, 200],
         renotify: true, // Re-notify if notification with same tag exists
         actions: [
@@ -177,21 +182,33 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  // Play notification sound
-  playNotificationSound();
-
+  // Show notification with sound enabled
   event.waitUntil(
-    self.registration.showNotification(notificationData.title, notificationData)
+    self.registration.showNotification(notificationData.title, notificationData).then(() => {
+      // Notify all clients to play sound (service worker can't play audio directly)
+      return self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          try {
+            client.postMessage({ 
+              type: 'play-notification-sound',
+              notificationId: notificationData.tag
+            });
+          } catch (error) {
+            // Ignore errors
+          }
+        });
+      });
+    })
   );
 });
 
-// Play notification sound in service worker
-// Note: Service workers can't directly play audio, but we can use the notification's sound property
-// The browser will play the default notification sound when silent: false
-function playNotificationSound() {
-  console.log('Service Worker: Notification sound will be played by browser');
-  // The sound is handled by the browser when we set silent: false in notification options
-}
+// Message handler for notification sound
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'play-notification-sound') {
+    // This is handled by the client-side code
+    return;
+  }
+});
 
 // Notification click handling
 self.addEventListener('notificationclick', (event) => {
@@ -263,14 +280,23 @@ async function clearOfflineData() {
 
 // Message handler for keep-alive and other messages
 self.addEventListener('message', (event) => {
-  console.log('Service Worker: Message received', event.data);
+  if (!event.data) return;
   
-  if (event.data && event.data.type === 'keep-alive') {
-    // Respond to keep-alive message
-    event.ports[0].postMessage({ type: 'keep-alive-ack', timestamp: Date.now() });
-  } else if (event.data && event.data.type === 'skipWaiting') {
+  if (event.data.type === 'keep-alive') {
+    // Respond to keep-alive message if port is available
+    if (event.ports && event.ports[0]) {
+      try {
+        event.ports[0].postMessage({ type: 'keep-alive-ack', timestamp: Date.now() });
+      } catch (error) {
+        // Ignore errors
+      }
+    }
+  } else if (event.data.type === 'skipWaiting') {
     // Skip waiting and activate immediately
     self.skipWaiting();
+  } else if (event.data.type === 'play-notification-sound') {
+    // This is handled by the client-side code
+    return;
   }
 });
 

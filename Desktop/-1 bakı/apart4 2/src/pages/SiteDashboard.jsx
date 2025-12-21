@@ -51,6 +51,17 @@ const SiteDashboard = () => {
   const user = getUser();
   const siteId = user?.siteId;
   
+  // Listen for service worker messages (for notification sound)
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'play-notification-sound') {
+          playNotificationSound();
+        }
+      });
+    }
+  }, []);
+
   // Function to show push notification
   const showPushNotification = (notification) => {
     if (Notification.permission === 'granted') {
