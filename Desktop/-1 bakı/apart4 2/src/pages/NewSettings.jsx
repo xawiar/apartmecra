@@ -31,6 +31,12 @@ const Settings = () => {
   const [labelType, setLabelType] = useState('all'); // Label type filter (all, site, business_center)
   const [siteUpdateRequests, setSiteUpdateRequests] = useState([]); // Site update requests
   const [companyUpdateRequests, setCompanyUpdateRequests] = useState([]); // Company update requests
+  const [announcementForm, setAnnouncementForm] = useState({
+    title: '',
+    message: '',
+    type: 'info',
+    targetSite: 'all' // 'all' or specific siteId
+  });
 
   useEffect(() => {
     const fetchUsers = async () => {

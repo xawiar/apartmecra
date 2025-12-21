@@ -1524,12 +1524,12 @@ export const getNotifications = async (userId = null, unreadOnly = false) => {
     
     // Filter by user if provided
     if (userId) {
-      filters.push(where('userId', '==', userId));
+      filters.push({ field: 'userId', operator: '==', value: userId });
     }
     
     // Filter unread only if requested
     if (unreadOnly) {
-      filters.push(where('read', '==', false));
+      filters.push({ field: 'read', operator: '==', value: false });
     }
     
     const result = await getCollection(
