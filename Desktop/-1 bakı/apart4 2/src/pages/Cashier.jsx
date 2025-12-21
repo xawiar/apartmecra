@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getPartners, updatePartner, getAgreements, getSites, getCompanies, updateSite, updateCompany, updateAgreement, createLog, getDebts, createDebt, updateDebt, deleteDebt } from '../services/api';
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getPartners, updatePartner, getAgreements, getSites, getCompanies, updateSite, updateCompany, updateAgreement, createLog, getDebts, createDebt, updateDebt, deleteDebt, getChecks, updateCheck } from '../services/api';
 import { isObserver } from '../utils/auth';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -1110,7 +1110,78 @@ const Cashier = () => {
   // Handle cancel transaction (vazgeç)
   const handleCancelTransaction = async (transaction) => {
     try {
+      // Confirm cancellation
+      const confirmed = await window.showConfirm(
+        'Ödeme İptali',
+        `Bu ödemeyi iptal etmek istediğinizden emin misiniz? ${transaction.agreementId ? 'Anlaşmanın ödeme durumu sıfırlanacaktır.' : ''}`,
+        'warning'
+      );
+      
+      if (!confirmed) return;
+      
       console.log('Cancelling transaction:', transaction);
+      
+      // If this is an income transaction with an agreement, reverse the payment
+      if (transaction.type === 'income' && transaction.agreementId) {
+        try {
+          const agreement = agreements.find(a => String(a.id) === String(transaction.agreementId));
+          if (agreement) {
+            const paymentAmount = Math.abs(transaction.amount);
+            const currentPaidAmount = agreement.paidAmount || 0;
+            const newPaidAmount = Math.max(0, currentPaidAmount - paymentAmount);
+            const totalAmount = agreement.totalAmount || 0;
+            const remainingAmount = totalAmount - newPaidAmount;
+            const paymentStatus = remainingAmount <= 0.01 ? 'paid' : (newPaidAmount > 0 ? 'partial' : 'unpaid');
+            
+            const updatedAgreement = {
+              ...agreement,
+              paidAmount: newPaidAmount,
+              remainingAmount: remainingAmount,
+              paymentStatus: paymentStatus,
+              paymentReceived: remainingAmount <= 0.01,
+              // Only set paymentDate if full payment is received, otherwise remove it
+              ...(remainingAmount <= 0.01 ? { paymentDate: agreement.paymentDate } : {})
+            };
+            
+            // Remove paymentDate if no payment remains
+            if (newPaidAmount === 0) {
+              delete updatedAgreement.paymentDate;
+            }
+            
+            await updateAgreement(agreement.id, updatedAgreement);
+            
+            // Update local state
+            setAgreements(prev => prev.map(a => 
+              String(a.id) === String(agreement.id) ? updatedAgreement : a
+            ));
+            
+            console.log(`Agreement ${agreement.id} payment reversed: ${paymentAmount} subtracted`);
+          }
+        } catch (agreementError) {
+          console.error('Error reversing agreement payment:', agreementError);
+          // Continue with transaction deletion even if agreement update fails
+        }
+      }
+      
+      // If this is a check payment, update check status
+      if (transaction.checkId) {
+        try {
+          const allChecks = await getChecks();
+          const check = allChecks.find(c => String(c.id) === String(transaction.checkId) || String(c._docId) === String(transaction.checkId));
+          
+          if (check && check.status === 'cleared') {
+            // Revert check status to pending
+            await updateCheck(check.id || check._docId, {
+              ...check,
+              status: 'pending'
+            });
+            console.log(`Check ${check.checkNumber} status reverted to pending`);
+          }
+        } catch (checkError) {
+          console.error('Error updating check status:', checkError);
+          // Continue with transaction deletion even if check update fails
+        }
+      }
       
       // Check if this is a partner payment transaction
       const isPartnerPayment = transaction.source?.includes('Ortak Ödemesi') || 
@@ -1161,16 +1232,26 @@ const Cashier = () => {
       // Show success message
       await window.showAlert(
         'Başarılı',
-        'İşlem iptal edildi ve kasa bakiyesi güncellendi.',
+        'Ödeme iptal edildi. Anlaşma ödeme durumu güncellendi.',
         'success'
       );
+      
+      // Log the action
+      try {
+        await createLog({
+          user: 'Admin',
+          action: `Ödeme iptal edildi: ${transaction.source} - ${transaction.amount} TL${transaction.agreementId ? ` (Anlaşma: ${transaction.agreementId})` : ''}`
+        });
+      } catch (logError) {
+        console.error('Error creating log:', logError);
+      }
       
       console.log('Transaction cancelled successfully');
     } catch (error) {
       console.error('Error cancelling transaction:', error);
       await window.showAlert(
         'Hata',
-        'İşlem iptal edilirken bir hata oluştu.',
+        'Ödeme iptal edilirken bir hata oluştu: ' + (error.message || 'Bilinmeyen hata'),
         'error'
       );
     }
@@ -2037,11 +2118,11 @@ const Cashier = () => {
                             >
                               <i className="bi bi-pencil"></i>
                             </button>
-                            {transaction.type === 'expense' && (
+                            {(transaction.type === 'expense' || (transaction.type === 'income' && transaction.agreementId)) && (
                               <button
                                 onClick={() => handleCancelTransaction(transaction)}
                                 className="btn btn-sm btn-outline-danger rounded-pill py-1 px-2"
-                                title="Vazgeç"
+                                title={transaction.type === 'income' ? 'Ödemeyi İptal Et' : 'Vazgeç'}
                                 disabled={isObserver()}
                               >
                                 <i className="bi bi-x-circle"></i>
