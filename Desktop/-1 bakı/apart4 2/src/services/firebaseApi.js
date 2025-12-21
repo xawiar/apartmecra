@@ -54,6 +54,18 @@ import {
   updateCheck as updateCheckFromDb,
   deleteCheck as deleteCheckFromDb,
   
+  // Site Update Requests
+  getSiteUpdateRequests as getSiteUpdateRequestsFromDb,
+  createSiteUpdateRequest as createSiteUpdateRequestInDb,
+  updateSiteUpdateRequest as updateSiteUpdateRequestInDb,
+  deleteSiteUpdateRequest as deleteSiteUpdateRequestFromDb,
+  
+  // Company Update Requests
+  getCompanyUpdateRequests as getCompanyUpdateRequestsFromDb,
+  createCompanyUpdateRequest as createCompanyUpdateRequestInDb,
+  updateCompanyUpdateRequest as updateCompanyUpdateRequestInDb,
+  deleteCompanyUpdateRequest as deleteCompanyUpdateRequestFromDb,
+  
   // Partners
   getPartners as getPartnersFromDb,
   createPartner as createPartnerInDb,
@@ -1017,6 +1029,54 @@ export const getAccountingRecords = async () => {
 export const createAccountingRecord = async (recordData) => {
   await initializeFirebase();
   return await createAccountingRecordInDb(recordData);
+};
+
+// Site Update Requests endpoints
+export const getSiteUpdateRequests = async () => {
+  await initializeFirebase();
+  return await getSiteUpdateRequestsFromDb();
+};
+
+export const createSiteUpdateRequest = async (requestData) => {
+  await initializeFirebase();
+  const result = await createSiteUpdateRequestInDb(requestData);
+  return result.success ? result.data : null;
+};
+
+export const updateSiteUpdateRequest = async (requestId, requestData) => {
+  await initializeFirebase();
+  const result = await updateSiteUpdateRequestInDb(requestId, requestData);
+  return result.success ? result.data : null;
+};
+
+export const deleteSiteUpdateRequest = async (requestId) => {
+  await initializeFirebase();
+  const result = await deleteSiteUpdateRequestFromDb(requestId);
+  return result.success;
+};
+
+// Company Update Requests endpoints
+export const getCompanyUpdateRequests = async () => {
+  await initializeFirebase();
+  return await getCompanyUpdateRequestsFromDb();
+};
+
+export const createCompanyUpdateRequest = async (requestData) => {
+  await initializeFirebase();
+  const result = await createCompanyUpdateRequestInDb(requestData);
+  return result.success ? result.data : null;
+};
+
+export const updateCompanyUpdateRequest = async (requestId, requestData) => {
+  await initializeFirebase();
+  const result = await updateCompanyUpdateRequestInDb(requestId, requestData);
+  return result.success ? result.data : null;
+};
+
+export const deleteCompanyUpdateRequest = async (requestId) => {
+  await initializeFirebase();
+  const result = await deleteCompanyUpdateRequestFromDb(requestId);
+  return result.success;
 };
 
 // Export Firebase-specific functions

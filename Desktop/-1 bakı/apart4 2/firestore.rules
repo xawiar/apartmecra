@@ -86,17 +86,9 @@ service cloud.firestore {
       // Site kullanıcıları kendi sitelerini görebilir
       allow read: if isAuthenticated();
       
-      // Oluşturma ve silme: Sadece admin
-      allow create, delete: if isAdmin();
-      
-      // Güncelleme: Admin veya site kullanıcısı kendi sitesini güncelleyebilir
-      // Site ID karşılaştırması: hem document ID hem de custom 'id' field'ı kontrol edilir
-      // String karşılaştırması için toString() kullan
-      allow update: if isAdmin() || 
-                    (isSiteUser() && 
-                     getUserSiteId() != null &&
-                     (resource.data.id != null && resource.data.id.toString() == getUserSiteId().toString()) || 
-                     (resource.id != null && resource.id.toString() == getUserSiteId().toString()));
+      // Oluşturma, güncelleme ve silme: Sadece admin
+      // Site kullanıcıları artık direkt güncelleme yapamaz, onay mekanizması kullanılır
+      allow create, update, delete: if isAdmin();
     }
     
     // Companies collection
@@ -104,16 +96,9 @@ service cloud.firestore {
       // Okuma: Authenticated kullanıcılar
       allow read: if isAuthenticated();
       
-      // Oluşturma ve silme: Sadece admin
-      allow create, delete: if isAdmin();
-      
-      // Güncelleme: Admin veya firma kullanıcısı kendi firmasını güncelleyebilir
-      // Company ID karşılaştırması: hem document ID hem de custom 'id' field'ı kontrol edilir
-      allow update: if isAdmin() || 
-                    (isCompanyUser() && 
-                     getUserCompanyId() != null &&
-                     ((resource.data.id != null && resource.data.id == getUserCompanyId()) || 
-                      (resource.id != null && resource.id == getUserCompanyId())));
+      // Oluşturma, güncelleme ve silme: Sadece admin
+      // Firma kullanıcıları artık direkt güncelleme yapamaz, onay mekanizması kullanılır
+      allow create, update, delete: if isAdmin();
     }
     
     // Agreements collection
@@ -145,6 +130,20 @@ service cloud.firestore {
     match /checks/{checkId} {
       allow read: if isAuthenticated();
       allow create, update, delete: if isAuthenticated();
+    }
+    
+    // Site Update Requests collection
+    match /siteUpdateRequests/{requestId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated(); // Site kullanıcıları request oluşturabilir
+      allow update, delete: if isAdmin(); // Sadece admin onaylayabilir/silebilir
+    }
+    
+    // Company Update Requests collection
+    match /companyUpdateRequests/{requestId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated(); // Firma kullanıcıları request oluşturabilir
+      allow update, delete: if isAdmin(); // Sadece admin onaylayabilir/silebilir
     }
     
     // Partners collection

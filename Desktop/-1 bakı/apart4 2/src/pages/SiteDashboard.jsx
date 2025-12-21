@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getSiteData, getSites, getCompanies, getPanelImages, getAgreements, getTransactions, updateSite } from '../services/api';
+import { getSiteData, getSites, getCompanies, getPanelImages, getAgreements, getTransactions, createSiteUpdateRequest } from '../services/api';
 import logger from '../utils/logger';
 import { getUser } from '../utils/auth';
 import SiteHelpers from '../components/Sites/SiteHelpers';
@@ -325,21 +325,64 @@ const SiteDashboard = () => {
     }));
   };
   
-  // Handle site form submit
+  // Handle site form submit - Create update request instead of direct update
   const handleSiteFormSubmit = async (e) => {
     e.preventDefault();
     if (!siteData.site) return;
     
     try {
-      const updatedSite = await updateSite(siteData.site.id, siteFormData);
-      if (updatedSite) {
-        setSiteData(prev => ({ ...prev, site: updatedSite }));
+      // Create update request instead of direct update
+      const requestData = {
+        siteId: siteData.site.id,
+        siteName: siteData.site.name,
+        requestedBy: user?.email || user?.username || 'Site User',
+        requestedByRole: 'site_user',
+        currentData: {
+          name: siteData.site.name,
+          manager: siteData.site.manager,
+          phone: siteData.site.phone,
+          blocks: siteData.site.blocks,
+          elevatorsPerBlock: siteData.site.elevatorsPerBlock,
+          apartmentCount: siteData.site.apartmentCount,
+          bankAccountName: siteData.site.bankAccountName,
+          iban: siteData.site.iban,
+          notes: siteData.site.notes
+        },
+        requestedData: siteFormData,
+        changes: {} // Will be calculated
+      };
+      
+      // Calculate changes
+      const changes = {};
+      Object.keys(siteFormData).forEach(key => {
+        if (siteFormData[key] !== requestData.currentData[key]) {
+          changes[key] = {
+            old: requestData.currentData[key],
+            new: siteFormData[key]
+          };
+        }
+      });
+      
+      requestData.changes = changes;
+      
+      if (Object.keys(changes).length === 0) {
+        await window.showAlert('Bilgi', 'Değişiklik yapılmadı.', 'info');
         setShowEditSiteModal(false);
-        await window.showAlert('Başarılı', 'Site bilgileri başarıyla güncellendi.', 'success');
+        return;
+      }
+      
+      const request = await createSiteUpdateRequest(requestData);
+      if (request) {
+        setShowEditSiteModal(false);
+        await window.showAlert(
+          'Başarılı', 
+          'Site bilgileri güncelleme talebi oluşturuldu. Admin onayından sonra değişiklikler uygulanacaktır.', 
+          'success'
+        );
       }
     } catch (error) {
-      console.error('Error updating site:', error);
-      await window.showAlert('Hata', 'Site bilgileri güncellenirken bir hata oluştu.', 'error');
+      console.error('Error creating site update request:', error);
+      await window.showAlert('Hata', 'Güncelleme talebi oluşturulurken bir hata oluştu.', 'error');
     }
   };
 

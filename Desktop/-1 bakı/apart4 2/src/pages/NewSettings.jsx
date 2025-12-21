@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, createUser, updateUser, deleteUser, getLogs, getSites, getCompanies } from '../services/api';
+import { getUsers, createUser, updateUser, deleteUser, getLogs, getSites, getCompanies, getSiteUpdateRequests, getCompanyUpdateRequests, updateSiteUpdateRequest, updateCompanyUpdateRequest, deleteSiteUpdateRequest, deleteCompanyUpdateRequest, updateSite, updateCompany, createLog } from '../services/api';
 import Archive from './Archive';
 import jsPDF from 'jspdf';
 
@@ -29,6 +29,8 @@ const Settings = () => {
   const [sites, setSites] = useState([]); // Sites for label printing
   const [selectedSiteForLabels, setSelectedSiteForLabels] = useState('all'); // Selected site for labels
   const [labelType, setLabelType] = useState('all'); // Label type filter (all, site, business_center)
+  const [siteUpdateRequests, setSiteUpdateRequests] = useState([]); // Site update requests
+  const [companyUpdateRequests, setCompanyUpdateRequests] = useState([]); // Company update requests
 
   useEffect(() => {
     const fetchUsers = async () => {

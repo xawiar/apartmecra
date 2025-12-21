@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { getAgreements, getSites, getCompanies, getTransactions, getPanelImages, getChecks, updateCompany } from '../services/api';
+import { getAgreements, getSites, getCompanies, getTransactions, getPanelImages, getChecks, createCompanyUpdateRequest } from '../services/api';
 import { getUser } from '../utils/auth';
 import { useNavigate } from 'react-router-dom';
 
@@ -369,6 +369,66 @@ const CompanyDashboard = () => {
   const handleDateFilterChange = (date) => {
     setSelectedDate(date);
     filterAgreementsByDate(date);
+  };
+  
+  // Handle company form submit - Create update request instead of direct update
+  const handleCompanyFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!company) return;
+    
+    try {
+      // Create update request instead of direct update
+      const requestData = {
+        companyId: company.id,
+        companyName: company.name,
+        requestedBy: user?.email || user?.username || 'Company User',
+        requestedByRole: 'company_user',
+        currentData: {
+          name: company.name,
+          contact: company.contact,
+          phone: company.phone,
+          email: company.email,
+          address: company.address,
+          taxOffice: company.taxOffice,
+          taxNumber: company.taxNumber,
+          notes: company.notes
+        },
+        requestedData: companyFormData,
+        changes: {} // Will be calculated
+      };
+      
+      // Calculate changes
+      const changes = {};
+      Object.keys(companyFormData).forEach(key => {
+        if (companyFormData[key] !== requestData.currentData[key]) {
+          changes[key] = {
+            old: requestData.currentData[key],
+            new: companyFormData[key]
+          };
+        }
+      });
+      
+      requestData.changes = changes;
+      
+      if (Object.keys(changes).length === 0) {
+        await window.showAlert('Bilgi', 'Değişiklik yapılmadı.', 'info');
+        setShowEditCompanyModal(false);
+        return;
+      }
+      
+      const request = await createCompanyUpdateRequest(requestData);
+      if (request) {
+        setShowEditCompanyModal(false);
+        await window.showAlert(
+          'Başarılı', 
+          'Firma bilgileri güncelleme talebi oluşturuldu. Admin onayından sonra değişiklikler uygulanacaktır.', 
+          'success'
+        );
+      }
+    } catch (error) {
+      console.error('Error creating company update request:', error);
+      await window.showAlert('Hata', 'Güncelleme talebi oluşturulurken bir hata oluştu.', 'error');
+    }
   };
 
 

@@ -34,7 +34,9 @@ export const COLLECTIONS = {
   ARCHIVED_AGREEMENTS: 'archivedAgreements',
   LOGS: 'logs',
   PANEL_IMAGES: 'panelImages',
-  CHECKS: 'checks'
+  CHECKS: 'checks',
+  SITE_UPDATE_REQUESTS: 'siteUpdateRequests',
+  COMPANY_UPDATE_REQUESTS: 'companyUpdateRequests'
 };
 
 // Generic CRUD operations
@@ -1059,6 +1061,56 @@ export const createLog = async (logData) => {
 
 export const deleteLog = async (logId) => {
   return await deleteDocument(COLLECTIONS.LOGS, logId);
+};
+
+// Site Update Requests operations
+export const getSiteUpdateRequests = async () => {
+  const result = await getCollection(COLLECTIONS.SITE_UPDATE_REQUESTS, [], 'createdAt', 'desc');
+  return result.data || [];
+};
+
+export const createSiteUpdateRequest = async (requestData) => {
+  return await createDocument(COLLECTIONS.SITE_UPDATE_REQUESTS, {
+    ...requestData,
+    status: 'pending',
+    requestedAt: serverTimestamp()
+  });
+};
+
+export const updateSiteUpdateRequest = async (requestId, requestData) => {
+  return await updateDocument(COLLECTIONS.SITE_UPDATE_REQUESTS, requestId, {
+    ...requestData,
+    updatedAt: serverTimestamp()
+  });
+};
+
+export const deleteSiteUpdateRequest = async (requestId) => {
+  return await deleteDocument(COLLECTIONS.SITE_UPDATE_REQUESTS, requestId);
+};
+
+// Company Update Requests operations
+export const getCompanyUpdateRequests = async () => {
+  const result = await getCollection(COLLECTIONS.COMPANY_UPDATE_REQUESTS, [], 'createdAt', 'desc');
+  return result.data || [];
+};
+
+export const createCompanyUpdateRequest = async (requestData) => {
+  return await createDocument(COLLECTIONS.COMPANY_UPDATE_REQUESTS, {
+    ...requestData,
+    status: 'pending',
+    requestedAt: serverTimestamp()
+  });
+};
+
+export const updateCompanyUpdateRequest = async (requestId, requestData) => {
+  return await updateDocument(COLLECTIONS.COMPANY_UPDATE_REQUESTS, requestId, {
+    ...requestData,
+    updatedAt: serverTimestamp()
+  });
+};
+
+export const deleteCompanyUpdateRequest = async (requestId) => {
+  return await deleteDocument(COLLECTIONS.COMPANY_UPDATE_REQUESTS, requestId);
 };
 
 // Dashboard operations
