@@ -1715,7 +1715,7 @@ export const sendAnnouncementToAllSites = async (title, message, type = 'info', 
         message: message,
         type: type,
         link: link,
-        announcementId: announcementId, // Link to announcement if it's an announcement
+        announcementId: announcementId || null, // Link to announcement if it's an announcement
         read: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
