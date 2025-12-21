@@ -78,7 +78,10 @@ const PersonnelDashboard = () => {
     locationLng: '',
     manager: '',
     janitorPhones: '',
-    notes: ''
+    notes: '',
+    blocks: '',
+    elevatorsPerBlock: '',
+    apartmentCount: ''
   });
   const [showMap, setShowMap] = useState(false);
   const [mapLoading, setMapLoading] = useState(false);
@@ -429,7 +432,10 @@ const PersonnelDashboard = () => {
       locationLng: site.locationLng || '',
       manager: site.manager || '',
       janitorPhones: Array.isArray(site.janitorPhones) ? site.janitorPhones.join(', ') : (site.janitorPhones || ''),
-      notes: site.notes || ''
+      notes: site.notes || '',
+      blocks: site.blocks || '',
+      elevatorsPerBlock: site.elevatorsPerBlock || '',
+      apartmentCount: site.apartmentCount || ''
     });
     setShowSiteEditModal(true);
   };
@@ -459,7 +465,10 @@ const PersonnelDashboard = () => {
         locationLng: siteEditForm.locationLng || null,
         manager: siteEditForm.manager,
         janitorPhones: janitorPhonesArray,
-        notes: siteEditForm.notes
+        notes: siteEditForm.notes,
+        blocks: siteEditForm.blocks ? parseInt(siteEditForm.blocks) : null,
+        elevatorsPerBlock: siteEditForm.elevatorsPerBlock ? parseInt(siteEditForm.elevatorsPerBlock) : null,
+        apartmentCount: siteEditForm.apartmentCount ? parseInt(siteEditForm.apartmentCount) : null
       };
 
       const result = await updateSite(selectedSite.id, updateData);

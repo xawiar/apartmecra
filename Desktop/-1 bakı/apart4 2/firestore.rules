@@ -86,9 +86,15 @@ service cloud.firestore {
       // Site kullanıcıları kendi sitelerini görebilir
       allow read: if isAuthenticated();
       
-      // Oluşturma, güncelleme ve silme: Sadece admin
+      // Oluşturma: Admin veya personnel (personnel panel yönetimi yapıyor, site oluşturabilir)
+      allow create: if isAdmin() || isPersonnel();
+      
+      // Güncelleme: Admin veya personnel (personnel site bilgilerini güncelleyebilir)
       // Site kullanıcıları artık direkt güncelleme yapamaz, onay mekanizması kullanılır
-      allow create, update, delete: if isAdmin();
+      allow update: if isAdmin() || isPersonnel();
+      
+      // Silme: Sadece admin
+      allow delete: if isAdmin();
     }
     
     // Companies collection
@@ -96,9 +102,12 @@ service cloud.firestore {
       // Okuma: Authenticated kullanıcılar
       allow read: if isAuthenticated();
       
-      // Oluşturma, güncelleme ve silme: Sadece admin
+      // Oluşturma: Admin veya personnel (personnel panel yönetimi yapıyor, firma oluşturabilir)
+      allow create: if isAdmin() || isPersonnel();
+      
+      // Güncelleme ve silme: Sadece admin
       // Firma kullanıcıları artık direkt güncelleme yapamaz, onay mekanizması kullanılır
-      allow create, update, delete: if isAdmin();
+      allow update, delete: if isAdmin();
     }
     
     // Agreements collection
