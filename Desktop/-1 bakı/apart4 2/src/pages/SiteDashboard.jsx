@@ -807,7 +807,6 @@ const SiteDashboard = () => {
       {/* Site Panels - Show panels for this site only */}
       {siteData.agreements.filter(a => 
         a.status === 'active' && 
-        (a.paymentReceived || a.creditPaymentReceived) && 
         Array.isArray(a.siteIds) && a.siteIds.includes(siteId)
       ).length > 0 && (
         <div className="row g-4 mb-4">
@@ -823,7 +822,6 @@ const SiteDashboard = () => {
                 {siteData.agreements
                   .filter(a => 
                     a.status === 'active' && 
-                    (a.paymentReceived || a.creditPaymentReceived) && 
                     Array.isArray(a.siteIds) && a.siteIds.includes(siteId)
                   )
                   .map((agreement) => {
