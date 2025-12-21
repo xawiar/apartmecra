@@ -116,10 +116,22 @@ const CompanyDashboard = () => {
   });
   const [transactions, setTransactions] = useState([]); // Add transactions state
   const [panelImages, setPanelImages] = useState([]);
+  const [checks, setChecks] = useState([]); // Add checks state
   const [showAgreementHistory, setShowAgreementHistory] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [filteredAgreements, setFilteredAgreements] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showEditCompanyModal, setShowEditCompanyModal] = useState(false);
+  const [companyFormData, setCompanyFormData] = useState({
+    name: '',
+    contact: '',
+    phone: '',
+    email: '',
+    address: '',
+    taxOffice: '',
+    taxNumber: '',
+    notes: ''
+  });
   const navigate = useNavigate();
   
   // Memoize user and companyId to prevent unnecessary re-renders
