@@ -1,11 +1,12 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useRef, lazy, Suspense } from 'react';
+import { useRef, lazy, Suspense, useEffect } from 'react';
 import Login from './pages/Login';
 import PrivateRoute from './components/PrivateRoute';
 import BootstrapLayout from './components/BootstrapLayout';
 import withObserverRestrictions from './components/withObserverRestrictions';
 import ErrorBoundary from './components/ErrorBoundary';
 import { getUser } from './utils/auth';
+import { initializeKeepAlive, cleanupKeepAlive } from './utils/keepAlive';
 
 // Lazy load pages for code splitting - reduces initial bundle size
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -97,6 +98,32 @@ const DashboardRoute = () => {
 };
 
 function App() {
+  // Initialize keep-alive when user is logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      // User is logged in, start keep-alive
+      initializeKeepAlive().catch(error => {
+        console.error('Failed to initialize keep-alive:', error);
+      });
+    } else {
+      // User is not logged in, stop keep-alive
+      cleanupKeepAlive().catch(error => {
+        console.error('Failed to cleanup keep-alive:', error);
+      });
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (!localStorage.getItem('token')) {
+        cleanupKeepAlive().catch(error => {
+          console.error('Failed to cleanup keep-alive on unmount:', error);
+        });
+      }
+    };
+  }, []);
 
   return (
     <ErrorBoundary showDetails={import.meta.env.DEV}>

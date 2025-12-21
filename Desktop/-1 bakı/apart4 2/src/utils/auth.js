@@ -145,7 +145,15 @@ export const canView = () => {
   return user && ['administrator', 'admin', 'observer', 'company'].includes(user.role);
 };
 
-export const logout = () => {
+export const logout = async () => {
+  // Stop keep-alive mechanism
+  try {
+    const { cleanupKeepAlive } = await import('./keepAlive');
+    await cleanupKeepAlive();
+  } catch (error) {
+    console.error('Failed to cleanup keep-alive on logout:', error);
+  }
+  
   // Clear all auth-related data
   localStorage.removeItem('token');
   localStorage.removeItem('user');

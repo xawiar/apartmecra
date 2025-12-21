@@ -22,8 +22,8 @@ const BootstrapLayout = ({ children }) => {
   window.showAlert = showAlert;
   window.showConfirm = showConfirm;
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 

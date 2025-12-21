@@ -1,5 +1,6 @@
 // Service Worker for Apart4 PWA
-const CACHE_NAME = 'apart4-v1.0.2'; // Updated to force cache refresh
+const CACHE_NAME = 'apart4-v1.0.3'; // Updated to force cache refresh
+const KEEP_ALIVE_INTERVAL = 30000; // 30 seconds
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',
@@ -40,7 +41,37 @@ self.addEventListener('activate', (event) => {
     })
   );
   self.clients.claim();
+  
+  // Start keep-alive mechanism
+  startKeepAlive();
 });
+
+// Keep-alive mechanism to ensure service worker stays active
+function startKeepAlive() {
+  // Periodic background sync to keep service worker alive
+  if ('periodicSync' in self.registration) {
+    setInterval(async () => {
+      try {
+        await self.registration.periodicSync.register('keep-alive', {
+          minInterval: 60000 // 1 minute
+        });
+      } catch (error) {
+        console.log('Service Worker: Periodic sync not supported or failed:', error);
+      }
+    }, KEEP_ALIVE_INTERVAL);
+  }
+  
+  // Alternative: Use message channel to keep service worker alive
+  setInterval(() => {
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({ type: 'keep-alive', timestamp: Date.now() });
+      });
+    });
+  }, KEEP_ALIVE_INTERVAL);
+  
+  console.log('Service Worker: Keep-alive mechanism started');
+}
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
@@ -229,3 +260,25 @@ async function clearOfflineData() {
   // Implementation for clearing offline data
   console.log('Clearing offline data');
 }
+
+// Message handler for keep-alive and other messages
+self.addEventListener('message', (event) => {
+  console.log('Service Worker: Message received', event.data);
+  
+  if (event.data && event.data.type === 'keep-alive') {
+    // Respond to keep-alive message
+    event.ports[0].postMessage({ type: 'keep-alive-ack', timestamp: Date.now() });
+  } else if (event.data && event.data.type === 'skipWaiting') {
+    // Skip waiting and activate immediately
+    self.skipWaiting();
+  }
+});
+
+// Periodic background sync (if supported)
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'keep-alive') {
+    console.log('Service Worker: Periodic sync triggered');
+    // Just keep the service worker alive
+    event.waitUntil(Promise.resolve());
+  }
+});
