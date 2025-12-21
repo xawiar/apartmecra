@@ -1963,6 +1963,54 @@ const PersonnelDashboard = () => {
                     <small className="text-muted">Birden fazla telefon numarasını virgülle ayırarak girebilirsiniz</small>
                   </div>
                   
+                  <div className="row g-2">
+                    <div className="col-md-4">
+                      <label className="form-label fw-medium">
+                        <i className="bi bi-building me-1"></i>
+                        Blok Sayısı
+                      </label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        name="blocks"
+                        value={siteEditForm.blocks}
+                        onChange={handleSiteEditChange}
+                        placeholder="Örn: 5"
+                        min="0"
+                      />
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label fw-medium">
+                        <i className="bi bi-elevator me-1"></i>
+                        Blok Başına Asansör Sayısı
+                      </label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        name="elevatorsPerBlock"
+                        value={siteEditForm.elevatorsPerBlock}
+                        onChange={handleSiteEditChange}
+                        placeholder="Örn: 2"
+                        min="0"
+                      />
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label fw-medium">
+                        <i className="bi bi-house-door me-1"></i>
+                        Daire Sayısı
+                      </label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        name="apartmentCount"
+                        value={siteEditForm.apartmentCount}
+                        onChange={handleSiteEditChange}
+                        placeholder="Örn: 100"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                  
                   <div className="col-md-12">
                     <label className="form-label fw-medium">
                       <i className="bi bi-sticky me-1"></i>
