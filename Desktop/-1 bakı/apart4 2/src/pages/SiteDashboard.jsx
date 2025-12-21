@@ -931,7 +931,11 @@ const SiteDashboard = () => {
           </div>
           <button 
             className="btn btn-outline-danger"
-            onClick={() => {
+            onClick={async () => {
+              // Stop keep-alive mechanism
+              const { cleanupKeepAlive } = await import('../utils/keepAlive');
+              await cleanupKeepAlive();
+              
               localStorage.removeItem('token');
               localStorage.removeItem('user');
               window.location.href = '/';
