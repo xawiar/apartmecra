@@ -75,7 +75,34 @@ const SiteDashboard = () => {
           const currentUser = getCurrentUser();
           if (currentUser && currentUser.uid) {
             try {
-              const userNotifications = await getNotifications(currentUser.uid, false); // Get all notifications, not just unread
+              // Get user document ID from Firestore users collection
+              // First try to find user by email or uid
+              const { getDocs, query, where, collection } = await import('firebase/firestore');
+              const { db } = await import('../config/firebase.js');
+              const usersRef = collection(db, 'users');
+              
+              // Try to find user by email first (site users have email like siteId@site.local)
+              const emailQuery = query(usersRef, where('email', '==', currentUser.email || ''));
+              const emailSnapshot = await getDocs(emailQuery);
+              
+              let userDocId = null;
+              if (!emailSnapshot.empty) {
+                userDocId = emailSnapshot.docs[0].id;
+              } else {
+                // If not found by email, try to find by siteId (for site users)
+                if (siteId) {
+                  const siteIdQuery = query(usersRef, where('siteId', '==', siteId), where('role', '==', 'site_user'));
+                  const siteIdSnapshot = await getDocs(siteIdQuery);
+                  if (!siteIdSnapshot.empty) {
+                    userDocId = siteIdSnapshot.docs[0].id;
+                  }
+                }
+              }
+              
+              // If still not found, use currentUser.uid as fallback
+              const userIdToUse = userDocId || currentUser.uid;
+              
+              const userNotifications = await getNotifications(userIdToUse, false); // Get all notifications, not just unread
               setNotifications(userNotifications || []);
             } catch (error) {
               console.error('Error fetching notifications:', error);
