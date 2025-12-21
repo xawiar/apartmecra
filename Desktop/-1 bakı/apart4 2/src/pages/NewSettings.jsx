@@ -74,6 +74,19 @@ const Settings = () => {
       setLogsLoading(false);
     }
   };
+  
+  const fetchUpdateRequests = async () => {
+    try {
+      const [siteRequests, companyRequests] = await Promise.all([
+        getSiteUpdateRequests(),
+        getCompanyUpdateRequests()
+      ]);
+      setSiteUpdateRequests(siteRequests || []);
+      setCompanyUpdateRequests(companyRequests || []);
+    } catch (error) {
+      console.error('Error fetching update requests:', error);
+    }
+  };
 
   // Fetch logs when logs tab is activated
   useEffect(() => {
