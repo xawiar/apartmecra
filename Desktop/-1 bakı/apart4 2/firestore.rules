@@ -72,8 +72,15 @@ service cloud.firestore {
       // Site kullanıcıları kendi sitelerini görebilir
       allow read: if isAuthenticated();
       
-      // Yazma: Sadece admin
-      allow create, update, delete: if isAdmin();
+      // Oluşturma ve silme: Sadece admin
+      allow create, delete: if isAdmin();
+      
+      // Güncelleme: Admin veya site kullanıcısı kendi sitesini güncelleyebilir
+      allow update: if isAdmin() || 
+                    (isSiteUser() && 
+                     (resource.data.id == getUserSiteId() || 
+                      resource.data._docId == getUserSiteId() ||
+                      resource.id == getUserSiteId()));
     }
     
     // Companies collection
