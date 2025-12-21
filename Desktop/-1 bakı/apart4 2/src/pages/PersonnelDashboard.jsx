@@ -880,50 +880,69 @@ const PersonnelDashboard = () => {
             <div className="card-body p-0" style={{ overflowY: 'auto', flex: 1 }}>
               {sites.length > 0 ? (
                 <div className="list-group list-group-flush">
-                  {(sites || []).map((site) => (
-                    <div
-                      key={site.id}
-                      className={`list-group-item ${selectedSite?.id === site.id ? 'active' : ''}`}
-                    >
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <div className="flex-grow-1" style={{ cursor: 'pointer' }} onClick={() => handleSiteSelect(site)}>
-                          <h6 className="mb-1 fw-bold">{site.name}</h6>
-                          <small className="text-muted d-block">
-                            <i className="bi bi-geo-alt me-1"></i>
-                            {site.neighborhood || 'Konum belirtilmemiş'}
-                          </small>
-                          {site.manager && (
-                            <small className="text-muted d-block">
-                              <i className="bi bi-person me-1"></i>
-                              {site.manager}
-                            </small>
-                          )}
-                          {(site.location || (site.locationLat && site.locationLng)) && (
-                            <small className="text-success d-block mt-1">
-                              <i className="bi bi-map me-1"></i>
-                              {site.locationLat && site.locationLng 
-                                ? `Konum: ${parseFloat(site.locationLat).toFixed(6)}, ${parseFloat(site.locationLng).toFixed(6)}`
-                                : `Konum: ${site.location}`}
-                            </small>
-                          )}
+                  {(() => {
+                    // Group sites by neighborhood
+                    const groupedSites = {};
+                    (sites || []).forEach((site) => {
+                      const neighborhood = site.neighborhood || 'Mahalle Belirtilmemiş';
+                      if (!groupedSites[neighborhood]) {
+                        groupedSites[neighborhood] = [];
+                      }
+                      groupedSites[neighborhood].push(site);
+                    });
+                    
+                    // Sort neighborhoods alphabetically
+                    const sortedNeighborhoods = Object.keys(groupedSites).sort();
+                    
+                    return sortedNeighborhoods.map((neighborhood) => (
+                      <div key={neighborhood}>
+                        <div className="list-group-item bg-light fw-bold text-primary border-bottom-0" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+                          <i className="bi bi-geo-alt-fill me-2"></i>
+                          {neighborhood} ({groupedSites[neighborhood].length} site)
                         </div>
-                        <i className="bi bi-pencil-square ms-2" style={{ cursor: 'pointer' }} onClick={() => handleSiteSelect(site)}></i>
+                        {groupedSites[neighborhood].map((site) => (
+                          <div
+                            key={site.id}
+                            className={`list-group-item ${selectedSite?.id === site.id ? 'active' : ''}`}
+                          >
+                            <div className="d-flex justify-content-between align-items-start mb-2">
+                              <div className="flex-grow-1" style={{ cursor: 'pointer' }} onClick={() => handleSiteSelect(site)}>
+                                <h6 className="mb-1 fw-bold">{site.name}</h6>
+                                {site.manager && (
+                                  <small className="text-muted d-block">
+                                    <i className="bi bi-person me-1"></i>
+                                    {site.manager}
+                                  </small>
+                                )}
+                                {(site.location || (site.locationLat && site.locationLng)) && (
+                                  <small className="text-success d-block mt-1">
+                                    <i className="bi bi-map me-1"></i>
+                                    {site.locationLat && site.locationLng 
+                                      ? `Konum: ${parseFloat(site.locationLat).toFixed(6)}, ${parseFloat(site.locationLng).toFixed(6)}`
+                                      : `Konum: ${site.location}`}
+                                  </small>
+                                )}
+                              </div>
+                              <i className="bi bi-pencil-square ms-2" style={{ cursor: 'pointer' }} onClick={() => handleSiteSelect(site)}></i>
+                            </div>
+                            {site.location && (
+                              <button
+                                className="btn btn-sm btn-outline-primary w-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openGoogleMaps(site);
+                                }}
+                                title="Google Maps'te Yol Tarifi Al"
+                              >
+                                <i className="bi bi-geo-alt-fill me-1"></i>
+                                Haritada Aç
+                              </button>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                      {site.location && (
-                        <button
-                          className="btn btn-sm btn-outline-primary w-100"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openGoogleMaps(site);
-                          }}
-                          title="Google Maps'te Yol Tarifi Al"
-                        >
-                          <i className="bi bi-geo-alt-fill me-1"></i>
-                          Haritada Aç
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               ) : (
                 <div className="text-center p-4 text-muted">
