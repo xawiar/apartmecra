@@ -88,8 +88,15 @@ service cloud.firestore {
       // Okuma: Authenticated kullanıcılar
       allow read: if isAuthenticated();
       
-      // Yazma: Sadece admin
-      allow create, update, delete: if isAdmin();
+      // Oluşturma ve silme: Sadece admin
+      allow create, delete: if isAdmin();
+      
+      // Güncelleme: Admin veya firma kullanıcısı kendi firmasını güncelleyebilir
+      allow update: if isAdmin() || 
+                    (isCompanyUser() && 
+                     (resource.data.id == getUserCompanyId() || 
+                      resource.data._docId == getUserCompanyId() ||
+                      resource.id == getUserCompanyId()));
     }
     
     // Agreements collection
