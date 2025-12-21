@@ -98,18 +98,6 @@ const Settings = () => {
   // Fetch update requests when approvals tab is activated
   useEffect(() => {
     if (activeTab === 'approvals') {
-      const fetchUpdateRequests = async () => {
-        try {
-          const [siteRequests, companyRequests] = await Promise.all([
-            getSiteUpdateRequests(),
-            getCompanyUpdateRequests()
-          ]);
-          setSiteUpdateRequests(siteRequests || []);
-          setCompanyUpdateRequests(companyRequests || []);
-        } catch (error) {
-          console.error('Error fetching update requests:', error);
-        }
-      };
       fetchUpdateRequests();
     }
   }, [activeTab]);
