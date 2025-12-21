@@ -1802,10 +1802,11 @@ const Settings = () => {
 
               <button type="submit" className="btn btn-primary">
                 <i className="bi bi-send me-2"></i>
-                Duyuru Gönder
+                {editingAnnouncement ? 'Duyuruyu Güncelle' : 'Duyuru Gönder'}
               </button>
             </form>
           </div>
+          )}
         </div>
       )}
 
