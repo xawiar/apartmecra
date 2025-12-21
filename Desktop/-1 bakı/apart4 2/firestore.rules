@@ -76,11 +76,12 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
       
       // Güncelleme: Admin veya site kullanıcısı kendi sitesini güncelleyebilir
+      // Site ID karşılaştırması: hem document ID hem de custom 'id' field'ı kontrol edilir
       allow update: if isAdmin() || 
                     (isSiteUser() && 
                      (resource.data.id == getUserSiteId() || 
-                      resource.data._docId == getUserSiteId() ||
-                      resource.id == getUserSiteId()));
+                      resource.id == getUserSiteId() ||
+                      request.resource.data.id == getUserSiteId()));
     }
     
     // Companies collection
