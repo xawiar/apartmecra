@@ -45,9 +45,12 @@ service cloud.firestore {
     function isPersonnel() {
       return isAuthenticated() &&
              (
-               (hasUserDoc() && getUserDoc().data.role == 'personnel') ||
+               // Email kontrolü önce (daha hızlı ve güvenilir)
                (request.auth.token.email != null && 
-                request.auth.token.email.split('@')[1] == 'personnel.local')
+                request.auth.token.email.split('@').size() == 2 &&
+                request.auth.token.email.split('@')[1] == 'personnel.local') ||
+               // Users koleksiyonundaki role kontrolü
+               (hasUserDoc() && getUserDoc().data.role == 'personnel')
              );
     }
 
