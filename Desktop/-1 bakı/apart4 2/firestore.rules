@@ -93,11 +93,12 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
       
       // Güncelleme: Admin veya firma kullanıcısı kendi firmasını güncelleyebilir
+      // Company ID karşılaştırması: hem document ID hem de custom 'id' field'ı kontrol edilir
       allow update: if isAdmin() || 
                     (isCompanyUser() && 
                      (resource.data.id == getUserCompanyId() || 
-                      resource.data._docId == getUserCompanyId() ||
-                      resource.id == getUserCompanyId()));
+                      resource.id == getUserCompanyId() ||
+                      request.resource.data.id == getUserCompanyId()));
     }
     
     // Agreements collection
