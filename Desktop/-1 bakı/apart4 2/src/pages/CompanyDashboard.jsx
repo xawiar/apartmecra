@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getAgreements, getSites, getCompanies, getTransactions, getPanelImages, getChecks, createCompanyUpdateRequest } from '../services/api';
 import { getUser } from '../utils/auth';
 import { useNavigate } from 'react-router-dom';
+import logger from '../utils/logger';
 
 // Import helper functions
 const AgreementHelpers = ({
