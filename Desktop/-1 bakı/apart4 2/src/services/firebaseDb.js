@@ -1732,3 +1732,65 @@ export const sendAnnouncementToAllSites = async (title, message, type = 'info', 
     return { success: false, error: error.message };
   }
 };
+
+// Announcements operations
+export const getAnnouncements = async () => {
+  try {
+    const result = await getCollection(
+      COLLECTIONS.ANNOUNCEMENTS,
+      [],
+      'createdAt',
+      'desc'
+    );
+    
+    return result.data || [];
+  } catch (error) {
+    console.error('Error getting announcements:', error);
+    return [];
+  }
+};
+
+export const createAnnouncement = async (announcementData) => {
+  try {
+    const announcement = {
+      ...announcementData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+    
+    const result = await createDocument(COLLECTIONS.ANNOUNCEMENTS, announcement);
+    
+    if (result.success) {
+      return { success: true, data: result.data };
+    }
+    
+    return { success: false, error: 'Failed to create announcement' };
+  } catch (error) {
+    console.error('Error creating announcement:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const updateAnnouncement = async (announcementId, announcementData) => {
+  try {
+    const result = await updateDocument(COLLECTIONS.ANNOUNCEMENTS, announcementId, {
+      ...announcementData,
+      updatedAt: serverTimestamp()
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Error updating announcement:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const deleteAnnouncement = async (announcementId) => {
+  try {
+    const result = await deleteDocument(COLLECTIONS.ANNOUNCEMENTS, announcementId);
+    return result;
+  } catch (error) {
+    console.error('Error deleting announcement:', error);
+    return { success: false, error: error.message };
+  }
+};
