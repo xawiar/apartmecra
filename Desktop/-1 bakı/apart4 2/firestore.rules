@@ -108,9 +108,11 @@ service cloud.firestore {
       // Oluşturma: Admin veya personnel (personnel panel yönetimi yapıyor, firma oluşturabilir)
       allow create: if isAdmin() || isPersonnel();
       
-      // Güncelleme ve silme: Sadece admin
-      // Firma kullanıcıları artık direkt güncelleme yapamaz, onay mekanizması kullanılır
-      allow update, delete: if isAdmin();
+      // Güncelleme: Sadece admin (firma kullanıcıları artık direkt güncelleme yapamaz, onay mekanizması kullanılır)
+      allow update: if isAdmin();
+      
+      // Silme: Admin veya personnel (arşivleme için gerekli)
+      allow delete: if isAdmin() || isPersonnel();
     }
     
     // Agreements collection
