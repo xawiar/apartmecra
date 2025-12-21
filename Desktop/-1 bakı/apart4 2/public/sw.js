@@ -123,8 +123,10 @@ self.addEventListener('push', (event) => {
         data: data.data || data,
         tag: data.data?.notificationId || data.tag || 'apartmecra-notification',
         requireInteraction: false,
-        silent: false, // Enable sound
+        silent: false, // Enable sound - browser will play default notification sound
+        sound: '/notification-sound.mp3', // Custom sound file (if supported)
         vibrate: [200, 100, 200, 100, 200],
+        renotify: true, // Re-notify if notification with same tag exists
         actions: [
           {
             action: 'view',
@@ -153,16 +155,11 @@ self.addEventListener('push', (event) => {
 });
 
 // Play notification sound in service worker
+// Note: Service workers can't directly play audio, but we can use the notification's sound property
+// The browser will play the default notification sound when silent: false
 function playNotificationSound() {
-  // Create a simple beep using Web Audio API
-  try {
-    // We can't use AudioContext directly in service worker, so we'll use a data URL
-    // The sound will be played by the browser when notification is shown
-    // For actual sound, we need to use a sound file or create a tone
-    console.log('Service Worker: Playing notification sound');
-  } catch (error) {
-    console.error('Service Worker: Error playing sound', error);
-  }
+  console.log('Service Worker: Notification sound will be played by browser');
+  // The sound is handled by the browser when we set silent: false in notification options
 }
 
 // Notification click handling

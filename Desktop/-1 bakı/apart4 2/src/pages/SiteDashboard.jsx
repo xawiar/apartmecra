@@ -65,8 +65,10 @@ const SiteDashboard = () => {
         badge: badge,
         tag: notification.id || notification._docId || 'apartmecra-notification',
         requireInteraction: false,
-        silent: false, // Enable sound
+        silent: false, // Enable sound - browser will play default notification sound
+        sound: '/notification-sound.mp3', // Custom sound file (if supported by browser)
         vibrate: [200, 100, 200, 100, 200],
+        renotify: true, // Re-notify if notification with same tag exists
         data: {
           notificationId: notification.id || notification._docId,
           link: notification.link || '/site-dashboard',
@@ -97,21 +99,42 @@ const SiteDashboard = () => {
   // Function to play notification sound
   const playNotificationSound = () => {
     try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      // Try to play a notification sound using HTML5 Audio
+      // This works better than Web Audio API for notifications
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.7;
       
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.value = 800;
-      oscillator.type = 'sine';
-      
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+      // Play sound
+      audio.play().catch(error => {
+        console.warn('Could not play notification sound file, trying fallback:', error);
+        
+        // Fallback: Use Web Audio API to create a beep
+        try {
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          
+          // Resume audio context if suspended (required by some browsers)
+          if (audioContext.state === 'suspended') {
+            audioContext.resume();
+          }
+          
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.value = 800;
+          oscillator.type = 'sine';
+          
+          gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+          
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.5);
+        } catch (fallbackError) {
+          console.warn('Could not play notification sound with fallback:', fallbackError);
+        }
+      });
     } catch (error) {
       console.warn('Could not play notification sound:', error);
     }
@@ -920,19 +943,20 @@ const SiteDashboard = () => {
         </div>
       </div>
 
-      {/* Notification Permission Request */}
+      {/* Notification Permission Request - Responsive */}
       {typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default' && (
-        <div className="alert alert-info border-0 shadow-sm mb-4" style={{ borderRadius: '12px' }}>
-          <div className="d-flex align-items-center justify-content-between">
-            <div className="d-flex align-items-center">
-              <i className="bi bi-bell fs-4 me-3"></i>
+        <div className="alert alert-info border-0 shadow-sm mb-3 mb-md-4" style={{ borderRadius: '12px' }}>
+          <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2">
+            <div className="d-flex align-items-center flex-grow-1">
+              <i className="bi bi-bell fs-4 fs-5-md me-2 me-md-3"></i>
               <div>
-                <h6 className="mb-1 fw-bold">Bildirim İzni</h6>
-                <p className="mb-0 small">Yeni duyuruları anında almak için bildirim izni verin.</p>
+                <h6 className="mb-1 fw-bold small">Bildirim İzni</h6>
+                <p className="mb-0 small d-none d-md-block">Yeni duyuruları anında almak için bildirim izni verin.</p>
+                <p className="mb-0 small d-md-none">Bildirim izni verin.</p>
               </div>
             </div>
             <button
-              className="btn btn-sm btn-primary"
+              className="btn btn-sm btn-primary w-100 w-md-auto"
               onClick={async () => {
                 const result = await requestNotificationPermission();
                 if (result.granted) {
