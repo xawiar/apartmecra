@@ -798,6 +798,73 @@ const SiteDashboard = () => {
         </div>
       </div>
 
+      {/* Notifications Section - Modern Design */}
+      {notifications.length > 0 && (
+        <div className={`alert alert-${notifications.filter(n => !n.read).length > 0 ? 'primary' : 'info'} border-0 shadow-sm mb-4`} style={{ borderRadius: '12px' }}>
+          <div className="d-flex align-items-center justify-content-between">
+            <div className="d-flex align-items-center flex-grow-1">
+              <div className="me-3">
+                <i className={`bi bi-${notifications.filter(n => !n.read).length > 0 ? 'bell-fill' : 'bell'} fs-4`} style={{ color: notifications.filter(n => !n.read).length > 0 ? '#0d6efd' : '#6c757d' }}></i>
+              </div>
+              <div className="flex-grow-1">
+                <div className="d-flex align-items-center mb-1">
+                  <h6 className="mb-0 fw-bold me-2">Duyurular ve Bildirimler</h6>
+                  {notifications.filter(n => !n.read).length > 0 && (
+                    <span className="badge bg-danger rounded-pill">
+                      {notifications.filter(n => !n.read).length} Yeni
+                    </span>
+                  )}
+                </div>
+                {!notificationsCollapsed && (
+                  <div className="mt-2">
+                    {notifications.slice(0, 3).map((notification) => (
+                      <div
+                        key={notification.id || notification._docId}
+                        className={`mb-2 p-2 rounded ${!notification.read ? 'bg-light border-start border-3 border-primary' : 'bg-white'}`}
+                        style={{ fontSize: '0.9rem' }}
+                      >
+                        <div className="d-flex align-items-start">
+                          <div className={`badge ${notification.type === 'payment' ? 'bg-success' : notification.type === 'warning' ? 'bg-warning' : notification.type === 'error' ? 'bg-danger' : 'bg-info'} me-2 mt-1`} style={{ fontSize: '0.7rem' }}>
+                            <i className={`bi ${notification.type === 'payment' ? 'bi-cash-coin' : notification.type === 'warning' ? 'bi-exclamation-triangle' : notification.type === 'error' ? 'bi-x-circle' : 'bi-info-circle'}`}></i>
+                          </div>
+                          <div className="flex-grow-1">
+                            <div className="fw-semibold">{notification.title}</div>
+                            <div className="text-muted small">{notification.message}</div>
+                            <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                              {notification.createdAt 
+                                ? new Date(notification.createdAt.seconds * 1000 || notification.createdAt).toLocaleDateString('tr-TR', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })
+                                : 'Yeni'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {notifications.length > 3 && (
+                      <div className="text-muted small mt-2">
+                        <i className="bi bi-three-dots me-1"></i>
+                        {notifications.length - 3} bildirim daha var. Tüm bildirimleri görmek için üstteki bildirim ikonuna tıklayın.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              className="btn btn-sm btn-link text-decoration-none ms-2"
+              onClick={() => setNotificationsCollapsed(!notificationsCollapsed)}
+              title={notificationsCollapsed ? "Genişlet" : "Daralt"}
+            >
+              <i className={`bi bi-chevron-${notificationsCollapsed ? 'down' : 'up'}`}></i>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Statistics Cards */}
       <div className="row g-3 mb-4">
         <div className="col-lg-2 col-md-4">
@@ -848,70 +915,6 @@ const SiteDashboard = () => {
         </div>
       </div>
 
-      {/* Notifications Section */}
-      {showNotificationsSection && notifications.length > 0 && (
-        <div className="row g-4 mb-4">
-          <div className="col-md-12">
-            <div className="card custom-card shadow-sm border-primary">
-              <div className="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
-                <h5 className="mb-0 fw-bold">
-                  <i className="bi bi-megaphone me-2"></i>
-                  Duyurular ve Bildirimler
-                  {notifications.filter(n => !n.read).length > 0 && (
-                    <span className="badge bg-danger ms-2">
-                      {notifications.filter(n => !n.read).length} Yeni
-                    </span>
-                  )}
-                </h5>
-                <button
-                  className="btn btn-sm btn-outline-secondary"
-                  onClick={() => setShowNotificationsSection(false)}
-                  title="Gizle"
-                >
-                  <i className="bi bi-x"></i>
-                </button>
-              </div>
-              <div className="card-body">
-                <div className="list-group list-group-flush">
-                  {notifications.slice(0, 5).map((notification) => (
-                    <div
-                      key={notification.id || notification._docId}
-                      className={`list-group-item ${!notification.read ? 'bg-light border-start border-primary border-3' : ''}`}
-                    >
-                      <div className="d-flex align-items-start">
-                        <div className={`badge ${notification.type === 'payment' ? 'bg-success' : notification.type === 'warning' ? 'bg-warning' : notification.type === 'error' ? 'bg-danger' : 'bg-info'} me-2 mt-1`}>
-                          <i className={`bi ${notification.type === 'payment' ? 'bi-cash-coin' : notification.type === 'warning' ? 'bi-exclamation-triangle' : notification.type === 'error' ? 'bi-x-circle' : 'bi-info-circle'}`}></i>
-                        </div>
-                        <div className="flex-grow-1">
-                          <h6 className="mb-1 fw-bold">{notification.title}</h6>
-                          <p className="mb-1 small">{notification.message}</p>
-                          <small className="text-muted">
-                            {notification.createdAt 
-                              ? new Date(notification.createdAt.seconds * 1000 || notification.createdAt).toLocaleDateString('tr-TR', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })
-                              : 'Yeni'}
-                          </small>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {notifications.length > 5 && (
-                  <div className="text-center mt-3">
-                    <small className="text-muted">
-                      {notifications.length - 5} bildirim daha var. Tüm bildirimleri görmek için üstteki bildirim ikonuna tıklayın.
-                    </small>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Site Panels - Show all panels for this site */}
       {siteData.site && (
