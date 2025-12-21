@@ -169,12 +169,67 @@ const SiteDashboard = () => {
               // If still not found, use currentUser.uid as fallback
               const userIdToUse = userDocId || currentUser.uid;
               
-              const userNotifications = await getNotifications(userIdToUse, false); // Get all notifications, not just unread
+              // Get initial notifications
+              const userNotifications = await getNotifications(userIdToUse, false);
               setNotifications(userNotifications || []);
+              
+              // Set up real-time listener for new notifications
+              const { onSnapshot } = await import('firebase/firestore');
+              const notificationsRef = collection(db, 'notifications');
+              const notificationsQuery = query(
+                notificationsRef,
+                where('userId', '==', userIdToUse)
+              );
+              
+              const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
+                const newNotifications = [];
+                snapshot.forEach((doc) => {
+                  newNotifications.push({
+                    _docId: doc.id,
+                    ...doc.data(),
+                    id: doc.data().id || doc.id
+                  });
+                });
+                
+                // Sort by createdAt descending
+                newNotifications.sort((a, b) => {
+                  const aTime = a.createdAt?.seconds || a.createdAt || 0;
+                  const bTime = b.createdAt?.seconds || b.createdAt || 0;
+                  return bTime - aTime;
+                });
+                
+                // Check for new unread notifications and show push notification
+                const previousNotifications = userNotifications || [];
+                const newUnreadNotifications = newNotifications.filter(n => 
+                  !n.read && 
+                  !previousNotifications.find(p => (p.id || p._docId) === (n.id || n._docId))
+                );
+                
+                setNotifications(newNotifications);
+                
+                // Show push notification for new unread notifications
+                newUnreadNotifications.forEach(notification => {
+                  showPushNotification(notification);
+                });
+              }, (error) => {
+                console.error('Error in notifications listener:', error);
+              });
+              
+              // Store unsubscribe function for cleanup
+              return () => {
+                if (unsubscribe) unsubscribe();
+              };
             } catch (error) {
               console.error('Error fetching notifications:', error);
             }
           }
+        }
+        
+        // Initialize push notifications
+        if ('serviceWorker' in navigator && 'Notification' in window) {
+          initializePushNotifications().catch(error => {
+            console.error('Error initializing push notifications:', error);
+          });
         }
         
         // Set initial site form data
