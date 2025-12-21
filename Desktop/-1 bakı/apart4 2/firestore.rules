@@ -96,8 +96,8 @@ service cloud.firestore {
       // Site kullanıcıları artık direkt güncelleme yapamaz, onay mekanizması kullanılır
       allow update: if isAdmin() || isPersonnel();
       
-      // Silme: Sadece admin
-      allow delete: if isAdmin();
+      // Silme: Admin veya personnel (arşivleme için gerekli)
+      allow delete: if isAdmin() || isPersonnel();
     }
     
     // Companies collection
