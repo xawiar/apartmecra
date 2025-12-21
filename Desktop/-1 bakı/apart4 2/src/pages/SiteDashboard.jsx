@@ -45,7 +45,7 @@ const SiteDashboard = () => {
     notes: ''
   });
   const [notifications, setNotifications] = useState([]);
-  const [showNotificationsSection, setShowNotificationsSection] = useState(true);
+  const [notificationsCollapsed, setNotificationsCollapsed] = useState(false);
 
   const user = getUser();
   const siteId = user?.siteId;
