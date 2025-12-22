@@ -617,8 +617,6 @@ const PartnerShares = () => {
   const totalAmountOwed = partners.reduce((sum, partner) => sum + partner.amountOwed, 0);
 
   // Calculate total cash balance
-  const totalCashBalance = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
-
   // Format currency
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -1143,7 +1141,16 @@ const PartnerShares = () => {
               <div className="modal-body">
                 <div className="alert alert-info">
                   <i className="bi bi-info-circle me-2"></i>
-                  Kasa Bakiyesi: <strong>{formatCurrency(totalCashBalance)}</strong>
+                  {currentStatusResults ? (
+                    <>
+                      Toplam Gelir: <strong>{formatCurrency(currentStatusResults.totalIncome)}</strong> | 
+                      Net Kasa: <strong>{formatCurrency(currentStatusResults.netCash)}</strong>
+                    </>
+                  ) : (
+                    <>
+                      Kasa Bakiyesi: <strong>{formatCurrency(transactions.reduce((sum, t) => sum + t.amount, 0))}</strong>
+                    </>
+                  )}
                 </div>
                 
                 <div className="mb-3">
