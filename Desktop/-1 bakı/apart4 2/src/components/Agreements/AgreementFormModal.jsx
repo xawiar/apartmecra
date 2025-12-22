@@ -783,10 +783,13 @@ const AgreementFormModal = ({
                 </div>
 
                 {/* Summary */}
-                <AgreementSummary 
+                <AgreementSummary
                   formData={formData}
                   sitePanelCounts={sitePanelCounts}
                   helpers={helpers}
+                  sites={sites}
+                  sitePanelSelections={sitePanelSelections}
+                  dateRanges={dateRanges}
                 />
               </div>
               

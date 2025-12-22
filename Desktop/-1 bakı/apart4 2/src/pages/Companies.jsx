@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { getCompanies, createCompany, updateCompany, deleteCompany, archiveCompany, createUser, getAgreements, updateAgreement, getTransactions, createTransaction, getSites } from '../services/api';
+import { getCompanies, createCompany, updateCompany, deleteCompany, archiveCompany, createUser, getAgreements, updateAgreement, getTransactions, createTransaction, getSites, createCheck } from '../services/api';
 import { createLog } from '../services/api';
 import { isObserver } from '../utils/auth';
 import { Link } from 'react-router-dom';
@@ -34,7 +34,14 @@ const Companies = () => {
   const [creditData, setCreditData] = useState({
     panelPrice: 300, // Default panel price
     panelCount: 1,
-    totalAmount: 300
+    totalAmount: 300,
+    paymentMethod: 'cash', // 'cash' or 'check'
+    checkDetails: {
+      checkNumber: '',
+      bankName: '',
+      dueDate: '',
+      amount: 0
+    }
   });
   
   // Refs for PDF generation and Excel import
@@ -220,22 +227,46 @@ const Companies = () => {
     setCreditData({
       panelPrice: 300,
       panelCount: 1,
-      totalAmount: 300
+      totalAmount: 300,
+      paymentMethod: 'cash',
+      checkDetails: {
+        checkNumber: '',
+        bankName: '',
+        dueDate: '',
+        amount: 0
+      }
     });
     setShowCreditModal(true);
   };
 
   // Handle credit data change
   const handleCreditChange = (e) => {
-    const { name, value } = e.target;
-    const newData = {
-      ...creditData,
-      [name]: parseFloat(value) || 0
-    };
+    const { name, value, type } = e.target;
+    const newData = { ...creditData };
+    
+    if (name.startsWith('checkDetails.')) {
+      // Handle check details
+      const checkField = name.replace('checkDetails.', '');
+      newData.checkDetails = {
+        ...newData.checkDetails,
+        [checkField]: checkField === 'amount' ? parseFloat(value) || 0 : value
+      };
+      // Update check amount to match total amount
+      if (checkField === 'amount' || name === 'panelPrice' || name === 'panelCount') {
+        newData.checkDetails.amount = newData.panelPrice * newData.panelCount;
+      }
+    } else {
+      // Handle regular fields
+      newData[name] = type === 'number' ? (parseFloat(value) || 0) : value;
+    }
     
     // Calculate total amount
     if (name === 'panelPrice' || name === 'panelCount') {
       newData.totalAmount = newData.panelPrice * newData.panelCount;
+      // Update check amount if payment method is check
+      if (newData.paymentMethod === 'check') {
+        newData.checkDetails.amount = newData.totalAmount;
+      }
     }
     
     setCreditData(newData);
@@ -254,15 +285,54 @@ const Companies = () => {
       return;
     }
     
+    // Validate check details if payment method is check
+    if (creditData.paymentMethod === 'check') {
+      if (!creditData.checkDetails.checkNumber || !creditData.checkDetails.bankName || !creditData.checkDetails.dueDate) {
+        await window.showAlert(
+          'Hata',
+          'Lütfen çek bilgilerini eksiksiz doldurunuz.',
+          'warning'
+        );
+        return;
+      }
+    }
+    
     try {
+      let checkId = null;
+      
+      // If payment method is check, create check record first
+      if (creditData.paymentMethod === 'check') {
+        const checkData = {
+          agreementId: null, // Credit purchase is not linked to an agreement
+          companyId: currentCompany.id,
+          checkNumber: creditData.checkDetails.checkNumber,
+          bankName: creditData.checkDetails.bankName,
+          dueDate: creditData.checkDetails.dueDate,
+          amount: creditData.checkDetails.amount,
+          status: 'pending',
+          description: `${currentCompany.name} firmasından kredi satın alma çeki`,
+          source: 'Kredi Satışı'
+        };
+        
+        const newCheck = await createCheck(checkData);
+        if (!newCheck) {
+          throw new Error('Check creation failed');
+        }
+        checkId = newCheck.id || newCheck._docId;
+      }
+      
       // Create transaction for the credit purchase
       const transactionData = {
         type: 'income',
-        amount: creditData.totalAmount,
+        amount: creditData.paymentMethod === 'check' ? 0 : creditData.totalAmount, // If check, don't add to cashier balance yet
         date: new Date().toISOString().split('T')[0],
-        source: 'Kredi Satışı',
-        description: `${currentCompany.name} firmasından ${creditData.panelCount} adet panel kredisi satışı`,
-        category: 'Kredi Satışı'
+        source: creditData.paymentMethod === 'check' 
+          ? `Kredi Satışı (Çek) - ${currentCompany.name}`
+          : 'Kredi Satışı',
+        description: `${currentCompany.name} firmasından ${creditData.panelCount} adet panel kredisi satışı${creditData.paymentMethod === 'check' ? ` (Çek: ${creditData.checkDetails.checkNumber})` : ''}`,
+        category: 'Kredi Satışı',
+        checkId: checkId,
+        paymentMethod: creditData.paymentMethod
       };
       
       const newTransaction = await createTransaction(transactionData);
@@ -326,12 +396,12 @@ const Companies = () => {
       // Log the action
       await createLog({
         user: 'Admin',
-        action: `Firma kredisi satın alındı: ${currentCompany.name} (${creditData.panelCount} panel, ${creditData.totalAmount} ₺)`
+        action: `Firma kredisi satın alındı: ${currentCompany.name} (${creditData.panelCount} panel, ${creditData.totalAmount} ₺, ${creditData.paymentMethod === 'check' ? 'Çek' : 'Nakit'})`
       });
       
       await window.showAlert(
         'Başarılı',
-        'Kredi başarıyla satın alındı.',
+        `Kredi başarıyla satın alındı.${creditData.paymentMethod === 'check' ? ' Çek kaydı oluşturuldu.' : ''}`,
         'success'
       );
     } catch (error) {
@@ -1718,6 +1788,72 @@ const Companies = () => {
                       disabled
                     />
                   </div>
+                  
+                  <div className="mb-3">
+                    <label className="form-label fw-bold">Ödeme Yöntemi <span className="text-danger">*</span></label>
+                    <select
+                      className="form-select form-control-custom"
+                      name="paymentMethod"
+                      value={creditData.paymentMethod}
+                      onChange={handleCreditChange}
+                      required
+                    >
+                      <option value="cash">Nakit</option>
+                      <option value="check">Çek</option>
+                    </select>
+                  </div>
+                  
+                  {creditData.paymentMethod === 'check' && (
+                    <>
+                      <div className="mb-3">
+                        <label className="form-label fw-bold">Çek Numarası <span className="text-danger">*</span></label>
+                        <input
+                          type="text"
+                          className="form-control form-control-custom"
+                          name="checkDetails.checkNumber"
+                          value={creditData.checkDetails.checkNumber}
+                          onChange={handleCreditChange}
+                          placeholder="Çek numarasını girin"
+                          required
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label fw-bold">Banka Adı <span className="text-danger">*</span></label>
+                        <input
+                          type="text"
+                          className="form-control form-control-custom"
+                          name="checkDetails.bankName"
+                          value={creditData.checkDetails.bankName}
+                          onChange={handleCreditChange}
+                          placeholder="Banka adını girin"
+                          required
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label fw-bold">Vade Tarihi <span className="text-danger">*</span></label>
+                        <input
+                          type="date"
+                          className="form-control form-control-custom"
+                          name="checkDetails.dueDate"
+                          value={creditData.checkDetails.dueDate}
+                          onChange={handleCreditChange}
+                          required
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label fw-bold">Çek Tutarı (₺)</label>
+                        <input
+                          type="number"
+                          className="form-control form-control-custom"
+                          name="checkDetails.amount"
+                          value={creditData.checkDetails.amount}
+                          onChange={handleCreditChange}
+                          disabled
+                        />
+                        <div className="form-text">Çek tutarı toplam tutara eşitlenir</div>
+                      </div>
+                    </>
+                  )}
                 </form>
               </div>
               <div className="modal-footer bg-light">

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import useResponsive from '../../hooks/useResponsive';
 import { isObserver } from '../../utils/auth';
 
@@ -27,7 +27,24 @@ const SitesModals = ({
 
   // Site Detail Modal
   const SiteDetailModal = () => {
+    const [activeTab, setActiveTab] = useState('info'); // 'info', 'payments', 'advanceHistory'
+    
     if (!showModal || !currentSite) return null;
+    
+    // Get advance history transactions
+    const advanceHistory = transactions.filter(t => 
+      (t.source?.includes('Site Avans Ödemesi') && t.siteId && String(t.siteId) === String(currentSite.id)) ||
+      (t.source?.includes(`Site Avans Ödemesi - ${currentSite.name}`)) ||
+      (t.source?.includes('Site Ödemesi') && t.siteId && String(t.siteId) === String(currentSite.id) && t.advanceUsed > 0)
+    ).sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Format currency helper (use helpers if available, otherwise use local function)
+    const formatCurrency = helpers?.formatCurrency || ((amount) => {
+      return new Intl.NumberFormat('tr-TR', {
+        style: 'currency',
+        currency: 'TRY'
+      }).format(amount);
+    });
 
     return (
       <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} onClick={(e) => {
@@ -110,6 +127,20 @@ const SitesModals = ({
                               <strong>IBAN Numarası:</strong>
                             </div>
                             <div className="ps-4">{currentSite.iban || '-'}</div>
+                          </div>
+                          <div className="col-md-6 mb-3">
+                            <div className="d-flex align-items-center mb-2">
+                              <i className="bi bi-wallet text-primary me-2"></i>
+                              <strong>Avans Bakiyesi:</strong>
+                            </div>
+                            <div className="ps-4">
+                              <span className={`fw-bold ${(currentSite.advanceBalance || 0) > 0 ? 'text-success' : 'text-muted'}`}>
+                                {new Intl.NumberFormat('tr-TR', {
+                                  style: 'currency',
+                                  currency: 'TRY'
+                                }).format(currentSite.advanceBalance || 0)}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -312,17 +343,17 @@ const SitesModals = ({
                   </div>
                 </div>
 
-                {/* Panel Visualization */}
-                <div className="row">
-                  <div className="col-12">
-                    <div className="detail-card">
-                      <div className="detail-card-header bg-light">
-                        <h6 className="mb-0 fw-bold">
-                          <i className="bi bi-grid-3x3-gap me-2"></i>
-                          Panel Dağılımı
-                        </h6>
-                      </div>
-                      <div className="detail-card-body">
+                    {/* Panel Visualization */}
+                    <div className="row">
+                      <div className="col-12">
+                        <div className="detail-card">
+                          <div className="detail-card-header bg-light">
+                            <h6 className="mb-0 fw-bold">
+                              <i className="bi bi-grid-3x3-gap me-2"></i>
+                              Panel Dağılımı
+                            </h6>
+                          </div>
+                          <div className="detail-card-body">
                         <div className="d-flex flex-wrap gap-1 justify-content-center">
                           {Array.from({ length: currentSite.panels || 0 }, (_, i) => {
                             const panelNumber = i + 1;
@@ -462,6 +493,117 @@ const SitesModals = ({
                     </div>
                   </div>
                 </div>
+                  </>
+                )}
+
+                {activeTab === 'advanceHistory' && (
+                  <div className="row mb-4">
+                    <div className="col-12">
+                      <div className="detail-card">
+                        <div className="detail-card-header bg-light">
+                          <h6 className="mb-0 fw-bold">
+                            <i className="bi bi-wallet me-2"></i>
+                            Avans Geçmişi
+                          </h6>
+                        </div>
+                        <div className="detail-card-body">
+                          {advanceHistory.length > 0 ? (
+                            <div className="table-responsive">
+                              <table className="table table-bordered table-detail">
+                                <thead>
+                                  <tr>
+                                    <th>Tarih</th>
+                                    <th>İşlem Tipi</th>
+                                    <th>Açıklama</th>
+                                    <th className="text-end">Avans Tutarı</th>
+                                    <th className="text-end">Kullanılan Avans</th>
+                                    <th className="text-end">Kasa Ödemesi</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {advanceHistory.map((transaction, index) => {
+                                    const isAdvancePayment = transaction.source?.includes('Site Avans Ödemesi');
+                                    const isSitePayment = transaction.source?.includes('Site Ödemesi') && transaction.advanceUsed > 0;
+                                    
+                                    return (
+                                      <tr key={transaction.id || index}>
+                                        <td>{new Date(transaction.date).toLocaleDateString('tr-TR')}</td>
+                                        <td>
+                                          <span className={`badge ${isAdvancePayment ? 'bg-success' : 'bg-info'}`}>
+                                            {isAdvancePayment ? 'Avans Ödemesi' : 'Site Ödemesi'}
+                                          </span>
+                                        </td>
+                                        <td>{transaction.description || transaction.source}</td>
+                                        <td className="text-end">
+                                          {isAdvancePayment ? (
+                                            <span className="fw-bold text-success">
+                                              {formatCurrency(Math.abs(transaction.amount || transaction.originalAmount || 0))}
+                                            </span>
+                                          ) : (
+                                            <span className="text-muted">-</span>
+                                          )}
+                                        </td>
+                                        <td className="text-end">
+                                          {isSitePayment ? (
+                                            <span className="fw-bold text-info">
+                                              {formatCurrency(transaction.advanceUsed || 0)}
+                                            </span>
+                                          ) : (
+                                            <span className="text-muted">-</span>
+                                          )}
+                                        </td>
+                                        <td className="text-end">
+                                          {isSitePayment && transaction.cashPaid > 0 ? (
+                                            <span className="fw-bold text-primary">
+                                              {formatCurrency(transaction.cashPaid || 0)}
+                                            </span>
+                                          ) : (
+                                            <span className="text-muted">-</span>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                                <tfoot>
+                                  <tr className="table-light">
+                                    <td colSpan="3" className="fw-bold">Toplam</td>
+                                    <td className="text-end fw-bold text-success">
+                                      {formatCurrency(
+                                        advanceHistory
+                                          .filter(t => t.source?.includes('Site Avans Ödemesi'))
+                                          .reduce((sum, t) => sum + Math.abs(t.amount || t.originalAmount || 0), 0)
+                                      )}
+                                    </td>
+                                    <td className="text-end fw-bold text-info">
+                                      {formatCurrency(
+                                        advanceHistory
+                                          .filter(t => t.advanceUsed > 0)
+                                          .reduce((sum, t) => sum + (t.advanceUsed || 0), 0)
+                                      )}
+                                    </td>
+                                    <td className="text-end fw-bold text-primary">
+                                      {formatCurrency(
+                                        advanceHistory
+                                          .filter(t => t.cashPaid > 0)
+                                          .reduce((sum, t) => sum + (t.cashPaid || 0), 0)
+                                      )}
+                                    </td>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                          ) : (
+                            <div className="text-center py-5">
+                              <i className="bi bi-wallet fs-1 text-muted"></i>
+                              <p className="mt-3 text-muted">Bu site için avans geçmişi bulunmamaktadır.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="modal-footer bg-light rounded-bottom">

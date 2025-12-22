@@ -27,7 +27,9 @@ const Cashier = () => {
     description: '',
     amount: '',
     partnerId: '',
-    agreementId: '' // For partial payment support
+    agreementId: '', // For partial payment support
+    siteId: '', // For site advance payment
+    isSiteAdvance: false // Flag for site advance payment
   });
   const [selectedAgreementForPayment, setSelectedAgreementForPayment] = useState(null);
   // Report state
@@ -119,7 +121,9 @@ const Cashier = () => {
       source: '',
       description: '',
       amount: '',
-      partnerId: ''
+      partnerId: '',
+      siteId: '',
+      isSiteAdvance: false
     });
     setEditingTransaction(null);
     setShowExpenseForm(true);
@@ -158,7 +162,9 @@ const Cashier = () => {
       description: '',
       amount: '',
       partnerId: '',
-      agreementId: ''
+      agreementId: '',
+      siteId: '',
+      isSiteAdvance: false
     });
   };
 
@@ -289,8 +295,43 @@ const Cashier = () => {
           : (editingTransaction?.debtId || null),
         agreementId: formData.agreementId && formData.type === 'income'
           ? formData.agreementId
-          : (editingTransaction?.agreementId || null)
+          : (editingTransaction?.agreementId || null),
+        siteId: formData.siteId || null,
+        isSiteAdvance: formData.isSiteAdvance || false
       };
+      
+      // If this is a site advance payment, update site's advanceBalance
+      if (formData.isSiteAdvance && formData.siteId && formData.type === 'expense' && !editingTransaction) {
+        const site = sites.find(s => String(s.id) === String(formData.siteId));
+        if (site) {
+          const advanceAmount = Math.abs(parseFloat(formData.amount));
+          const currentAdvanceBalance = parseFloat(site.advanceBalance || 0);
+          const newAdvanceBalance = currentAdvanceBalance + advanceAmount;
+          
+          // Update site's advanceBalance
+          await updateSite(site.id, {
+            ...site,
+            advanceBalance: newAdvanceBalance
+          });
+          
+          // Update sites state
+          setSites(sites.map(s => 
+            String(s.id) === String(site.id) 
+              ? { ...s, advanceBalance: newAdvanceBalance }
+              : s
+          ));
+          
+          // Update transaction source to indicate it's a site advance
+          transactionData.source = `Site Avans Ödemesi - ${site.name}`;
+          transactionData.description = `${site.name} için avans ödemesi${transactionData.description ? ` - ${transactionData.description}` : ''}`;
+          
+          // Log the action
+          await createLog({
+            user: 'Admin',
+            action: `Site avans ödemesi yapıldı: ${site.name} (${formatCurrency(advanceAmount)}) - Yeni bakiye: ${formatCurrency(newAdvanceBalance)}`
+          });
+        }
+      }
       
       // If this is a partial payment for an agreement, update the agreement
       if (formData.agreementId && formData.type === 'income' && !editingTransaction) {
@@ -686,19 +727,6 @@ const Cashier = () => {
   // Handle site payment from calculated results
   const handlePaySitePayment = async (result) => {
     try {
-      // Show confirmation dialog
-      const confirmed = await window.showConfirm?.(
-        'Ödeme Onayı',
-        `${result.siteName} için ${formatCurrency(result.totalAmount)} tutarında ödeme yapmak istediğinize emin misiniz?`,
-        'warning'
-      );
-
-      if (!confirmed) {
-        return;
-      }
-
-      // Kasa bakiyesi kontrolü kaldırıldı - kasa eksiye düşebilir
-
       // Find the site
       const site = sites.find(s => String(s.id) === String(result.siteId));
       if (!site) {
@@ -710,20 +738,55 @@ const Cashier = () => {
         return;
       }
 
-      // Create expense transaction for each payment to track individual payments
-      // Create one transaction for the total amount with all agreement IDs in description
+      // Calculate advance balance and amount to pay
+      const advanceBalance = parseFloat(site.advanceBalance || 0);
+      const calculatedAmount = result.totalAmount;
+      const amountToPay = Math.max(0, calculatedAmount - advanceBalance);
+      const remainingAdvance = Math.max(0, advanceBalance - calculatedAmount);
+      
+      // Show confirmation dialog with advance info
+      const confirmMessage = advanceBalance > 0
+        ? `${result.siteName} için:\n` +
+          `Hesaplanan Tutar: ${formatCurrency(calculatedAmount)}\n` +
+          `Avans Bakiyesi: ${formatCurrency(advanceBalance)}\n` +
+          `Ödenecek Tutar: ${formatCurrency(amountToPay)}\n` +
+          (remainingAdvance > 0 ? `Kalan Avans: ${formatCurrency(remainingAdvance)}\n` : '') +
+          `\nÖdeme yapmak istediğinize emin misiniz?`
+        : `${result.siteName} için ${formatCurrency(calculatedAmount)} tutarında ödeme yapmak istediğinize emin misiniz?`;
+      
+      const confirmed = await window.showConfirm?.(
+        'Ödeme Onayı',
+        confirmMessage,
+        'warning'
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      // Update site's advance balance first
+      const updatedSite = { ...site };
+      if (advanceBalance > 0) {
+        updatedSite.advanceBalance = remainingAdvance;
+      }
+
+      // Create expense transaction
+      // If advance covers the full amount, create transaction with amount 0 (no cash deduction)
+      // Otherwise, create transaction with the remaining amount
       const expenseData = {
         date: new Date().toISOString().split('T')[0],
         type: 'expense',
-        source: `Site Ödemesi - ${result.siteName}`,
-        description: `${result.siteName} için hesaplanan site ödemesi (${result.payments.length} anlaşma) - Anlaşmalar: ${result.payments.map(p => p.agreementId).join(', ')}`,
-        amount: -Math.abs(result.totalAmount),
+        source: `Site Ödemesi - ${result.siteName}${advanceBalance > 0 ? ' (Avans Bakiyesinden)' : ''}`,
+        description: `${result.siteName} için hesaplanan site ödemesi (${result.payments.length} anlaşma) - Anlaşmalar: ${result.payments.map(p => p.agreementId).join(', ')}${advanceBalance > 0 ? ` - Avans Bakiyesinden: ${formatCurrency(Math.min(advanceBalance, calculatedAmount))}` : ''}`,
+        amount: amountToPay > 0 ? -Math.abs(amountToPay) : 0,
         siteId: result.siteId,
-        agreementIds: result.payments.map(p => p.agreementId), // Store all agreement IDs for tracking
+        agreementIds: result.payments.map(p => p.agreementId),
         paymentPeriod: {
-          dateFrom: sitePaymentFilter.dateFrom, // Tarih aralığı bilgisi
+          dateFrom: sitePaymentFilter.dateFrom,
           dateTo: sitePaymentFilter.dateTo
-        }
+        },
+        advanceUsed: advanceBalance > 0 ? Math.min(advanceBalance, calculatedAmount) : 0,
+        cashPaid: amountToPay
       };
 
       const newTransaction = await createTransaction(expenseData);
@@ -732,9 +795,6 @@ const Cashier = () => {
         // Update transactions state
         setTransactions([...transactions, newTransaction]);
 
-        // Update site's pending payments - remove paid amounts
-        const updatedSite = { ...site };
-        
         // Remove pending payments that match the calculated payments
         if (updatedSite.pendingPayments && updatedSite.pendingPayments.length > 0) {
           // For each payment in result.payments, try to find and remove matching pending payment
@@ -754,7 +814,7 @@ const Cashier = () => {
           updatedSite.hasPendingPayment = false;
         }
 
-        // Update site in backend
+        // Update site in backend (with updated advanceBalance)
         await updateSite(result.siteId, updatedSite);
 
         // Update sites state
@@ -766,14 +826,26 @@ const Cashier = () => {
         ));
 
         // Log the action
+        const logMessage = advanceBalance > 0
+          ? `Site ödemesi yapıldı: ${result.siteName} (Hesaplanan: ${formatCurrency(calculatedAmount)}, Avans: ${formatCurrency(Math.min(advanceBalance, calculatedAmount))}, Kasa: ${formatCurrency(amountToPay)}, Kalan Avans: ${formatCurrency(remainingAdvance)})`
+          : `Site ödemesi yapıldı: ${result.siteName} (${formatCurrency(calculatedAmount)})`;
+        
         await createLog({
           user: 'Admin',
-          action: `Site ödemesi yapıldı: ${result.siteName} (${formatCurrency(result.totalAmount)})`
+          action: logMessage
         });
 
+        const successMessage = advanceBalance > 0
+          ? `${result.siteName} için ödeme yapıldı:\n` +
+            `Hesaplanan: ${formatCurrency(calculatedAmount)}\n` +
+            `Avans Bakiyesinden: ${formatCurrency(Math.min(advanceBalance, calculatedAmount))}\n` +
+            (amountToPay > 0 ? `Kasadan: ${formatCurrency(amountToPay)}\n` : '') +
+            (remainingAdvance > 0 ? `Kalan Avans: ${formatCurrency(remainingAdvance)}` : '')
+          : `${result.siteName} için ${formatCurrency(calculatedAmount)} tutarında ödeme başarıyla yapıldı.`;
+        
         await window.showAlert?.(
           'Başarılı',
-          `${result.siteName} için ${formatCurrency(result.totalAmount)} tutarında ödeme başarıyla yapıldı.`,
+          successMessage,
           'success'
         );
       } else {
@@ -1622,11 +1694,30 @@ const Cashier = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {sitePaymentResults.map((result) => (
+                      {sitePaymentResults.map((result) => {
+                        const site = sites.find(s => String(s.id) === String(result.siteId));
+                        const advanceBalance = parseFloat(site?.advanceBalance || 0);
+                        const amountToPay = Math.max(0, result.totalAmount - advanceBalance);
+                        const remainingAdvance = Math.max(0, advanceBalance - result.totalAmount);
+                        
+                        return (
                         <tr key={result.siteId} className={result.paid ? 'table-success' : ''}>
                           <td className="fw-medium">{result.siteName}</td>
-                          <td className="text-end fw-bold text-primary">
-                            {formatCurrency(result.totalAmount)}
+                          <td className="text-end">
+                            <div className="d-flex flex-column align-items-end">
+                              <span className="fw-bold text-primary">
+                                {formatCurrency(amountToPay)}
+                              </span>
+                              {advanceBalance > 0 && (
+                                <div className="small text-muted mt-1">
+                                  <div>Hesaplanan: {formatCurrency(result.totalAmount)}</div>
+                                  <div className="text-info">Avans: {formatCurrency(advanceBalance)}</div>
+                                  {remainingAdvance > 0 && (
+                                    <div className="text-success">Kalan Avans: {formatCurrency(remainingAdvance)}</div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </td>
                           <td>
                             <button
@@ -1657,7 +1748,8 @@ const Cashier = () => {
                             )}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -2400,6 +2492,56 @@ const Cashier = () => {
                   </div>
                   
                   <div className="mb-3">
+                    <label htmlFor="siteId" className="form-label">Site (Opsiyonel - Avans Ödemesi İçin)</label>
+                    <select
+                      id="siteId"
+                      name="siteId"
+                      value={formData.siteId}
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          siteId: e.target.value,
+                          isSiteAdvance: e.target.value ? formData.isSiteAdvance : false
+                        });
+                      }}
+                      className="form-select form-control-custom"
+                    >
+                      <option value="">Site seçin (opsiyonel)</option>
+                      {sites.map(site => (
+                        <option key={site.id} value={site.id}>
+                          {site.name} {site.advanceBalance ? `(Avans: ${formatCurrency(site.advanceBalance || 0)})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    {formData.siteId && (
+                      <div className="form-check mt-2">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id="isSiteAdvance"
+                          name="isSiteAdvance"
+                          checked={formData.isSiteAdvance}
+                          onChange={(e) => {
+                            setFormData({
+                              ...formData,
+                              isSiteAdvance: e.target.checked
+                            });
+                          }}
+                        />
+                        <label className="form-check-label" htmlFor="isSiteAdvance">
+                          <strong>Site Avans Ödemesi</strong>
+                        </label>
+                      </div>
+                    )}
+                    <div className="form-text">
+                      <small className="text-muted">
+                        <i className="bi bi-info-circle me-1"></i>
+                        Site seçip "Site Avans Ödemesi" işaretlenirse, bu tutar site'nin avans bakiyesine eklenir. Ortak seçilirse ortak kendi cebinden öder.
+                      </small>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-3">
                     <label htmlFor="partnerId" className="form-label">Ortak (Opsiyonel)</label>
                     <select
                       id="partnerId"
@@ -2407,6 +2549,7 @@ const Cashier = () => {
                       value={formData.partnerId}
                       onChange={handleFormChange}
                       className="form-select form-control-custom"
+                      disabled={formData.isSiteAdvance}
                     >
                       <option value="">Ortak seçin (opsiyonel)</option>
                       {partners.map(partner => (
@@ -2418,7 +2561,9 @@ const Cashier = () => {
                     <div className="form-text">
                       <small className="text-muted">
                         <i className="bi bi-info-circle me-1"></i>
-                        Ortak seçilirse, ortak kendi cebinden öder ve alacaklı olur. Kasadan para düşmez.
+                        {formData.isSiteAdvance 
+                          ? 'Site avans ödemesi seçildiğinde ortak seçilemez.'
+                          : 'Ortak seçilirse, ortak kendi cebinden öder ve alacaklı olur. Kasadan para düşmez.'}
                       </small>
                     </div>
                   </div>

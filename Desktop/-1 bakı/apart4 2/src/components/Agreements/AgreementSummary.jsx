@@ -3,8 +3,41 @@ import React from 'react';
 const AgreementSummary = ({ 
   formData,
   sitePanelCounts,
-  helpers
+  helpers,
+  sites,
+  sitePanelSelections,
+  dateRanges
 }) => {
+  // Calculate total people count from selected sites
+  const calculateTotalPeople = () => {
+    if (!sites || !sitePanelSelections || !dateRanges) return 0;
+    
+    let totalPeople = 0;
+    const selectedSiteIds = new Set();
+    
+    // Get all selected sites across all date ranges
+    dateRanges.forEach((range, rangeIndex) => {
+      const selectedSitesInRange = helpers?.getSelectedSitesForRange?.(rangeIndex, sitePanelSelections) || [];
+      selectedSitesInRange.forEach(siteId => {
+        if (!selectedSiteIds.has(siteId)) {
+          selectedSiteIds.add(siteId);
+          const site = sites.find(s => String(s.id) === String(siteId));
+          if (site) {
+            if (site.siteType === 'site') {
+              totalPeople += parseInt(site.averagePeople || 0);
+            } else if (site.siteType === 'business_center') {
+              totalPeople += parseInt(site.peopleCount || 0);
+            }
+          }
+        }
+      });
+    });
+    
+    return totalPeople;
+  };
+  
+  const totalPeople = calculateTotalPeople();
+  
   return (
     <div className="card border-0 shadow-sm">
       <div className="card-header bg-light border-0 rounded-top">
@@ -42,6 +75,14 @@ const AgreementSummary = ({
             </div>
           </div>
           <div className="col-md-6">
+            <div className="border rounded-3 p-3 h-100 bg-info bg-opacity-10 border-info">
+              <p className="mb-1 text-muted small">Tahmini Hedef Kitle</p>
+              <p className="text-info fw-bold fs-4 mb-0">
+                {totalPeople.toLocaleString('tr-TR')} kişi
+              </p>
+            </div>
+          </div>
+          <div className="col-md-12">
             <div className="border rounded-3 p-3 h-100 bg-primary bg-opacity-10 border-primary">
               <p className="mb-1 text-muted small">Toplam Tutar</p>
               {(() => {
