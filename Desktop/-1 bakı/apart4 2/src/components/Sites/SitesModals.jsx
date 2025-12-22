@@ -67,8 +67,51 @@ const SitesModals = ({
             </div>
             <div className="modal-body" ref={modalContentRef}>
               <div className="container-fluid">
-                {/* Site Information Section - Responsive Grid */}
-                <div className="row mb-4">
+                {/* Tab Navigation */}
+                <ul className="nav nav-tabs mb-4" role="tablist">
+                  <li className="nav-item" role="presentation">
+                    <button
+                      className={`nav-link ${activeTab === 'info' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('info')}
+                      type="button"
+                      role="tab"
+                    >
+                      <i className="bi bi-info-circle me-2"></i>
+                      Site Bilgileri
+                    </button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button
+                      className={`nav-link ${activeTab === 'payments' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('payments')}
+                      type="button"
+                      role="tab"
+                    >
+                      <i className="bi bi-currency-dollar me-2"></i>
+                      Ödemeler
+                    </button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button
+                      className={`nav-link ${activeTab === 'advanceHistory' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('advanceHistory')}
+                      type="button"
+                      role="tab"
+                    >
+                      <i className="bi bi-wallet me-2"></i>
+                      Avans Geçmişi
+                      {advanceHistory.length > 0 && (
+                        <span className="badge bg-primary ms-2">{advanceHistory.length}</span>
+                      )}
+                    </button>
+                  </li>
+                </ul>
+
+                {/* Tab Content */}
+                {activeTab === 'info' && (
+                  <>
+                    {/* Site Information Section - Responsive Grid */}
+                    <div className="row mb-4">
                   <div className="col-12">
                     <div className="detail-card">
                       <div className="detail-card-header bg-light">
@@ -230,16 +273,171 @@ const SitesModals = ({
                   </div>
                 </div>
 
-                {/* Payment Information Section - Responsive Design */}
-                <div className="row mb-4">
-                  <div className="col-12">
-                    <div className="detail-card">
-                      <div className="detail-card-header bg-light">
-                        <h6 className="mb-0 fw-bold">
-                          <i className="bi bi-currency-dollar me-2"></i>
-                          Ödeme Bilgileri
-                        </h6>
+                    {/* Panel Visualization */}
+                    <div className="row">
+                      <div className="col-12">
+                        <div className="detail-card">
+                          <div className="detail-card-header bg-light">
+                            <h6 className="mb-0 fw-bold">
+                              <i className="bi bi-grid-3x3-gap me-2"></i>
+                              Panel Dağılımı
+                            </h6>
+                          </div>
+                          <div className="detail-card-body">
+                            <div className="d-flex flex-wrap gap-1 justify-content-center">
+                              {Array.from({ length: currentSite.panels || 0 }, (_, i) => {
+                                const panelNumber = i + 1;
+                                const panelId = `panel-${panelNumber}`;
+                                
+                                // Get panel info using the same logic as CurrentStatus page
+                                const getPanelInfo = (siteId, panelId) => {
+                                  const relevantAgreements = agreements.filter(agreement => 
+                                    agreement.siteIds && agreement.siteIds.includes(siteId) && agreement.status === 'active'
+                                  );
+                                  
+                                  for (const agreement of relevantAgreements) {
+                                    // Check if this agreement has panel selections for this site
+                                    if (agreement.sitePanelSelections && agreement.sitePanelSelections[siteId]) {
+                                      // Check all blocks for this site
+                                      for (const [blockId, selectedPanels] of Object.entries(agreement.sitePanelSelections[siteId])) {
+                                        if (selectedPanels && selectedPanels.includes(panelId)) {
+                                          return {
+                                            isUsed: true,
+                                            companyName: companies.find(c => String(c.id) === String(agreement.companyId))?.name || 'Bilinmeyen Firma',
+                                            startDate: agreement.startDate,
+                                            endDate: agreement.endDate,
+                                            agreementId: agreement.id,
+                                            status: agreement.status,
+                                            photoUrl: agreement.photoUrl
+                                          };
+                                        }
+                                      }
+                                    }
+                                  }
+                                  
+                                  return { isUsed: false };
+                                };
+                                
+                                const panelInfo = getPanelInfo(currentSite.id, panelId);
+                                
+                                // Format date helper
+                                const formatDate = (dateString) => {
+                                  return new Date(dateString).toLocaleDateString('tr-TR');
+                                };
+                                
+                                return (
+                                  <div
+                                    key={panelNumber}
+                                    className={`position-relative d-flex align-items-center justify-content-center border rounded ${
+                                      panelInfo.isUsed 
+                                        ? 'bg-primary text-white'
+                                        : 'bg-light text-muted'
+                                    }`}
+                                    style={{
+                                      width: '60px',
+                                      height: '80px',
+                                      fontSize: '10px',
+                                      fontWeight: 'bold',
+                                      flexDirection: 'column',
+                                      padding: '2px',
+                                      cursor: panelInfo.isUsed ? 'pointer' : 'default'
+                                    }}
+                                    title={panelInfo.isUsed ? 
+                                      `Panel ${panelNumber} - ${panelInfo.companyName}\nTarih: ${formatDate(panelInfo.startDate)} - ${formatDate(panelInfo.endDate)}\nAnlaşma ID: ${panelInfo.agreementId}` : 
+                                      `Panel ${panelNumber} - Boş`}
+                                    onClick={() => {
+                                      if (panelInfo.isUsed) {
+                                        // Show comprehensive panel info with all requested details (same as CurrentStatus)
+                                        let content = `
+                                          <div class="text-start">
+                                            <div class="mb-3">
+                                              <strong>Reklam Veren Firma:</strong> ${panelInfo.companyName}
+                                            </div>
+                                            <div class="mb-3">
+                                              <strong>Anlaşma Süresi:</strong> ${formatDate(panelInfo.startDate)} - ${formatDate(panelInfo.endDate)}
+                                            </div>
+                                            <div class="mb-3">
+                                              <strong>Anlaşma ID:</strong> ${panelInfo.agreementId}
+                                            </div>
+                                        `;
+                                        
+                                        if (panelInfo.photoUrl) {
+                                          content += `
+                                            <div class="text-center mt-3">
+                                              <strong>Yayındaki Reklam Görseli:</strong>
+                                              <div class="mt-2">
+                                                <img src="${panelInfo.photoUrl}" style="max-width: 100%; max-height: 300px;" alt="Reklam Görseli" class="border rounded" />
+                                              </div>
+                                            </div>
+                                          `;
+                                        } else {
+                                          content += `
+                                            <div class="text-center mt-3">
+                                              <strong>Yayındaki Reklam Görseli:</strong>
+                                              <div class="mt-2 text-muted">
+                                                <i class="bi bi-image fs-1"></i>
+                                                <p class="mb-0">Görsel eklenmemiş</p>
+                                              </div>
+                                            </div>
+                                          `;
+                                        }
+                                        
+                                        content += `</div>`;
+                                        
+                                        // Use the same alert system as CurrentStatus
+                                        if (window.showAlert) {
+                                          window.showAlert(
+                                            'Panel Bilgisi',
+                                            content,
+                                            'info'
+                                          );
+                                        } else {
+                                          // Fallback to simple alert if showAlert is not available
+                                          alert(`Panel ${panelNumber}\nFirma: ${panelInfo.companyName}\nTarih: ${formatDate(panelInfo.startDate)} - ${formatDate(panelInfo.endDate)}\nAnlaşma ID: ${panelInfo.agreementId}`);
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    <div style={{ fontSize: '12px' }}>{panelNumber}</div>
+                                    {panelInfo.isUsed && (
+                                      <>
+                                        <div className="text-truncate" style={{ fontSize: '8px', maxWidth: '50px' }} title={panelInfo.companyName}>
+                                          {panelInfo.companyName}
+                                        </div>
+                                        <div className="text-truncate" style={{ fontSize: '7px', maxWidth: '50px' }} title={`${formatDate(panelInfo.startDate)} - ${formatDate(panelInfo.endDate)}`}>
+                                          {formatDate(panelInfo.startDate)} - {formatDate(panelInfo.endDate)}
+                                        </div>
+                                        <div style={{ fontSize: '6px' }}>ID: {panelInfo.agreementId}</div>
+                                        {panelInfo.photoUrl && (
+                                          <div className="position-absolute" style={{ top: '2px', right: '2px' }}>
+                                            <i className="bi bi-image text-warning" style={{ fontSize: '8px' }}></i>
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
                       </div>
+                    </div>
+                  </>
+                )}
+
+                {activeTab === 'payments' && (
+                  <>
+                    {/* Payment Information Section - Responsive Design */}
+                    <div className="row mb-4">
+                      <div className="col-12">
+                        <div className="detail-card">
+                          <div className="detail-card-header bg-light">
+                            <h6 className="mb-0 fw-bold">
+                              <i className="bi bi-currency-dollar me-2"></i>
+                              Ödeme Bilgileri
+                            </h6>
+                          </div>
                       <div className="detail-card-body">
                         {/* Total Payments Display */}
                         <div className="alert alert-success mb-4">
@@ -343,156 +541,6 @@ const SitesModals = ({
                   </div>
                 </div>
 
-                    {/* Panel Visualization */}
-                    <div className="row">
-                      <div className="col-12">
-                        <div className="detail-card">
-                          <div className="detail-card-header bg-light">
-                            <h6 className="mb-0 fw-bold">
-                              <i className="bi bi-grid-3x3-gap me-2"></i>
-                              Panel Dağılımı
-                            </h6>
-                          </div>
-                          <div className="detail-card-body">
-                        <div className="d-flex flex-wrap gap-1 justify-content-center">
-                          {Array.from({ length: currentSite.panels || 0 }, (_, i) => {
-                            const panelNumber = i + 1;
-                            const panelId = `panel-${panelNumber}`;
-                            
-                            // Get panel info using the same logic as CurrentStatus page
-                            const getPanelInfo = (siteId, panelId) => {
-                              const relevantAgreements = agreements.filter(agreement => 
-                                agreement.siteIds && agreement.siteIds.includes(siteId) && agreement.status === 'active'
-                              );
-                              
-                              for (const agreement of relevantAgreements) {
-                                // Check if this agreement has panel selections for this site
-                                if (agreement.sitePanelSelections && agreement.sitePanelSelections[siteId]) {
-                                  // Check all blocks for this site
-                                  for (const [blockId, selectedPanels] of Object.entries(agreement.sitePanelSelections[siteId])) {
-                                    if (selectedPanels && selectedPanels.includes(panelId)) {
-                                      return {
-                                        isUsed: true,
-                                        companyName: companies.find(c => String(c.id) === String(agreement.companyId))?.name || 'Bilinmeyen Firma',
-                                        startDate: agreement.startDate,
-                                        endDate: agreement.endDate,
-                                        agreementId: agreement.id,
-                                        status: agreement.status,
-                                        photoUrl: agreement.photoUrl
-                                      };
-                                    }
-                                  }
-                                }
-                              }
-                              
-                              return { isUsed: false };
-                            };
-                            
-                            const panelInfo = getPanelInfo(currentSite.id, panelId);
-                            
-                            // Format date helper
-                            const formatDate = (dateString) => {
-                              return new Date(dateString).toLocaleDateString('tr-TR');
-                            };
-                            
-                            return (
-                              <div
-                                key={panelNumber}
-                                className={`position-relative d-flex align-items-center justify-content-center border rounded ${
-                                  panelInfo.isUsed 
-                                    ? 'bg-primary text-white'
-                                    : 'bg-light text-muted'
-                                }`}
-                                style={{
-                                  width: '60px',
-                                  height: '80px',
-                                  fontSize: '10px',
-                                  fontWeight: 'bold',
-                                  flexDirection: 'column',
-                                  padding: '2px',
-                                  cursor: panelInfo.isUsed ? 'pointer' : 'default'
-                                }}
-                                title={panelInfo.isUsed ? 
-                                  `Panel ${panelNumber} - ${panelInfo.companyName}\nTarih: ${formatDate(panelInfo.startDate)} - ${formatDate(panelInfo.endDate)}\nAnlaşma ID: ${panelInfo.agreementId}` : 
-                                  `Panel ${panelNumber} - Boş`}
-                                onClick={() => {
-                                  if (panelInfo.isUsed) {
-                                    // Show comprehensive panel info with all requested details (same as CurrentStatus)
-                                    let content = `
-                                      <div class="text-start">
-                                        <div class="mb-3">
-                                          <strong>Reklam Veren Firma:</strong> ${panelInfo.companyName}
-                                        </div>
-                                        <div class="mb-3">
-                                          <strong>Anlaşma Süresi:</strong> ${formatDate(panelInfo.startDate)} - ${formatDate(panelInfo.endDate)}
-                                        </div>
-                                        <div class="mb-3">
-                                          <strong>Anlaşma ID:</strong> ${panelInfo.agreementId}
-                                        </div>
-                                    `;
-                                    
-                                    if (panelInfo.photoUrl) {
-                                      content += `
-                                        <div class="text-center mt-3">
-                                          <strong>Yayındaki Reklam Görseli:</strong>
-                                          <div class="mt-2">
-                                            <img src="${panelInfo.photoUrl}" style="max-width: 100%; max-height: 300px;" alt="Reklam Görseli" class="border rounded" />
-                                          </div>
-                                        </div>
-                                      `;
-                                    } else {
-                                      content += `
-                                        <div class="text-center mt-3">
-                                          <strong>Yayındaki Reklam Görseli:</strong>
-                                          <div class="mt-2 text-muted">
-                                            <i class="bi bi-image fs-1"></i>
-                                            <p class="mb-0">Görsel eklenmemiş</p>
-                                          </div>
-                                        </div>
-                                      `;
-                                    }
-                                    
-                                    content += `</div>`;
-                                    
-                                    // Use the same alert system as CurrentStatus
-                                    if (window.showAlert) {
-                                      window.showAlert(
-                                        'Panel Bilgisi',
-                                        content,
-                                        'info'
-                                      );
-                                    } else {
-                                      // Fallback to simple alert if showAlert is not available
-                                      alert(`Panel ${panelNumber}\nFirma: ${panelInfo.companyName}\nTarih: ${formatDate(panelInfo.startDate)} - ${formatDate(panelInfo.endDate)}\nAnlaşma ID: ${panelInfo.agreementId}`);
-                                    }
-                                  }
-                                }}
-                              >
-                                <div style={{ fontSize: '12px' }}>{panelNumber}</div>
-                                {panelInfo.isUsed && (
-                                  <>
-                                    <div className="text-truncate" style={{ fontSize: '8px', maxWidth: '50px' }} title={panelInfo.companyName}>
-                                      {panelInfo.companyName}
-                                    </div>
-                                    <div className="text-truncate" style={{ fontSize: '7px', maxWidth: '50px' }} title={`${formatDate(panelInfo.startDate)} - ${formatDate(panelInfo.endDate)}`}>
-                                      {formatDate(panelInfo.startDate)} - {formatDate(panelInfo.endDate)}
-                                    </div>
-                                    <div style={{ fontSize: '6px' }}>ID: {panelInfo.agreementId}</div>
-                                    {panelInfo.photoUrl && (
-                                      <div className="position-absolute" style={{ top: '2px', right: '2px' }}>
-                                        <i className="bi bi-image text-warning" style={{ fontSize: '8px' }}></i>
-                                      </div>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
                   </>
                 )}
 
