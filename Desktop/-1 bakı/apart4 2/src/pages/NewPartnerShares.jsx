@@ -629,23 +629,14 @@ const PartnerShares = () => {
 
   // Calculate current status for all partners
   const calculateCurrentStatus = () => {
-    // Calculate total cash balance
-    const totalCashBalance = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
-    
-    // Calculate total advances (toplam avanslar)
-    const totalAdvances = transactions
-      .filter(transaction => 
-        transaction.source?.includes('Ortak Avans Ödemesi')
-      )
+    // 1. Toplam Gelir = Tüm gelirler (avans ödemesi düşülmez)
+    const totalIncome = transactions
+      .filter(transaction => transaction.type === 'income')
       .reduce((sum, transaction) => sum + Math.abs(transaction.amount || 0), 0);
     
-    // Calculate distributable amount (kasa + toplam avanslar)
-    const distributableAmount = totalCashBalance + totalAdvances;
-    
-    // Calculate total partner expenses (net_gider)
-    // Bu, ortakların kendi cebinden yaptığı harcamaların toplamı (originalAmount ile işaretlenmiş)
-    // Kasa dahil edilmiyor
-    const netGider = transactions
+    // 2. Toplam Gider = Ortak harcamaları + Site ödemeleri + Diğer giderler
+    // 2.1. Ortak harcamaları (ortakların kendi cebinden yaptığı harcamalar)
+    const partnerExpensesTotal = transactions
       .filter(transaction => 
         transaction.type === 'expense' && 
         transaction.amount === 0 && 
@@ -653,9 +644,43 @@ const PartnerShares = () => {
       )
       .reduce((sum, transaction) => sum + (transaction.originalAmount || 0), 0);
     
+    // 2.2. Site ödemeleri (Site Ödemesi içeren expense'ler)
+    const sitePaymentsTotal = transactions
+      .filter(transaction => 
+        transaction.type === 'expense' && 
+        transaction.source?.includes('Site Ödemesi')
+      )
+      .reduce((sum, transaction) => sum + Math.abs(transaction.amount || 0), 0);
+    
+    // 2.3. Diğer giderler (kasadan yapılan diğer giderler, site ödemesi ve ortak harcaması olmayan)
+    const otherExpensesTotal = transactions
+      .filter(transaction => 
+        transaction.type === 'expense' && 
+        transaction.amount < 0 && 
+        !transaction.source?.includes('Site Ödemesi') &&
+        !(transaction.amount === 0 && transaction.originalAmount)
+      )
+      .reduce((sum, transaction) => sum + Math.abs(transaction.amount || 0), 0);
+    
+    // Toplam Gider
+    const totalExpenses = partnerExpensesTotal + sitePaymentsTotal + otherExpensesTotal;
+    
+    // 3. Net Durum = Toplam Gelir - Toplam Gider
+    const netStatus = totalIncome - totalExpenses;
+    
+    // 4. Toplam Avanslar (gösterim için)
+    const totalAdvances = transactions
+      .filter(transaction => 
+        transaction.source?.includes('Ortak Avans Ödemesi')
+      )
+      .reduce((sum, transaction) => sum + Math.abs(transaction.amount || 0), 0);
+    
+    // 5. Net Kasa = Toplam Gelir - Toplam Avanslar
+    const netCash = totalIncome - totalAdvances;
+    
     // Calculate status for each partner
     const partnerStatuses = partners.map(partner => {
-      // 1. Yaptığı harcama (yaptığı_harcama)
+      // Ortak harcaması (ortakların kendi cebinden yaptığı harcamalar)
       const partnerExpenses = transactions
         .filter(transaction => 
           transaction.partnerId === partner.id.toString() &&
@@ -665,7 +690,7 @@ const PartnerShares = () => {
         )
         .reduce((sum, transaction) => sum + (transaction.originalAmount || 0), 0);
       
-      // 2. Aldığı avans (aldığı_avans)
+      // Ortak avansı
       const partnerAdvances = transactions
         .filter(transaction => 
           transaction.source?.includes(`Ortak Avans Ödemesi - ${partner.name}`) ||
@@ -674,18 +699,14 @@ const PartnerShares = () => {
         )
         .reduce((sum, transaction) => sum + Math.abs(transaction.amount || 0), 0);
       
-      // 3. Ortaklık oranı
+      // Ortaklık oranı
       const sharePercentage = parseFloat(partner.sharePercentage) || 0;
       
-      // 4. Net durum hesaplama
-      // net = yaptığı_harcama − aldığı_avans − (net_gider × ortaklık_oranı)
-      const netStatus = partnerExpenses - partnerAdvances - (netGider * sharePercentage / 100);
+      // Her Ortağın Payı = Net Durum × Ortak Pay Yüzdesi
+      const partnerShare = netStatus * sharePercentage / 100;
       
-      // 5. Dağıtılacak pay (kasa + toplam avanslar) × ortaklık_oranı
-      const distributableShare = distributableAmount * sharePercentage / 100;
-      
-      // 6. Final durum (net durum + dağıtılacak pay)
-      const finalStatus = netStatus + distributableShare;
+      // Final Durum = (Net Durum × Pay Yüzdesi) + Ortak Harcaması - Ortak Avansı
+      const finalStatus = partnerShare + partnerExpenses - partnerAdvances;
       
       return {
         partnerId: partner.id,
@@ -693,18 +714,20 @@ const PartnerShares = () => {
         sharePercentage: sharePercentage,
         expenses: partnerExpenses,
         advances: partnerAdvances,
-        netGiderShare: netGider * sharePercentage / 100,
-        netStatus: netStatus,
-        distributableShare: distributableShare,
+        partnerShare: partnerShare, // Net durumdan düşen pay
         finalStatus: finalStatus
       };
     });
     
     setCurrentStatusResults({
-      totalCashBalance,
+      totalIncome,
+      totalExpenses,
+      partnerExpensesTotal,
+      sitePaymentsTotal,
+      otherExpensesTotal,
+      netStatus,
       totalAdvances,
-      distributableAmount,
-      netGider,
+      netCash,
       partnerStatuses
     });
   };
@@ -1911,41 +1934,48 @@ const PartnerShares = () => {
                   <div className="col-md-3">
                     <div className="card border-0 bg-light">
                       <div className="card-body">
-                        <h6 className="text-muted mb-2">Kasa Bakiyesi</h6>
-                        <h4 className="mb-0 fw-bold text-primary">
-                          {formatCurrency(currentStatusResults.totalCashBalance)}
-                        </h4>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="card border-0 bg-light">
-                      <div className="card-body">
-                        <h6 className="text-muted mb-2">Toplam Avanslar</h6>
-                        <h4 className="mb-0 fw-bold text-danger">
-                          {formatCurrency(currentStatusResults.totalAdvances)}
-                        </h4>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="card border-0 bg-light">
-                      <div className="card-body">
-                        <h6 className="text-muted mb-2">Dağıtılacak Toplam</h6>
+                        <h6 className="text-muted mb-2">Toplam Gelir</h6>
                         <h4 className="mb-0 fw-bold text-success">
-                          {formatCurrency(currentStatusResults.distributableAmount)}
+                          {formatCurrency(currentStatusResults.totalIncome)}
                         </h4>
-                        <small className="text-muted">(Kasa + Avanslar)</small>
+                        <small className="text-muted">(Avans dahil değil)</small>
                       </div>
                     </div>
                   </div>
                   <div className="col-md-3">
                     <div className="card border-0 bg-light">
                       <div className="card-body">
-                        <h6 className="text-muted mb-2">Net Gider</h6>
-                        <h4 className="mb-0 fw-bold text-warning">
-                          {formatCurrency(currentStatusResults.netGider)}
+                        <h6 className="text-muted mb-2">Toplam Gider</h6>
+                        <h4 className="mb-0 fw-bold text-danger">
+                          {formatCurrency(currentStatusResults.totalExpenses)}
                         </h4>
+                        <small className="text-muted">
+                          Ortak: {formatCurrency(currentStatusResults.partnerExpensesTotal)} | 
+                          Site: {formatCurrency(currentStatusResults.sitePaymentsTotal)} | 
+                          Diğer: {formatCurrency(currentStatusResults.otherExpensesTotal)}
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-3">
+                    <div className="card border-0 bg-light">
+                      <div className="card-body">
+                        <h6 className="text-muted mb-2">Net Durum</h6>
+                        <h4 className={`mb-0 fw-bold ${currentStatusResults.netStatus >= 0 ? 'text-success' : 'text-danger'}`}>
+                          {formatCurrency(currentStatusResults.netStatus)}
+                        </h4>
+                        <small className="text-muted">(Gelir - Gider)</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-3">
+                    <div className="card border-0 bg-light">
+                      <div className="card-body">
+                        <h6 className="text-muted mb-2">Net Kasa</h6>
+                        <h4 className="mb-0 fw-bold text-primary">
+                          {formatCurrency(currentStatusResults.netCash)}
+                        </h4>
+                        <small className="text-muted">(Gelir - Avanslar: {formatCurrency(currentStatusResults.totalAdvances)})</small>
                       </div>
                     </div>
                   </div>
@@ -1958,11 +1988,9 @@ const PartnerShares = () => {
                       <tr>
                         <th>Ortak Adı</th>
                         <th className="text-end">Pay (%)</th>
-                        <th className="text-end">Yaptığı Harcama</th>
-                        <th className="text-end">Aldığı Avans</th>
-                        <th className="text-end">Net Gider Payı</th>
-                        <th className="text-end">Net Durum</th>
-                        <th className="text-end">Dağıtılacak Pay</th>
+                        <th className="text-end">Ortak Harcaması</th>
+                        <th className="text-end">Ortak Avansı</th>
+                        <th className="text-end">Net Durum Payı</th>
                         <th className="text-end">Final Durum</th>
                       </tr>
                     </thead>
@@ -1978,18 +2006,10 @@ const PartnerShares = () => {
                             {formatCurrency(status.advances)}
                           </td>
                           <td className="text-end text-info fw-medium">
-                            {formatCurrency(status.netGiderShare)}
-                          </td>
-                          <td className="text-end">
-                            <span className={`fw-bold ${status.netStatus >= 0 ? 'text-success' : 'text-danger'}`}>
-                              {formatCurrency(status.netStatus)}
-                            </span>
+                            {formatCurrency(status.partnerShare)}
                             <div className="small text-muted">
-                              {status.netStatus >= 0 ? 'Alacaklı' : 'Borçlu'}
+                              ({currentStatusResults.netStatus >= 0 ? '+' : ''}{formatCurrency(currentStatusResults.netStatus)} × {status.sharePercentage}%)
                             </div>
-                          </td>
-                          <td className="text-end text-success fw-medium">
-                            {formatCurrency(status.distributableShare)}
                           </td>
                           <td className="text-end">
                             <span className={`fw-bold fs-5 ${status.finalStatus >= 0 ? 'text-success' : 'text-danger'}`}>
@@ -1997,6 +2017,9 @@ const PartnerShares = () => {
                             </span>
                             <div className="small text-muted">
                               {status.finalStatus >= 0 ? 'Alacaklı' : 'Borçlu'}
+                            </div>
+                            <div className="small text-muted mt-1">
+                              = {formatCurrency(status.partnerShare)} + {formatCurrency(status.expenses)} - {formatCurrency(status.advances)}
                             </div>
                           </td>
                         </tr>
@@ -2012,13 +2035,7 @@ const PartnerShares = () => {
                           {formatCurrency(currentStatusResults.partnerStatuses.reduce((sum, s) => sum + s.advances, 0))}
                         </td>
                         <td className="text-end fw-bold text-info">
-                          {formatCurrency(currentStatusResults.partnerStatuses.reduce((sum, s) => sum + s.netGiderShare, 0))}
-                        </td>
-                        <td className="text-end fw-bold">
-                          {formatCurrency(currentStatusResults.partnerStatuses.reduce((sum, s) => sum + s.netStatus, 0))}
-                        </td>
-                        <td className="text-end fw-bold text-success">
-                          {formatCurrency(currentStatusResults.partnerStatuses.reduce((sum, s) => sum + s.distributableShare, 0))}
+                          {formatCurrency(currentStatusResults.partnerStatuses.reduce((sum, s) => sum + s.partnerShare, 0))}
                         </td>
                         <td className="text-end fw-bold">
                           {formatCurrency(currentStatusResults.partnerStatuses.reduce((sum, s) => sum + s.finalStatus, 0))}
