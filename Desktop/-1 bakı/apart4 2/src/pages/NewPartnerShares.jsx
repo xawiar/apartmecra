@@ -650,12 +650,13 @@ const PartnerShares = () => {
       )
       .reduce((sum, transaction) => sum + Math.abs(transaction.amount || 0), 0);
     
-    // 2.3. Diğer giderler (kasadan yapılan diğer giderler, site ödemesi ve ortak harcaması olmayan)
+    // 2.3. Diğer giderler (kasadan yapılan diğer giderler, site ödemesi, ortak harcaması ve avans olmayan)
     const otherExpensesTotal = transactions
       .filter(transaction => 
         transaction.type === 'expense' && 
         transaction.amount < 0 && 
         !transaction.source?.includes('Site Ödemesi') &&
+        !transaction.source?.includes('Ortak Avans Ödemesi') &&
         !(transaction.amount === 0 && transaction.originalAmount)
       )
       .reduce((sum, transaction) => sum + Math.abs(transaction.amount || 0), 0);
