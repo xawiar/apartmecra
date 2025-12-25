@@ -935,20 +935,29 @@ const Companies = () => {
   const paidAgreements = agreements.filter(a => {
     // Check if fully paid using new payment status
     if (a.paymentStatus === 'paid') return true;
+    // Fallback: check if remainingAmount is 0 or very small
+    if (a.remainingAmount !== undefined && a.remainingAmount <= 0.01) return true;
     // Fallback to old fields for backward compatibility
     if (a.paymentReceived || a.creditPaymentReceived) return true;
-    // Check if remainingAmount is 0 or very small
-    if (a.remainingAmount !== undefined && a.remainingAmount <= 0.01) return true;
+    return false;
+  });
+  
+  const pendingAgreements = agreements.filter(a => {
+    // Check if partial payment using new payment status
+    if (a.paymentStatus === 'partial') return true;
+    // Fallback: check if paidAmount > 0 but remainingAmount > 0
+    if (a.paidAmount !== undefined && a.paidAmount > 0 && 
+        a.remainingAmount !== undefined && a.remainingAmount > 0.01) return true;
     return false;
   });
   
   const unpaidAgreements = agreements.filter(a => {
     // Check if unpaid using new payment status
     if (a.paymentStatus === 'unpaid') return true;
+    // Fallback: check if no payment has been made
+    if (a.paidAmount === undefined || a.paidAmount === 0) return true;
     // Fallback to old fields for backward compatibility
     if (!a.paymentReceived && !a.creditPaymentReceived && !a.paidAmount) return true;
-    // Check if no payment has been made
-    if (a.paidAmount === undefined || a.paidAmount === 0) return true;
     return false;
   });
   
@@ -1160,10 +1169,7 @@ const Companies = () => {
               <div className="d-flex justify-content-between align-items-center">
                 <div>
                   <h6 className="text-muted mb-1 small">Bekleyen</h6>
-                  <h3 className="mb-0 fw-bold fs-6 fs-5-md">{new Intl.NumberFormat('tr-TR', {
-                    style: 'currency',
-                    currency: 'TRY'
-                  }).format(unpaidAmount)}</h3>
+                  <h3 className="mb-0 fw-bold fs-5 fs-4-md">{pendingAgreements.length}</h3>
                 </div>
                 <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
                   <i className="bi bi-arrow-up-circle text-primary fs-5 fs-4-md"></i>
