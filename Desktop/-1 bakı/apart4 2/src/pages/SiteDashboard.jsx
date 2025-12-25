@@ -356,8 +356,11 @@ const SiteDashboard = () => {
           });
           const calculatedFuturePayments = helpers.calculatePendingPayments(data.site, allAgreements, companiesData, allTransactions);
           const totalFutureAmount = calculatedFuturePayments.reduce((sum, payment) => {
-            const amount = parseFloat(payment.amount) || 0;
-            return sum + (isNaN(amount) ? 0 : amount);
+            const amount = parseFloat(payment.amount);
+            if (isNaN(amount) || !isFinite(amount)) {
+              return sum;
+            }
+            return sum + amount;
           }, 0);
 
           setFuturePayments(calculatedFuturePayments);
