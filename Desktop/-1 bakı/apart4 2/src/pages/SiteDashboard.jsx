@@ -20,7 +20,9 @@ const SiteDashboard = () => {
     totalRevenue: 0,
     pendingPayments: 0,
     totalPendingAmount: 0,
-    totalPaidAmount: 0
+    totalPaidAmount: 0,
+    futurePayments: 0,
+    totalFutureAmount: 0
   });
   const [futurePayments, setFuturePayments] = useState([]);
   const [paymentFilter, setPaymentFilter] = useState({
@@ -455,10 +457,18 @@ const SiteDashboard = () => {
 
   // Format currency
   const formatCurrency = (amount) => {
+    // Handle NaN, null, undefined, and invalid numbers
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || !isFinite(numAmount)) {
+      return new Intl.NumberFormat('tr-TR', {
+        style: 'currency',
+        currency: 'TRY'
+      }).format(0);
+    }
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: 'TRY'
-    }).format(amount);
+    }).format(numAmount);
   };
 
   // Format date
