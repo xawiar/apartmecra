@@ -8,6 +8,23 @@ const AgreementSummary = ({
   sitePanelSelections,
   dateRanges
 }) => {
+  // Calculate total site count from selected sites
+  const calculateTotalSites = () => {
+    if (!sitePanelSelections || !dateRanges) return 0;
+    
+    const selectedSiteIds = new Set();
+    
+    // Get all selected sites across all date ranges
+    dateRanges.forEach((range, rangeIndex) => {
+      const selectedSitesInRange = helpers?.getSelectedSitesForRange?.(rangeIndex, sitePanelSelections) || [];
+      selectedSitesInRange.forEach(siteId => {
+        selectedSiteIds.add(siteId);
+      });
+    });
+    
+    return selectedSiteIds.size;
+  };
+
   // Calculate total people count from selected sites
   const calculateTotalPeople = () => {
     if (!sites || !sitePanelSelections || !dateRanges) return 0;
@@ -23,7 +40,7 @@ const AgreementSummary = ({
           selectedSiteIds.add(siteId);
           const site = sites.find(s => String(s.id) === String(siteId));
           if (site) {
-            if (site.siteType === 'site') {
+            if (site.siteType === 'site' || !site.siteType) {
               totalPeople += parseInt(site.averagePeople || 0);
             } else if (site.siteType === 'business_center') {
               totalPeople += parseInt(site.peopleCount || 0);
@@ -36,7 +53,9 @@ const AgreementSummary = ({
     return totalPeople;
   };
   
+  const totalSites = calculateTotalSites();
   const totalPeople = calculateTotalPeople();
+  const totalPanels = Object.values(sitePanelCounts || {}).reduce((sum, count) => sum + (parseInt(count) || 0), 0);
   
   return (
     <div className="card border-0 shadow-sm">
@@ -48,6 +67,30 @@ const AgreementSummary = ({
       </div>
       <div className="card-body">
         <div className="row g-3">
+          <div className="col-md-4">
+            <div className="border rounded-3 p-3 h-100">
+              <p className="mb-1 text-muted small">Toplam Site</p>
+              <p className="text-primary fw-bold fs-4 mb-0">
+                {totalSites}
+              </p>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="border rounded-3 p-3 h-100">
+              <p className="mb-1 text-muted small">Toplam Panel</p>
+              <p className="text-primary fw-bold fs-4 mb-0">
+                {totalPanels}
+              </p>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="border rounded-3 p-3 h-100 bg-info bg-opacity-10 border-info">
+              <p className="mb-1 text-muted small">Tahmini Hedef Kitle</p>
+              <p className="text-info fw-bold fs-4 mb-0">
+                {totalPeople.toLocaleString('tr-TR')} kişi
+              </p>
+            </div>
+          </div>
           <div className="col-md-6">
             <div className="border rounded-3 p-3 h-100">
               <p className="mb-1 text-muted small">Toplam Hafta</p>
@@ -60,25 +103,9 @@ const AgreementSummary = ({
           </div>
           <div className="col-md-6">
             <div className="border rounded-3 p-3 h-100">
-              <p className="mb-1 text-muted small">Toplam Panel</p>
-              <p className="text-primary fw-bold fs-4 mb-0">
-                {Object.values(sitePanelCounts).reduce((sum, count) => sum + count, 0)}
-              </p>
-            </div>
-          </div>
-          <div className="col-md-6">
-            <div className="border rounded-3 p-3 h-100">
               <p className="mb-1 text-muted small">Haftalık Ücret</p>
               <p className="text-primary fw-bold fs-4 mb-0">
                 {helpers.formatCurrency(formData.weeklyRatePerPanel)}
-              </p>
-            </div>
-          </div>
-          <div className="col-md-6">
-            <div className="border rounded-3 p-3 h-100 bg-info bg-opacity-10 border-info">
-              <p className="mb-1 text-muted small">Tahmini Hedef Kitle</p>
-              <p className="text-info fw-bold fs-4 mb-0">
-                {totalPeople.toLocaleString('tr-TR')} kişi
               </p>
             </div>
           </div>
