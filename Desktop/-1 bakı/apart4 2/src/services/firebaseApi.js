@@ -558,6 +558,30 @@ export const deleteDebt = async (debtId) => {
   return result.success;
 };
 
+// Checks endpoints
+export const getChecks = async () => {
+  await initializeFirebase();
+  return await getChecksFromDb();
+};
+
+export const createCheck = async (checkData) => {
+  await initializeFirebase();
+  const result = await createCheckInDb(checkData);
+  return result.success ? result.data : null;
+};
+
+export const updateCheck = async (checkId, checkData) => {
+  await initializeFirebase();
+  const result = await updateCheckFromDb(checkId, checkData);
+  return result.success ? result.data : null;
+};
+
+export const deleteCheck = async (checkId) => {
+  await initializeFirebase();
+  const result = await deleteCheckFromDb(checkId);
+  return result.success;
+};
+
 // Partner shares endpoints
 export const getPartners = async () => {
   await initializeFirebase();
