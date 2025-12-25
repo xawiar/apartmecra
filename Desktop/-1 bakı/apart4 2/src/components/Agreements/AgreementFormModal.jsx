@@ -85,35 +85,35 @@ const AgreementFormModal = ({
               sitePanelCounts,
               helpers
             )}>
-              <div className="p-4">
+                  <div className="p-4">
                 {/* Step 1: Company Selection */}
-                <div className="card border-0 shadow-sm mb-4">
-                  <div className="card-header bg-light border-0 rounded-top">
-                    <h6 className="mb-0 d-flex align-items-center text-primary">
+                    <div className="card border-0 shadow-sm mb-4">
+                      <div className="card-header bg-light border-0 rounded-top">
+                        <h6 className="mb-0 d-flex align-items-center text-primary">
                       <span className="badge bg-primary me-2">1</span>
                       <i className="bi bi-building me-2"></i>
                       <span className="fw-semibold">Firma Seçimi</span>
-                    </h6>
-                  </div>
-                  <div className="card-body">
+                        </h6>
+                      </div>
+                      <div className="card-body">
                     <div className="mb-0">
-                      <label htmlFor="companyId" className="form-label fw-medium mb-2">Firma <span className="text-danger">*</span></label>
-                      <select
-                        id="companyId"
-                        name="companyId"
-                        value={formData.companyId}
-                        onChange={uiHandlers.handleFormChange}
-                        className="form-select agreement-form-control py-2"
-                        required
-                      >
-                        <option value="">Firma seçin</option>
+                          <label htmlFor="companyId" className="form-label fw-medium mb-2">Firma <span className="text-danger">*</span></label>
+                          <select
+                            id="companyId"
+                            name="companyId"
+                            value={formData.companyId}
+                            onChange={uiHandlers.handleFormChange}
+                            className="form-select agreement-form-control py-2"
+                            required
+                          >
+                            <option value="">Firma seçin</option>
                         {(companies || []).map(company => (
-                          <option key={company.id} value={company.id}>
-                            {company.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                              <option key={company.id} value={company.id}>
+                                {company.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                   </div>
                 </div>
 
@@ -161,31 +161,31 @@ const AgreementFormModal = ({
                           <div className="row g-2">
                             <div className="col-md-6">
                               <label className="form-label small mb-1">Başlangıç Tarihi</label>
-                              <input
-                                type="date"
+                            <input
+                              type="date"
                                 value={range.startDate || ''}
                                 onChange={(e) => uiHandlers.handleDateRangeChange(index, 'startDate', e.target.value)}
                                 className="form-control form-control-sm"
-                                required
-                              />
-                            </div>
+                              required
+                            />
+                          </div>
                             <div className="col-md-6">
                               <label className="form-label small mb-1">Bitiş Tarihi</label>
-                              <input
-                                type="date"
+                            <input
+                              type="date"
                                 value={range.endDate || ''}
                                 onChange={(e) => uiHandlers.handleDateRangeChange(index, 'endDate', e.target.value)}
                                 className="form-control form-control-sm"
-                                required
-                              />
-                            </div>
+                              required
+                            />
+                          </div>
                           </div>
                         </div>
                       </div>
                     ))}
-                  </div>
-                </div>
-
+                      </div>
+                    </div>
+                    
                 {/* Step 3: Site/Block/Panel Selection for Each Date Range */}
                 {dateRanges.map((range, rangeIndex) => {
                   const rangeKey = `range-${rangeIndex}`;
@@ -231,6 +231,40 @@ const AgreementFormModal = ({
                                   </button>
                                 </div>
                               </div>
+                              
+                              {/* Tahmini Hedef Kitle - Selected Sites People Count */}
+                              {(() => {
+                                const selectedSitesInRange = (uiHandlers.getSelectedSitesForRange && uiHandlers.getSelectedSitesForRange(rangeIndex, sitePanelSelections)) || [];
+                                let totalPeople = 0;
+                                selectedSitesInRange.forEach(siteId => {
+                                  const site = sites.find(s => String(s.id) === String(siteId));
+                                  if (site) {
+                                    if (site.siteType === 'site' || !site.siteType) {
+                                      totalPeople += parseInt(site.averagePeople || 0);
+                                    } else if (site.siteType === 'business_center') {
+                                      totalPeople += parseInt(site.peopleCount || 0);
+                                    }
+                                  }
+                                });
+                                
+                                if (selectedSitesInRange.length > 0 && totalPeople > 0) {
+                                  return (
+                                    <div className="alert alert-info d-flex align-items-center justify-content-between mb-3 py-2">
+                                      <div className="d-flex align-items-center">
+                                        <i className="bi bi-people-fill me-2 fs-5"></i>
+                                        <div>
+                                          <strong className="small">Tahmini Hedef Kitle (Bu Aralık):</strong>
+                                          <span className="ms-2 fw-bold">{totalPeople.toLocaleString('tr-TR')} kişi</span>
+                                        </div>
+                                      </div>
+                                      <small className="text-muted">
+                                        {selectedSitesInRange.length} site seçili
+                                      </small>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
 
                               {/* Regular Sites Grouped by Neighborhood - Accordion */}
                               <div className="accordion" id={`sites-accordion-${rangeIndex}`}>
@@ -241,8 +275,8 @@ const AgreementFormModal = ({
                                     neighborhoodSites.every(site => site && site.id && selectedSitesInRange.includes(site.id));
                                   const selectedCountInNeighborhood = neighborhoodSites.filter(site => site && site.id && selectedSitesInRange.includes(site.id)).length;
                                   const accordionId = `neighborhood-${rangeIndex}-${neighborhoodIndex}`;
-                                  
-                                  return (
+                            
+                            return (
                                     <div key={neighborhood} className="accordion-item">
                                       <h2 className="accordion-header" id={`heading-${accordionId}`}>
                                         <button
@@ -255,7 +289,7 @@ const AgreementFormModal = ({
                                         >
                                           <div className="d-flex justify-content-between align-items-center w-100 me-3">
                                             <span className="fw-semibold text-primary">
-                                              <i className="bi bi-geo-alt-fill me-2"></i>
+                                      <i className="bi bi-geo-alt-fill me-2"></i>
                                               {neighborhood}
                                             </span>
                                             <div className="d-flex align-items-center gap-2">
@@ -284,43 +318,43 @@ const AgreementFormModal = ({
                                         data-bs-parent={`#sites-accordion-${rangeIndex}`}
                                       >
                                         <div className="accordion-body">
-                                          <div className="row g-3">
+                                    <div className="row g-3">
                                             {(neighborhoodSites || []).map(site => {
                                               const isSelected = selectedSitesInRange.includes(site.id);
                                               const isFullyBooked = helpers && helpers.isSiteFullyBooked && hasValidDates
                                                 ? helpers.isSiteFullyBooked(site.id, range.startDate, range.endDate, [range])
                                                 : false;
                                               return (
-                                                <div key={site.id} className="col-md-6 col-sm-12">
+                                        <div key={site.id} className="col-md-6 col-sm-12">
                                                   <div className={`form-check-card h-100 ${isSelected ? 'border-primary' : isFullyBooked ? 'border-warning bg-warning bg-opacity-10' : ''}`}>
-                                                    <input
-                                                      type="checkbox"
+                                            <input
+                                              type="checkbox"
                                                       id={`site-${site.id}-range-${rangeIndex}`}
                                                       checked={isSelected}
                                                       onChange={() => uiHandlers.handleSiteSelectionForRange(rangeIndex, site.id, sitePanelSelections, [range])}
-                                                      className="form-check-input"
+                                              className="form-check-input"
                                                       disabled={isFullyBooked && !isSelected}
-                                                    />
+                                            />
                                                     <label htmlFor={`site-${site.id}-range-${rangeIndex}`} className={`form-check-label h-100 d-flex align-items-center p-3 ${isFullyBooked && !isSelected ? 'text-muted' : ''}`}>
-                                                      <div className="me-3">
+                                              <div className="me-3">
                                                         <div className={`${isFullyBooked && !isSelected ? 'bg-warning' : 'bg-primary'} bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center`} style={{ width: '40px', height: '40px' }}>
                                                           <i className={`bi bi-building ${isFullyBooked && !isSelected ? 'text-warning' : 'text-primary'}`}></i>
-                                                        </div>
-                                                      </div>
-                                                      <div className="flex-grow-1">
-                                                        <span className="fw-medium">{site.name}</span>
-                                                        <div className="small text-muted mt-1">
-                                                          <i className="bi bi-grid me-1"></i>
-                                                          {site.blocks} Blok, {site.panels} Panel
+                                                </div>
+                                              </div>
+                                              <div className="flex-grow-1">
+                                                <span className="fw-medium">{site.name}</span>
+                                                <div className="small text-muted mt-1">
+                                                  <i className="bi bi-grid me-1"></i>
+                                                  {site.blocks} Blok, {site.panels} Panel
                                                           {isFullyBooked && (
                                                             <span className="badge bg-warning text-dark ms-2">
                                                               <i className="bi bi-exclamation-triangle me-1"></i>
                                                               Tüm Paneller Dolu
                                                             </span>
                                                           )}
-                                                        </div>
-                                                      </div>
-                                                    </label>
+                                                </div>
+                                              </div>
+                                            </label>
                                                   </div>
                                                 </div>
                                               );
@@ -331,11 +365,11 @@ const AgreementFormModal = ({
                                     </div>
                                   );
                                 })}
-                              </div>
-
+                                  </div>
+                                
                               {/* Business Centers - Accordion */}
-                              {businessCenters.length > 0 && (
-                                <div className="mt-4 pt-4 border-top">
+                                {businessCenters.length > 0 && (
+                                  <div className="mt-4 pt-4 border-top">
                                   <div className="accordion" id={`business-centers-accordion-${rangeIndex}`}>
                                     <div className="accordion-item">
                                       <h2 className="accordion-header" id={`heading-business-centers-${rangeIndex}`}>
@@ -349,7 +383,7 @@ const AgreementFormModal = ({
                                         >
                                           <div className="d-flex justify-content-between align-items-center w-100 me-3">
                                             <span className="fw-semibold text-warning">
-                                              <i className="bi bi-briefcase-fill me-2"></i>
+                                      <i className="bi bi-briefcase-fill me-2"></i>
                                               İş Merkezleri
                                             </span>
                                             <span className="badge bg-warning text-dark">
@@ -365,7 +399,7 @@ const AgreementFormModal = ({
                                         data-bs-parent={`#business-centers-accordion-${rangeIndex}`}
                                       >
                                         <div className="accordion-body">
-                                          <div className="row g-3">
+                                    <div className="row g-3">
                                             {(businessCenters || []).map(site => {
                                               const selectedSitesInRange = (uiHandlers.getSelectedSitesForRange && uiHandlers.getSelectedSitesForRange(rangeIndex, sitePanelSelections)) || [];
                                               const isSelected = selectedSitesInRange.includes(site.id);
@@ -373,45 +407,45 @@ const AgreementFormModal = ({
                                                 ? helpers.isSiteFullyBooked(site.id, range.startDate, range.endDate, [range])
                                                 : false;
                                               return (
-                                                <div key={site.id} className="col-md-6 col-sm-12">
+                                        <div key={site.id} className="col-md-6 col-sm-12">
                                                   <div className={`form-check-card h-100 border-warning ${isSelected ? 'border-primary' : isFullyBooked ? 'bg-warning bg-opacity-10' : ''}`}>
-                                                    <input
-                                                      type="checkbox"
+                                            <input
+                                              type="checkbox"
                                                       id={`site-${site.id}-range-${rangeIndex}`}
                                                       checked={isSelected}
                                                       onChange={() => uiHandlers.handleSiteSelectionForRange(rangeIndex, site.id, sitePanelSelections, [range])}
-                                                      className="form-check-input"
+                                              className="form-check-input"
                                                       disabled={isFullyBooked && !isSelected}
-                                                    />
+                                            />
                                                     <label htmlFor={`site-${site.id}-range-${rangeIndex}`} className={`form-check-label h-100 d-flex align-items-center p-3 ${isFullyBooked && !isSelected ? 'text-muted' : ''}`}>
-                                                      <div className="me-3">
-                                                        <div className="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                                                          <i className="bi bi-briefcase text-warning"></i>
-                                                        </div>
-                                                      </div>
-                                                      <div className="flex-grow-1">
-                                                        <span className="fw-medium">{site.name}</span>
+                                              <div className="me-3">
+                                                <div className="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                                  <i className="bi bi-briefcase text-warning"></i>
+                                                </div>
+                                              </div>
+                                              <div className="flex-grow-1">
+                                                <span className="fw-medium">{site.name}</span>
                                                         {isFullyBooked && (
                                                           <span className="badge bg-warning text-dark ms-2">
                                                             <i className="bi bi-exclamation-triangle me-1"></i>
                                                             Tüm Paneller Dolu
                                                           </span>
                                                         )}
-                                                        <div className="small text-muted mt-1">
-                                                          <i className="bi bi-grid me-1"></i>
+                                                <div className="small text-muted mt-1">
+                                                  <i className="bi bi-grid me-1"></i>
                                                           {parseInt(site.manualPanels) || parseInt(site.panels) || 0} Panel
-                                                        </div>
-                                                      </div>
-                                                    </label>
-                                                  </div>
                                                 </div>
-                                              );
-                                            })}
+                                              </div>
+                                            </label>
                                           </div>
                                         </div>
-                                      </div>
-                                    </div>
-                                  </div>
+                            );
+                                            })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                                 </div>
                               )}
                             </div>
@@ -452,27 +486,27 @@ const AgreementFormModal = ({
                                         {totalSelectedBlocks} / {totalBlocks} Blok Seçili
                                       </span>
                                     </label>
-                                    <div className="d-flex gap-2">
-                                      <button
-                                        type="button"
+                            <div className="d-flex gap-2">
+                              <button
+                                type="button"
                                         className="btn btn-sm btn-success"
                                         onClick={() => uiHandlers.handleSelectAllBlocksForAllSitesInRange(rangeIndex, selectedSitesInRange, sites, siteBlockSelections, sitePanelSelections)}
                                         title="Seçili tüm sitelerin tüm bloklarını seç"
-                                      >
-                                        <i className="bi bi-check-square me-1"></i>
-                                        Tüm Blokları Seç
-                                      </button>
-                                      <button
-                                        type="button"
+                              >
+                                <i className="bi bi-check-square me-1"></i>
+                                Tüm Blokları Seç
+                              </button>
+                              <button
+                                type="button"
                                         className="btn btn-sm btn-primary"
                                         onClick={() => uiHandlers.handleSelectHalfForAllSitesInRange(rangeIndex, selectedSitesInRange, sites, siteBlockSelections, sitePanelSelections, [range])}
                                         title="Seçili tüm sitelerin tüm bloklarının panellerinin yarısını seç"
-                                      >
-                                        <i className="bi bi-check2-all me-1"></i>
-                                        Tümünün Yarısını Seç
-                                      </button>
-                                    </div>
-                                  </div>
+                              >
+                                <i className="bi bi-check2-all me-1"></i>
+                                Tümünün Yarısını Seç
+                              </button>
+                            </div>
+                        </div>
 
                                   {/* Sites with blocks in accordion */}
                                   <div className="accordion" id={`blocks-accordion-${rangeIndex}`}>
@@ -485,8 +519,8 @@ const AgreementFormModal = ({
                                         : (helpers.generateBlockLabels(site.blocks) || []);
                                       const selectedBlocks = (uiHandlers.getSelectedBlocksForRange && uiHandlers.getSelectedBlocksForRange(rangeIndex, siteId, siteBlockSelections)) || [];
                                       const siteAccordionId = `site-blocks-${rangeIndex}-${siteId}`;
-
-                                      return (
+                            
+                            return (
                                         <div key={siteId} className="accordion-item">
                                           <h2 className="accordion-header" id={`heading-${siteAccordionId}`}>
                                             <button
@@ -499,8 +533,8 @@ const AgreementFormModal = ({
                                             >
                                               <div className="d-flex justify-content-between align-items-center w-100 me-3">
                                                 <span className="fw-semibold text-primary">
-                                                  <i className="bi bi-geo-alt me-2"></i>
-                                                  {site.name}
+                                  <i className="bi bi-geo-alt me-2"></i>
+                                  {site.name}
                                                 </span>
                                                 <span className="badge bg-primary">
                                                   {selectedBlocks.length} / {blockLabels.length}
@@ -515,66 +549,66 @@ const AgreementFormModal = ({
                                             data-bs-parent={`#blocks-accordion-${rangeIndex}`}
                                           >
                                             <div className="accordion-body">
-                                              {/* Block Selection */}
-                                              <div className="mb-4">
-                                                <label className="form-label fw-medium mb-2">
-                                                  {site.siteType === 'business_center' ? 'İş Merkezi' : 'Bloklar'}
-                                                </label>
-                                                <div className="row g-2 mb-3">
-                                        {site.siteType === 'business_center' ? (
+                                {/* Block Selection */}
+                                <div className="mb-4">
+                                  <label className="form-label fw-medium mb-2">
+                                    {site.siteType === 'business_center' ? 'İş Merkezi' : 'Bloklar'}
+                                  </label>
+                                  <div className="row g-2 mb-3">
+                                    {site.siteType === 'business_center' ? (
                                           (() => {
                                             const blockKey = `${siteId}-block-A`;
                                             const isSelected = selectedBlocks.includes(blockKey);
                                             return (
-                                              <div className="col-md-3 col-sm-4 col-6">
+                                      <div className="col-md-3 col-sm-4 col-6">
                                                 <div className={`card h-100 border-2 ${isSelected ? 'border-primary bg-primary bg-opacity-10' : 'border-light'}`}>
-                                                  <div className="card-body p-2">
-                                                    <div className="form-check text-center">
-                                                      <input
-                                                        type="checkbox"
+                                          <div className="card-body p-2">
+                                            <div className="form-check text-center">
+                                              <input
+                                                type="checkbox"
                                                         id={`${siteId}-block-A-range-${rangeIndex}`}
                                                         checked={isSelected}
                                                         onChange={() => uiHandlers.handleBlockSelectionForRange(rangeIndex, siteId, blockKey, siteBlockSelections, sitePanelSelections)}
-                                                        className="form-check-input"
-                                                      />
+                                                className="form-check-input"
+                                              />
                                                       <label htmlFor={`${siteId}-block-A-range-${rangeIndex}`} className="form-check-label fw-bold">
-                                                        İş Merkezi
-                                                      </label>
-                                                    </div>
-                                                  </div>
-                                                </div>
-                                              </div>
+                                                İş Merkezi
+                                              </label>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
                                             );
                                           })()
-                                        ) : (
+                                    ) : (
                                           (blockLabels || []).map((label) => {
                                             const blockKey = `${siteId}-block-${label}`;
-                                            const isSelected = selectedBlocks.includes(blockKey);
-                                            
-                                            return (
-                                              <div key={blockKey} className="col-md-3 col-sm-4 col-6">
-                                                <div className={`card h-100 border-2 ${isSelected ? 'border-primary bg-primary bg-opacity-10' : 'border-light'}`}>
-                                                  <div className="card-body p-2">
-                                                    <div className="form-check text-center">
-                                                      <input
-                                                        type="checkbox"
+                                        const isSelected = selectedBlocks.includes(blockKey);
+                                        
+                                        return (
+                                          <div key={blockKey} className="col-md-3 col-sm-4 col-6">
+                                            <div className={`card h-100 border-2 ${isSelected ? 'border-primary bg-primary bg-opacity-10' : 'border-light'}`}>
+                                              <div className="card-body p-2">
+                                                <div className="form-check text-center">
+                                                  <input
+                                                    type="checkbox"
                                                         id={`${blockKey}-range-${rangeIndex}`}
-                                                        checked={isSelected}
+                                                    checked={isSelected}
                                                         onChange={() => uiHandlers.handleBlockSelectionForRange(rangeIndex, siteId, blockKey, siteBlockSelections, sitePanelSelections)}
-                                                        className="form-check-input"
-                                                      />
+                                                    className="form-check-input"
+                                                  />
                                                       <label htmlFor={`${blockKey}-range-${rangeIndex}`} className="form-check-label fw-bold">
-                                                        Blok {label}
-                                                      </label>
-                                                    </div>
-                                                  </div>
+                                                    Blok {label}
+                                                  </label>
                                                 </div>
                                               </div>
-                                            );
-                                          })
-                                                  )}
-                                                </div>
-                                                
+                                            </div>
+                                          </div>
+                                        );
+                                      })
+                                    )}
+                                  </div>
+                                  
                                                 {/* Panel Selection for Selected Blocks - Accordion */}
                                                 {(() => {
                                         const rangeKey = `range-${rangeIndex}`;
@@ -595,8 +629,8 @@ const AgreementFormModal = ({
                                               const totalPanels = site.siteType === 'business_center' 
                                                 ? (parseInt(site.manualPanels) || parseInt(site.panels) || 0) 
                                                 : (parseInt(site.elevatorsPerBlock) || 0) * 2;
-                                              
-                                              return (
+                                      
+                                      return (
                                                 <div key={blockKey} className="accordion-item">
                                                   <h2 className="accordion-header" id={`heading-${accordionId}`}>
                                                     <button
@@ -609,8 +643,8 @@ const AgreementFormModal = ({
                                                     >
                                                       <div className="d-flex justify-content-between align-items-center w-100 me-3">
                                                         <span className="fw-semibold text-primary">
-                                                          <i className="bi bi-grid-3x3-gap me-2"></i>
-                                                          {site.siteType === 'business_center' ? 'İş Merkezi Panelleri' : `Blok ${blockLabel} Panelleri`}
+                                              <i className="bi bi-grid-3x3-gap me-2"></i>
+                                              {site.siteType === 'business_center' ? 'İş Merkezi Panelleri' : `Blok ${blockLabel} Panelleri`}
                                                         </span>
                                                         <span className="badge bg-primary ms-2">
                                                           {selectedPanels.length} / {totalPanels}
@@ -627,62 +661,62 @@ const AgreementFormModal = ({
                                                     <div className="accordion-body">
                                                       <div className="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded">
                                                         <span className="small text-muted">Panel seçimi için aşağıdaki panelleri tıklayın</span>
-                                                        <button
-                                                          type="button"
-                                                          className="btn btn-primary btn-sm fw-bold"
-                                                          onClick={() => {
+                                            <button
+                                              type="button"
+                                              className="btn btn-primary btn-sm fw-bold"
+                                              onClick={() => {
                                                             uiHandlers.handleSelectHalfForDateRange(siteId, blockKey, rangeIndex, sitePanelSelections, totalPanels, [range]);
-                                                          }}
-                                                          title="Panellerin yarısını otomatik seç (tek sayılar önce, sonra çift sayılar)"
-                                                          style={{ minWidth: '120px' }}
-                                                        >
-                                                          <i className="bi bi-check2-square me-1"></i>
-                                                          Yarısını Seç
-                                                        </button>
-                                                      </div>
-                                                      <div className="row g-2">
+                                              }}
+                                              title="Panellerin yarısını otomatik seç (tek sayılar önce, sonra çift sayılar)"
+                                              style={{ minWidth: '120px' }}
+                                            >
+                                              <i className="bi bi-check2-square me-1"></i>
+                                              Yarısını Seç
+                                            </button>
+                                          </div>
+                                          <div className="row g-2">
                                                         {Array.from({ length: totalPanels }, (_, i) => {
-                                                          const panelId = i + 1;
-                                                          const panelKey = `panel-${panelId}`;
-                                                          const isPanelSelected = selectedPanels.includes(panelKey);
-                                                          const panelName = generatePanelName(siteId, blockLabel, panelId);
+                                              const panelId = i + 1;
+                                              const panelKey = `panel-${panelId}`;
+                                              const isPanelSelected = selectedPanels.includes(panelKey);
+                                              const panelName = generatePanelName(siteId, blockLabel, panelId);
                                                           const isAvailable = helpers.isPanelAvailable(siteId, blockKey, panelKey, range.startDate, range.endDate, [range]);
                                                           const usageInfo = !isAvailable ? helpers.getPanelUsageInfo(siteId, blockKey, panelKey, range.startDate, range.endDate) : null;
-                                                          
-                                                          return (
-                                                            <div key={panelKey} className="col-4 col-sm-3 col-md-2">
-                                                              <div 
-                                                                className={`card panel-card h-100 border-2 ${!isAvailable ? 'border-warning bg-warning bg-opacity-10' : isPanelSelected ? 'border-primary bg-primary bg-opacity-10' : 'border-light'}`} 
-                                                                style={{ cursor: isAvailable ? 'pointer' : 'not-allowed', transition: 'all 0.2s', position: 'relative' }}
+                                              
+                                              return (
+                                                <div key={panelKey} className="col-4 col-sm-3 col-md-2">
+                                                  <div 
+                                                    className={`card panel-card h-100 border-2 ${!isAvailable ? 'border-warning bg-warning bg-opacity-10' : isPanelSelected ? 'border-primary bg-primary bg-opacity-10' : 'border-light'}`} 
+                                                    style={{ cursor: isAvailable ? 'pointer' : 'not-allowed', transition: 'all 0.2s', position: 'relative' }}
                                                                 onClick={() => { if (isAvailable) uiHandlers.handlePanelSelectionForDateRange(siteId, blockKey, panelKey, rangeIndex, sitePanelSelections); }}
-                                                              >
-                                                                <div className="card-body p-2 d-flex flex-column align-items-center">
-                                                                  <div className="form-check mb-1">
-                                                                    <input
-                                                                      type="checkbox"
+                                                  >
+                                                    <div className="card-body p-2 d-flex flex-column align-items-center">
+                                                      <div className="form-check mb-1">
+                                                        <input
+                                                          type="checkbox"
                                                                       id={`${siteId}-${blockKey}-${panelKey}-${rangeIndex}`}
-                                                                      checked={isPanelSelected}
+                                                          checked={isPanelSelected}
                                                                       onChange={() => { if (isAvailable) uiHandlers.handlePanelSelectionForDateRange(siteId, blockKey, panelKey, rangeIndex, sitePanelSelections); }}
-                                                                      className="form-check-input"
-                                                                      onClick={(e) => e.stopPropagation()}
-                                                                      disabled={!isAvailable}
-                                                                    />
-                                                                  </div>
-                                                                  <div className="text-center">
-                                                                    <div className="fw-bold text-truncate" style={{ fontSize: '10px', maxWidth: '80px' }}>{panelName}</div>
-                                                                    <div className="small text-muted mt-1" style={{ fontSize: '9px' }}>Panel {panelId}</div>
-                                                                    {!isAvailable && usageInfo && (
-                                                                      <div className="small text-muted mt-1" style={{ fontSize: '8px' }}>
-                                                                        <i className="bi bi-lock-fill me-1"></i>
-                                                                        {usageInfo.companyName}
-                                                                      </div>
-                                                                    )}
-                                                                  </div>
-                                                                </div>
-                                                              </div>
-                                                            </div>
-                                                          );
-                                                        })}
+                                                          className="form-check-input"
+                                                          onClick={(e) => e.stopPropagation()}
+                                                          disabled={!isAvailable}
+                                                        />
+                                                      </div>
+                                                      <div className="text-center">
+                                                        <div className="fw-bold text-truncate" style={{ fontSize: '10px', maxWidth: '80px' }}>{panelName}</div>
+                                                        <div className="small text-muted mt-1" style={{ fontSize: '9px' }}>Panel {panelId}</div>
+                                                        {!isAvailable && usageInfo && (
+                                                          <div className="small text-muted mt-1" style={{ fontSize: '8px' }}>
+                                                            <i className="bi bi-lock-fill me-1"></i>
+                                                            {usageInfo.companyName}
+                                                          </div>
+                                                        )}
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              );
+                                            })}
                                                       </div>
                                                     </div>
                                                   </div>
@@ -698,9 +732,9 @@ const AgreementFormModal = ({
                                         </div>
                                       );
                                     })}
-                                  </div>
                                 </div>
-                              );
+                              </div>
+                            );
                             })()}
                           </>
                         )}
@@ -779,18 +813,18 @@ const AgreementFormModal = ({
                         placeholder="Ek notlar..."
                       />
                     </div>
-                  </div>
-                </div>
-
-                {/* Summary */}
-                <AgreementSummary
-                  formData={formData}
-                  sitePanelCounts={sitePanelCounts}
-                  helpers={helpers}
+                      </div>
+                    </div>
+                    
+                    {/* Summary */}
+                    <AgreementSummary 
+                      formData={formData}
+                      sitePanelCounts={sitePanelCounts}
+                      helpers={helpers}
                   sites={sites}
                   sitePanelSelections={sitePanelSelections}
                   dateRanges={dateRanges}
-                />
+                    />
               </div>
               
               <div className="modal-footer bg-light rounded-bottom p-4">
