@@ -146,6 +146,22 @@ const CompanyDashboard = () => {
   // Use ref to track if data has been fetched
   const hasFetchedRef = useRef(false);
 
+  // Helper function to get payment history for an agreement
+  const getAgreementPaymentHistory = (agreementId) => {
+    if (!agreementId || !transactions) return [];
+    return transactions.filter(t => 
+      t.agreementId && String(t.agreementId) === String(agreementId) && t.type === 'income'
+    ).sort((a, b) => new Date(b.date) - new Date(a.date));
+  };
+
+  // Helper function to get checks for an agreement
+  const getAgreementChecks = (agreementId) => {
+    if (!agreementId || !checks) return [];
+    return checks.filter(c => 
+      c.agreementId && String(c.agreementId) === String(agreementId)
+    ).sort((a, b) => new Date(b.dueDate || b.createdAt) - new Date(a.dueDate || a.createdAt));
+  };
+
   useEffect(() => {
     // Prevent multiple fetches
     if (hasFetchedRef.current) {

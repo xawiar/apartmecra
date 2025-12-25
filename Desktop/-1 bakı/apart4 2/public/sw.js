@@ -1,5 +1,5 @@
 // Service Worker for Apart4 PWA
-const CACHE_NAME = 'apart4-v1.0.3'; // Updated to force cache refresh
+const CACHE_NAME = 'apart4-v1.0.4'; // Updated to force cache refresh
 const KEEP_ALIVE_INTERVAL = 30000; // 30 seconds
 const urlsToCache = [
   '/',
