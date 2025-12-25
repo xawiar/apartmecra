@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { getSiteData, getSites, getCompanies, getPanelImages, getAgreements, getTransactions, createSiteUpdateRequest, getNotifications } from '../services/api';
+import { getSiteData, getSites, getCompanies, getPanelImages, getAgreements, getTransactions, createSiteUpdateRequest, getAnnouncements } from '../services/api';
 import logger from '../utils/logger';
 import { getUser } from '../utils/auth';
 import SiteHelpers from '../components/Sites/SiteHelpers';
-import { getCurrentUser } from '../services/firebaseAuth';
-import { auth } from '../config/firebase.js';
-import { initializePushNotifications, requestNotificationPermission } from '../services/notifications';
 
 const SiteDashboard = () => {
   const [siteData, setSiteData] = useState({
@@ -45,8 +42,8 @@ const SiteDashboard = () => {
     iban: '',
     notes: ''
   });
-  const [notifications, setNotifications] = useState([]);
-  const [notificationsCollapsed, setNotificationsCollapsed] = useState(false);
+  const [announcements, setAnnouncements] = useState([]);
+  const [announcementsCollapsed, setAnnouncementsCollapsed] = useState(false);
 
   const user = getUser();
   const siteId = user?.siteId;
@@ -179,99 +176,62 @@ const SiteDashboard = () => {
         setCompanies(companiesData);
         setPanelImages(allPanelImages);
         
-        // Fetch notifications for site user
-        if (auth && auth.currentUser) {
-          const currentUser = getCurrentUser();
-          if (currentUser && currentUser.uid) {
-            try {
-              // Get user document ID from Firestore users collection
-              // First try to find user by email or uid
-              const { getDocs, query, where, collection } = await import('firebase/firestore');
-              const { db } = await import('../config/firebase.js');
-              const usersRef = collection(db, 'users');
-              
-              // Try to find user by email first (site users have email like siteId@site.local)
-              const emailQuery = query(usersRef, where('email', '==', currentUser.email || ''));
-              const emailSnapshot = await getDocs(emailQuery);
-              
-              let userDocId = null;
-              if (!emailSnapshot.empty) {
-                userDocId = emailSnapshot.docs[0].id;
-              } else {
-                // If not found by email, try to find by siteId (for site users)
-                if (siteId) {
-                  const siteIdQuery = query(usersRef, where('siteId', '==', siteId), where('role', '==', 'site_user'));
-                  const siteIdSnapshot = await getDocs(siteIdQuery);
-                  if (!siteIdSnapshot.empty) {
-                    userDocId = siteIdSnapshot.docs[0].id;
-                  }
-                }
-              }
-              
-              // If still not found, use currentUser.uid as fallback
-              const userIdToUse = userDocId || currentUser.uid;
-              
-              // Get initial notifications
-              const userNotifications = await getNotifications(userIdToUse, false);
-              setNotifications(userNotifications || []);
-              
-              // Set up real-time listener for new notifications
-              const { onSnapshot } = await import('firebase/firestore');
-              const notificationsRef = collection(db, 'notifications');
-              const notificationsQuery = query(
-                notificationsRef,
-                where('userId', '==', userIdToUse)
-              );
-              
-              const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
-                const newNotifications = [];
-                snapshot.forEach((doc) => {
-                  newNotifications.push({
-                    _docId: doc.id,
-                    ...doc.data(),
-                    id: doc.data().id || doc.id
-                  });
-                });
-                
-                // Sort by createdAt descending
-                newNotifications.sort((a, b) => {
-                  const aTime = a.createdAt?.seconds || a.createdAt || 0;
-                  const bTime = b.createdAt?.seconds || b.createdAt || 0;
-                  return bTime - aTime;
-                });
-                
-                // Check for new unread notifications and show push notification
-                const previousNotifications = userNotifications || [];
-                const newUnreadNotifications = newNotifications.filter(n => 
-                  !n.read && 
-                  !previousNotifications.find(p => (p.id || p._docId) === (n.id || n._docId))
-                );
-                
-                setNotifications(newNotifications);
-                
-                // Show push notification for new unread notifications
-                newUnreadNotifications.forEach(notification => {
-                  showPushNotification(notification);
-                });
-              }, (error) => {
-                console.error('Error in notifications listener:', error);
-              });
-              
-              // Store unsubscribe function for cleanup
-              return () => {
-                if (unsubscribe) unsubscribe();
-              };
-            } catch (error) {
-              console.error('Error fetching notifications:', error);
-            }
-          }
-        }
-        
-        // Initialize push notifications
-        if ('serviceWorker' in navigator && 'Notification' in window) {
-          initializePushNotifications().catch(error => {
-            console.error('Error initializing push notifications:', error);
+        // Fetch announcements for this site
+        try {
+          const allAnnouncements = await getAnnouncements();
+          // Filter announcements for this site (all or specific site)
+          const siteAnnouncements = allAnnouncements.filter(announcement => 
+            announcement.targetSite === 'all' || announcement.targetSite === siteId
+          );
+          // Sort by createdAt descending
+          siteAnnouncements.sort((a, b) => {
+            const aTime = a.createdAt?.seconds || (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+            const bTime = b.createdAt?.seconds || (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+            return bTime - aTime;
           });
+          setAnnouncements(siteAnnouncements);
+          
+          // Set up real-time listener for announcements
+          const { onSnapshot, collection, query, orderBy } = await import('firebase/firestore');
+          const { db } = await import('../config/firebase.js');
+          const announcementsRef = collection(db, 'announcements');
+          const announcementsQuery = query(
+            announcementsRef,
+            orderBy('createdAt', 'desc')
+          );
+          
+          const unsubscribe = onSnapshot(announcementsQuery, (snapshot) => {
+            const newAnnouncements = [];
+            snapshot.forEach((doc) => {
+              const announcement = {
+                _docId: doc.id,
+                ...doc.data(),
+                id: doc.data().id || doc.id
+              };
+              // Filter for this site
+              if (announcement.targetSite === 'all' || announcement.targetSite === siteId) {
+                newAnnouncements.push(announcement);
+              }
+            });
+            
+            // Sort by createdAt descending
+            newAnnouncements.sort((a, b) => {
+              const aTime = a.createdAt?.seconds || (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+              const bTime = b.createdAt?.seconds || (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+              return bTime - aTime;
+            });
+            
+            setAnnouncements(newAnnouncements);
+          }, (error) => {
+            console.error('Error in announcements listener:', error);
+          });
+          
+          // Store unsubscribe function for cleanup
+          return () => {
+            if (unsubscribe) unsubscribe();
+          };
+        } catch (error) {
+          console.error('Error fetching announcements:', error);
         }
         
         // Set initial site form data
@@ -968,73 +928,42 @@ const SiteDashboard = () => {
         </div>
       </div>
 
-      {/* Notification Permission Request - Responsive */}
-      {typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default' && (
-        <div className="alert alert-info border-0 shadow-sm mb-3 mb-md-4" style={{ borderRadius: '12px' }}>
-          <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2">
-            <div className="d-flex align-items-center flex-grow-1">
-              <i className="bi bi-bell fs-4 fs-5-md me-2 me-md-3"></i>
-              <div>
-                <h6 className="mb-1 fw-bold small">Bildirim İzni</h6>
-                <p className="mb-0 small d-none d-md-block">Yeni duyuruları anında almak için bildirim izni verin.</p>
-                <p className="mb-0 small d-md-none">Bildirim izni verin.</p>
-              </div>
-            </div>
-            <button
-              className="btn btn-sm btn-primary w-100 w-md-auto"
-              onClick={async () => {
-                const result = await requestNotificationPermission();
-                if (result.granted) {
-                  await initializePushNotifications();
-                  await window.showAlert('Başarılı', 'Bildirim izni verildi. Artık yeni duyuruları anında alacaksınız.', 'success');
-                  window.location.reload();
-                } else {
-                  await window.showAlert('Bildirim İzni', 'Bildirim izni verilmedi. Lütfen tarayıcı ayarlarından izin verin.', 'warning');
-                }
-              }}
-            >
-              <i className="bi bi-check-circle me-1"></i>
-              İzin Ver
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Notifications Section - Modern Design */}
-      {notifications.length > 0 && (
-        <div className={`alert alert-${notifications.filter(n => !n.read).length > 0 ? 'primary' : 'info'} border-0 shadow-sm mb-4`} style={{ borderRadius: '12px' }}>
+      {/* Announcements Section */}
+      {announcements.length > 0 && (
+        <div className="alert alert-info border-0 shadow-sm mb-4" style={{ borderRadius: '12px' }}>
           <div className="d-flex align-items-center justify-content-between">
             <div className="d-flex align-items-center flex-grow-1">
               <div className="me-3">
-                <i className={`bi bi-${notifications.filter(n => !n.read).length > 0 ? 'bell-fill' : 'bell'} fs-4`} style={{ color: notifications.filter(n => !n.read).length > 0 ? '#0d6efd' : '#6c757d' }}></i>
+                <i className="bi bi-megaphone fs-4" style={{ color: '#0dcaf0' }}></i>
               </div>
               <div className="flex-grow-1">
                 <div className="d-flex align-items-center mb-1">
-                  <h6 className="mb-0 fw-bold me-2">Duyurular ve Bildirimler</h6>
-                  {notifications.filter(n => !n.read).length > 0 && (
-                    <span className="badge bg-danger rounded-pill">
-                      {notifications.filter(n => !n.read).length} Yeni
-                    </span>
-                  )}
+                  <h6 className="mb-0 fw-bold me-2">Duyurular</h6>
                 </div>
-                {!notificationsCollapsed && (
+                {!announcementsCollapsed && (
                   <div className="mt-2">
-                    {notifications.slice(0, 3).map((notification) => (
+                    {announcements.slice(0, 5).map((announcement) => (
                       <div
-                        key={notification.id || notification._docId}
-                        className={`mb-2 p-2 rounded ${!notification.read ? 'bg-light border-start border-3 border-primary' : 'bg-white'}`}
-                        style={{ fontSize: '0.9rem' }}
+                        key={announcement.id || announcement._docId}
+                        className="mb-2 p-2 rounded bg-white border-start border-3"
+                        style={{ 
+                          fontSize: '0.9rem',
+                          borderColor: announcement.type === 'payment' ? '#198754' : 
+                                      announcement.type === 'warning' ? '#ffc107' : 
+                                      announcement.type === 'error' ? '#dc3545' : 
+                                      '#0dcaf0'
+                        }}
                       >
                         <div className="d-flex align-items-start">
-                          <div className={`badge ${notification.type === 'payment' ? 'bg-success' : notification.type === 'warning' ? 'bg-warning' : notification.type === 'error' ? 'bg-danger' : 'bg-info'} me-2 mt-1`} style={{ fontSize: '0.7rem' }}>
-                            <i className={`bi ${notification.type === 'payment' ? 'bi-cash-coin' : notification.type === 'warning' ? 'bi-exclamation-triangle' : notification.type === 'error' ? 'bi-x-circle' : 'bi-info-circle'}`}></i>
+                          <div className={`badge ${announcement.type === 'payment' ? 'bg-success' : announcement.type === 'warning' ? 'bg-warning' : announcement.type === 'error' ? 'bg-danger' : 'bg-info'} me-2 mt-1`} style={{ fontSize: '0.7rem' }}>
+                            <i className={`bi ${announcement.type === 'payment' ? 'bi-cash-coin' : announcement.type === 'warning' ? 'bi-exclamation-triangle' : announcement.type === 'error' ? 'bi-x-circle' : 'bi-info-circle'}`}></i>
                           </div>
                           <div className="flex-grow-1">
-                            <div className="fw-semibold">{notification.title}</div>
-                            <div className="text-muted small">{notification.message}</div>
+                            <div className="fw-semibold">{announcement.title}</div>
+                            <div className="text-muted small">{announcement.message}</div>
                             <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                              {notification.createdAt 
-                                ? new Date(notification.createdAt.seconds * 1000 || notification.createdAt).toLocaleDateString('tr-TR', {
+                              {announcement.createdAt 
+                                ? new Date(announcement.createdAt.seconds * 1000 || announcement.createdAt).toLocaleDateString('tr-TR', {
                                     day: 'numeric',
                                     month: 'short',
                                     hour: '2-digit',
@@ -1046,10 +975,10 @@ const SiteDashboard = () => {
                         </div>
                       </div>
                     ))}
-                    {notifications.length > 3 && (
+                    {announcements.length > 5 && (
                       <div className="text-muted small mt-2">
                         <i className="bi bi-three-dots me-1"></i>
-                        {notifications.length - 3} bildirim daha var. Tüm bildirimleri görmek için üstteki bildirim ikonuna tıklayın.
+                        {announcements.length - 5} duyuru daha var
                       </div>
                     )}
                   </div>
@@ -1058,10 +987,10 @@ const SiteDashboard = () => {
             </div>
             <button
               className="btn btn-sm btn-link text-decoration-none ms-2"
-              onClick={() => setNotificationsCollapsed(!notificationsCollapsed)}
-              title={notificationsCollapsed ? "Genişlet" : "Daralt"}
+              onClick={() => setAnnouncementsCollapsed(!announcementsCollapsed)}
+              title={announcementsCollapsed ? "Genişlet" : "Daralt"}
             >
-              <i className={`bi bi-chevron-${notificationsCollapsed ? 'down' : 'up'}`}></i>
+              <i className={`bi bi-chevron-${announcementsCollapsed ? 'down' : 'up'}`}></i>
             </button>
           </div>
         </div>

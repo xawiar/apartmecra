@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { logout, getUser } from '../utils/auth';
 import CustomModal from './CustomModal';
 import useCustomAlert from '../hooks/useCustomAlert';
-import NotificationBell from './NotificationBell';
 
 const BootstrapLayout = ({ children }) => {
   const location = useLocation();
@@ -102,9 +101,6 @@ const BootstrapLayout = ({ children }) => {
           </div>
           
           <div className="d-flex align-items-center">
-            {/* Notification Bell - Only for site users */}
-            {isSiteUser && <NotificationBell />}
-            
             <div className="dropdown">
               <button className="btn btn-sm rounded-circle bg-primary text-white dropdown-toggle" 
                       type="button" 
