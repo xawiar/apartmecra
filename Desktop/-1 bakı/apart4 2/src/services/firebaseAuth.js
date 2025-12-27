@@ -200,18 +200,20 @@ const getErrorMessage = (errorCode) => {
     'auth/invalid-email': 'Geçersiz email adresi',
     'auth/user-disabled': 'Kullanıcı hesabı devre dışı',
     'auth/too-many-requests': 'Çok fazla deneme yapıldı, lütfen daha sonra tekrar deneyin',
-    'auth/network-request-failed': 'Ağ bağlantısı hatası',
+    'auth/network-request-failed': 'Ağ bağlantısı hatası. Lütfen internet bağlantınızı kontrol edin.',
     'auth/invalid-credential': 'Geçersiz kimlik bilgileri',
     'auth/operation-not-allowed': 'Bu işlem izin verilmiyor',
     'auth/weak-password': 'Şifre çok zayıf',
     'auth/invalid-argument': 'Geçersiz parametre',
     'auth/missing-password': 'Şifre gereklidir',
-    'auth/email-already-in-use': 'Bu email adresi zaten kullanılıyor'
+    'auth/email-already-in-use': 'Bu email adresi zaten kullanılıyor',
+    'auth/unauthorized-domain': 'Bu domain için yetkilendirme yok. Firebase Console\'da authorized domains ayarlarını kontrol edin.',
+    'auth/domain-not-allowed': 'Bu domain için yetkilendirme yok. Firebase Console\'da authorized domains ayarlarını kontrol edin.'
   };
   
-  // Handle 400 Bad Request errors
+  // Handle 400 Bad Request errors - often related to domain/IP restrictions
   if (!errorCode || errorCode.includes('400') || errorCode.includes('Bad Request')) {
-    return 'Geçersiz istek. Lütfen email ve şifrenizi kontrol edin.';
+    return 'Geçersiz istek. Bu hata genellikle Firebase authorized domains ayarlarından kaynaklanır. Lütfen Firebase Console\'da authorized domains listesine mevcut domain\'i ekleyin.';
   }
   
   return errorMessages[errorCode] || `Giriş hatası: ${errorCode || 'Bilinmeyen hata'}`;
