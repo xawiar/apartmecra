@@ -181,16 +181,14 @@ const SiteDashboard = () => {
         // Fetch announcements for this site
         try {
           const allAnnouncements = await getAnnouncements();
-          // Filter announcements for this site (all or specific site)
-          const siteAnnouncements = allAnnouncements.filter(announcement => 
-            announcement.targetSite === 'all' || announcement.targetSite === siteId
-          );
-          // Sort by createdAt descending
-          siteAnnouncements.sort((a, b) => {
-            const aTime = a.createdAt?.seconds || (a.createdAt ? new Date(a.createdAt).getTime() : 0);
-            const bTime = b.createdAt?.seconds || (b.createdAt ? new Date(b.createdAt).getTime() : 0);
-            return bTime - aTime;
-          });
+          // Filter announcements for this site (all or specific site) - only existing ones
+          const siteAnnouncements = allAnnouncements
+            .filter(announcement => announcement && (announcement.targetSite === 'all' || String(announcement.targetSite) === String(siteId)))
+            .sort((a, b) => {
+              const aTime = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+              const bTime = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+              return bTime - aTime;
+            });
           setAnnouncements(siteAnnouncements);
           
           // Set up real-time listener for announcements
