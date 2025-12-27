@@ -1507,17 +1507,67 @@ const Settings = () => {
                 <i className="bi bi-list-ul me-2"></i>
                 Yayınlanan Duyurular ({announcements.length})
               </h5>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => {
-                  setShowAnnouncementForm(true);
-                  setEditingAnnouncement(null);
-                  setAnnouncementForm({ title: '', message: '', type: 'info', targetSite: 'all' });
-                }}
-              >
-                <i className="bi bi-plus-circle me-1"></i>
-                Yeni Duyuru
-              </button>
+              <div className="d-flex gap-2">
+                {announcements.length > 0 && (
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={async () => {
+                      const confirmed = await window.showConfirm(
+                        'Tüm Duyuruları Sil',
+                        `Tüm ${announcements.length} duyuruyu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!`,
+                        'error'
+                      );
+                      if (confirmed) {
+                        try {
+                          let deletedCount = 0;
+                          let errorCount = 0;
+                          
+                          // Delete all announcements one by one
+                          for (const announcement of announcements) {
+                            try {
+                              await deleteAnnouncement(announcement.id || announcement._docId);
+                              deletedCount++;
+                            } catch (error) {
+                              console.error(`Error deleting announcement ${announcement.id}:`, error);
+                              errorCount++;
+                            }
+                          }
+                          
+                          // Clear the announcements list
+                          setAnnouncements([]);
+                          
+                          if (errorCount === 0) {
+                            await window.showAlert('Başarılı', `${deletedCount} duyuru başarıyla silindi.`, 'success');
+                            await createLog({
+                              user: 'Admin',
+                              action: `Tüm duyurular silindi (${deletedCount} adet)`
+                            });
+                          } else {
+                            await window.showAlert('Kısmen Başarılı', `${deletedCount} duyuru silindi, ${errorCount} duyuru silinirken hata oluştu.`, 'warning');
+                          }
+                        } catch (error) {
+                          console.error('Error deleting all announcements:', error);
+                          await window.showAlert('Hata', 'Duyurular silinirken bir hata oluştu.', 'error');
+                        }
+                      }
+                    }}
+                  >
+                    <i className="bi bi-trash me-1"></i>
+                    Tümünü Sil
+                  </button>
+                )}
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => {
+                    setShowAnnouncementForm(true);
+                    setEditingAnnouncement(null);
+                    setAnnouncementForm({ title: '', message: '', type: 'info', targetSite: 'all' });
+                  }}
+                >
+                  <i className="bi bi-plus-circle me-1"></i>
+                  Yeni Duyuru
+                </button>
+              </div>
             </div>
             <div className="card-body">
               {announcements.length === 0 ? (
