@@ -70,6 +70,13 @@ const Meetings = () => {
         filteredMeetings = allMeetings.filter(m => m.status === statusFilter);
       }
       
+      // Sort by date descending (most recent first) - tarihsel sırayla
+      filteredMeetings.sort((a, b) => {
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA; // Descending order (newest first)
+      });
+      
       setMeetings(filteredMeetings);
     } catch (error) {
       logger.error('Error fetching meetings data:', error);
@@ -163,6 +170,18 @@ const Meetings = () => {
         siteId: activeTab === 'sites' ? siteOrCompanyData.id : null,
         companyId: activeTab === 'companies' ? siteOrCompanyData.id : null,
         name: siteOrCompanyName,
+        // Site/company info only saved on first meeting (when creating new)
+        ...(formData.isNew && activeTab === 'sites' && {
+          manager: formData.manager || '',
+          phone: formData.phone || '',
+          address: formData.address || ''
+        }),
+        ...(formData.isNew && activeTab === 'companies' && {
+          contact: formData.contact || '',
+          phone: formData.phone || '',
+          email: formData.email || '',
+          address: formData.address || ''
+        }),
         // Common fields
         notes: formData.notes,
         status: formData.status,
@@ -722,20 +741,8 @@ const Meetings = () => {
                   <tr>
                     <th>Tarih</th>
                     <th>{activeTab === 'sites' ? 'Site Adı' : 'Firma Adı'}</th>
-                    {activeTab === 'sites' ? (
-                      <>
-                        <th>Yönetici</th>
-                        <th>Telefon</th>
-                      </>
-                    ) : (
-                      <>
-                        <th>Yetkili</th>
-                        <th>Telefon</th>
-                        <th>Email</th>
-                      </>
-                    )}
+                    <th>Görüşme Notu</th>
                     <th>Durum</th>
-                    <th>Notlar</th>
                     <th>İşlemler</th>
                   </tr>
                 </thead>
@@ -746,30 +753,20 @@ const Meetings = () => {
                         {meeting.date 
                           ? new Date(meeting.date).toLocaleDateString('tr-TR', {
                               day: 'numeric',
-                              month: 'short',
-                              year: 'numeric'
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
                             })
                           : 'Tarih yok'}
                       </td>
                       <td className="fw-medium">{meeting.name || '-'}</td>
-                      {activeTab === 'sites' ? (
-                        <>
-                          <td>{meeting.manager || '-'}</td>
-                          <td>{meeting.phone || '-'}</td>
-                        </>
-                      ) : (
-                        <>
-                          <td>{meeting.contact || '-'}</td>
-                          <td>{meeting.phone || '-'}</td>
-                          <td>{meeting.email || '-'}</td>
-                        </>
-                      )}
-                      <td>{getStatusBadge(meeting.status)}</td>
                       <td>
-                        <div className="text-truncate" style={{ maxWidth: '300px' }} title={meeting.notes}>
+                        <div className="text-break" style={{ maxWidth: '400px' }} title={meeting.notes}>
                           {meeting.notes || '-'}
                         </div>
                       </td>
+                      <td>{getStatusBadge(meeting.status)}</td>
                       <td>
                         <div className="btn-group btn-group-sm">
                           <button
