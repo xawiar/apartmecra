@@ -6,12 +6,14 @@ import logger from '../utils/logger';
 const Meetings = () => {
   const [activeTab, setActiveTab] = useState('sites'); // 'sites' or 'companies'
   const [meetingEntities, setMeetingEntities] = useState([]); // Sites or companies for meetings
-  const [allMeetingNotes, setAllMeetingNotes] = useState([]); // All meeting notes grouped by entity
+  const [selectedEntityForView, setSelectedEntityForView] = useState(null); // Selected entity for viewing notes
+  const [selectedEntityNotes, setSelectedEntityNotes] = useState([]); // Notes for selected entity
   const [loading, setLoading] = useState(true);
   const [showEntityForm, setShowEntityForm] = useState(false);
   const [showNoteForm, setShowNoteForm] = useState(false);
   const [editingEntity, setEditingEntity] = useState(null);
   const [editingNote, setEditingNote] = useState(null);
+  const [noteFormEntityId, setNoteFormEntityId] = useState(null); // Entity ID for note form
   
   // Entity form (site/company)
   const [entityFormData, setEntityFormData] = useState({
@@ -46,6 +48,14 @@ const Meetings = () => {
     fetchAllMeetingNotes();
   }, [activeTab]);
 
+  useEffect(() => {
+    if (selectedEntityForView) {
+      fetchEntityNotes(selectedEntityForView.id);
+    } else {
+      setSelectedEntityNotes([]);
+    }
+  }, [selectedEntityForView, activeTab]);
+
   const fetchEntities = async () => {
     try {
       const type = activeTab === 'sites' ? 'site' : 'company';
@@ -78,41 +88,33 @@ const Meetings = () => {
 
   const fetchAllMeetingNotes = async () => {
     try {
-      setLoading(true);
+      await fetchEntities();
+    } catch (error) {
+      logger.error('Error fetching entities:', error);
+    }
+  };
+
+  const fetchEntityNotes = async (entityId) => {
+    try {
       const type = activeTab === 'sites' ? 'site' : 'company';
       const allMeetings = await getMeetings(type);
       
-      // Group meetings by entity
-      const groupedNotes = {};
-      allMeetings.forEach(meeting => {
-        const entityId = activeTab === 'sites' ? meeting.siteId : meeting.companyId;
-        if (entityId) {
-          if (!groupedNotes[entityId]) {
-            groupedNotes[entityId] = {
-              entityId: entityId,
-              entityName: meeting.name,
-              notes: []
-            };
-          }
-          groupedNotes[entityId].notes.push(meeting);
-        }
+      // Filter meetings for this entity
+      const notes = allMeetings.filter(meeting => {
+        const meetingEntityId = activeTab === 'sites' ? meeting.siteId : meeting.companyId;
+        return meetingEntityId === entityId;
       });
       
-      // Sort notes within each group by date (most recent first)
-      Object.keys(groupedNotes).forEach(entityId => {
-        groupedNotes[entityId].notes.sort((a, b) => {
-          const dateA = a.date ? new Date(a.date).getTime() : 0;
-          const dateB = b.date ? new Date(b.date).getTime() : 0;
-          return dateB - dateA;
-        });
+      // Sort by date descending (most recent first)
+      notes.sort((a, b) => {
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
       });
       
-      setAllMeetingNotes(Object.values(groupedNotes));
-      await fetchEntities();
+      setSelectedEntityNotes(notes);
     } catch (error) {
-      logger.error('Error fetching meeting notes:', error);
-    } finally {
-      setLoading(false);
+      logger.error('Error fetching entity notes:', error);
     }
   };
 
@@ -189,20 +191,21 @@ const Meetings = () => {
   const handleNoteSubmit = async (e) => {
     e.preventDefault();
     
-    if (!noteFormData.selectedEntityId) {
+    const entityId = noteFormEntityId || noteFormData.selectedEntityId;
+    if (!entityId) {
       await window.showAlert('Uyarı', 'Lütfen bir site/firma seçin.', 'warning');
       return;
     }
     
     try {
-      const selectedEntity = meetingEntities.find(e => e.id === noteFormData.selectedEntityId);
+      const selectedEntity = meetingEntities.find(e => e.id === entityId);
       if (!selectedEntity) {
         throw new Error('Seçilen site/firma bulunamadı');
       }
       
       const noteData = {
         type: activeTab === 'sites' ? 'site' : 'company',
-        [activeTab === 'sites' ? 'siteId' : 'companyId']: noteFormData.selectedEntityId,
+        [activeTab === 'sites' ? 'siteId' : 'companyId']: entityId,
         name: selectedEntity.name,
         notes: noteFormData.notes,
         status: noteFormData.status,
@@ -231,6 +234,9 @@ const Meetings = () => {
       
       resetNoteForm();
       fetchAllMeetingNotes();
+      if (selectedEntityForView && selectedEntityForView.id === entityId) {
+        fetchEntityNotes(entityId);
+      }
     } catch (error) {
       logger.error('Error saving note:', error);
       await window.showAlert('Hata', 'Görüşme notu kaydedilirken bir hata oluştu.', 'error');
@@ -289,6 +295,9 @@ const Meetings = () => {
             action: `Görüşme notu silindi`
           });
           fetchAllMeetingNotes();
+          if (selectedEntityForView) {
+            fetchEntityNotes(selectedEntityForView.id);
+          }
         }
       } catch (error) {
         logger.error('Error deleting note:', error);
@@ -318,6 +327,7 @@ const Meetings = () => {
       status: 'continuing'
     });
     setEditingNote(null);
+    setNoteFormEntityId(null);
     setShowNoteForm(false);
   };
 
