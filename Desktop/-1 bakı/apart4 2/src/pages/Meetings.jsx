@@ -6,8 +6,8 @@ import logger from '../utils/logger';
 const Meetings = () => {
   const [activeTab, setActiveTab] = useState('sites'); // 'sites' or 'companies'
   const [meetingEntities, setMeetingEntities] = useState([]); // Sites or companies for meetings
-  const [selectedEntity, setSelectedEntity] = useState(null); // Selected site/company
-  const [meetingNotes, setMeetingNotes] = useState([]); // Meeting notes for selected entity
+  const [selectedEntity, setSelectedEntity] = useState(null); // Selected site/company for viewing
+  const [allMeetingNotes, setAllMeetingNotes] = useState([]); // All meeting notes grouped by entity
   const [loading, setLoading] = useState(true);
   const [showEntityForm, setShowEntityForm] = useState(false);
   const [showNoteForm, setShowNoteForm] = useState(false);
@@ -26,6 +26,7 @@ const Meetings = () => {
   
   // Note form
   const [noteFormData, setNoteFormData] = useState({
+    selectedEntityId: '', // Dropdown selection
     notes: '',
     status: 'continuing'
   });
@@ -43,16 +44,11 @@ const Meetings = () => {
   }, [isAdmin, activeTab]);
 
   useEffect(() => {
-    if (selectedEntity) {
-      fetchMeetingNotes(selectedEntity.id);
-    } else {
-      setMeetingNotes([]);
-    }
-  }, [selectedEntity, activeTab]);
+    fetchAllMeetingNotes();
+  }, [activeTab]);
 
   const fetchEntities = async () => {
     try {
-      setLoading(true);
       const type = activeTab === 'sites' ? 'site' : 'company';
       const allMeetings = await getMeetings(type);
       
@@ -78,32 +74,46 @@ const Meetings = () => {
       setMeetingEntities(Array.from(entitiesMap.values()));
     } catch (error) {
       logger.error('Error fetching entities:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const fetchMeetingNotes = async (entityId) => {
+  const fetchAllMeetingNotes = async () => {
     try {
+      setLoading(true);
       const type = activeTab === 'sites' ? 'site' : 'company';
       const allMeetings = await getMeetings(type);
       
-      // Filter meetings for this entity
-      const notes = allMeetings.filter(meeting => {
-        const meetingEntityId = activeTab === 'sites' ? meeting.siteId : meeting.companyId;
-        return meetingEntityId === entityId;
+      // Group meetings by entity
+      const groupedNotes = {};
+      allMeetings.forEach(meeting => {
+        const entityId = activeTab === 'sites' ? meeting.siteId : meeting.companyId;
+        if (entityId) {
+          if (!groupedNotes[entityId]) {
+            groupedNotes[entityId] = {
+              entityId: entityId,
+              entityName: meeting.name,
+              notes: []
+            };
+          }
+          groupedNotes[entityId].notes.push(meeting);
+        }
       });
       
-      // Sort by date descending (most recent first)
-      notes.sort((a, b) => {
-        const dateA = a.date ? new Date(a.date).getTime() : 0;
-        const dateB = b.date ? new Date(b.date).getTime() : 0;
-        return dateB - dateA;
+      // Sort notes within each group by date (most recent first)
+      Object.keys(groupedNotes).forEach(entityId => {
+        groupedNotes[entityId].notes.sort((a, b) => {
+          const dateA = a.date ? new Date(a.date).getTime() : 0;
+          const dateB = b.date ? new Date(b.date).getTime() : 0;
+          return dateB - dateA;
+        });
       });
       
-      setMeetingNotes(notes);
+      setAllMeetingNotes(Object.values(groupedNotes));
+      await fetchEntities();
     } catch (error) {
       logger.error('Error fetching meeting notes:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -170,10 +180,7 @@ const Meetings = () => {
       }
       
       resetEntityForm();
-      fetchEntities();
-      if (selectedEntity && editingEntity && editingEntity.id === selectedEntity.id) {
-        fetchMeetingNotes(selectedEntity.id);
-      }
+      fetchAllMeetingNotes();
     } catch (error) {
       logger.error('Error saving entity:', error);
       await window.showAlert('Hata', 'Kaydedilirken bir hata oluştu.', 'error');
@@ -183,15 +190,20 @@ const Meetings = () => {
   const handleNoteSubmit = async (e) => {
     e.preventDefault();
     
-    if (!selectedEntity) {
-      await window.showAlert('Uyarı', 'Lütfen önce bir site/firma seçin.', 'warning');
+    if (!noteFormData.selectedEntityId) {
+      await window.showAlert('Uyarı', 'Lütfen bir site/firma seçin.', 'warning');
       return;
     }
     
     try {
+      const selectedEntity = meetingEntities.find(e => e.id === noteFormData.selectedEntityId);
+      if (!selectedEntity) {
+        throw new Error('Seçilen site/firma bulunamadı');
+      }
+      
       const noteData = {
         type: activeTab === 'sites' ? 'site' : 'company',
-        [activeTab === 'sites' ? 'siteId' : 'companyId']: selectedEntity.id,
+        [activeTab === 'sites' ? 'siteId' : 'companyId']: noteFormData.selectedEntityId,
         name: selectedEntity.name,
         notes: noteFormData.notes,
         status: noteFormData.status,
@@ -219,7 +231,7 @@ const Meetings = () => {
       }
       
       resetNoteForm();
-      fetchMeetingNotes(selectedEntity.id);
+      fetchAllMeetingNotes();
     } catch (error) {
       logger.error('Error saving note:', error);
       await window.showAlert('Hata', 'Görüşme notu kaydedilirken bir hata oluştu.', 'error');
@@ -248,15 +260,14 @@ const Meetings = () => {
         }
         
         await window.showAlert('Başarılı', `${activeTab === 'sites' ? 'Site' : 'Firma'} ve tüm görüşme notları silindi.`, 'success');
-        await createLog({
-          user: 'Admin',
-          action: `${activeTab === 'sites' ? 'Site' : 'Firma'} silindi: ${entity.name}`
-        });
+          await createLog({
+            user: 'Admin',
+            action: `${activeTab === 'sites' ? 'Site' : 'Firma'} silindi: ${entity.name}`
+          });
         
-        fetchEntities();
+        fetchAllMeetingNotes();
         if (selectedEntity && selectedEntity.id === entity.id) {
           setSelectedEntity(null);
-          setMeetingNotes([]);
         }
       } catch (error) {
         logger.error('Error deleting entity:', error);
@@ -279,11 +290,9 @@ const Meetings = () => {
           await window.showAlert('Başarılı', 'Görüşme notu silindi.', 'success');
           await createLog({
             user: 'Admin',
-            action: `Görüşme notu silindi: ${selectedEntity?.name || ''}`
+            action: `Görüşme notu silindi`
           });
-          if (selectedEntity) {
-            fetchMeetingNotes(selectedEntity.id);
-          }
+          fetchAllMeetingNotes();
         }
       } catch (error) {
         logger.error('Error deleting note:', error);
@@ -311,6 +320,7 @@ const Meetings = () => {
 
   const resetNoteForm = () => {
     setNoteFormData({
+      selectedEntityId: selectedEntity?.id || '',
       notes: '',
       status: 'continuing'
     });
@@ -704,7 +714,7 @@ const Meetings = () => {
       )}
 
       {/* Note Form Modal */}
-      {showNoteForm && selectedEntity && (
+      {showNoteForm && (
         <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
           <div className="modal-dialog modal-lg">
             <div className="modal-content">
@@ -721,11 +731,34 @@ const Meetings = () => {
               </div>
               <form onSubmit={handleNoteSubmit}>
                 <div className="modal-body">
+                  <div className="mb-3">
+                    <label htmlFor="selectedEntityId" className="form-label">
+                      {activeTab === 'sites' ? 'Site' : 'Firma'} Seçin <span className="text-danger">*</span>
+                    </label>
+                    <select
+                      id="selectedEntityId"
+                      className="form-select"
+                      value={noteFormData.selectedEntityId}
+                      onChange={(e) => setNoteFormData({ ...noteFormData, selectedEntityId: e.target.value })}
+                      required
+                      disabled={!!editingNote} // Disable when editing
+                    >
+                      <option value="">-- {activeTab === 'sites' ? 'Site' : 'Firma'} Seçin --</option>
+                      {meetingEntities.map((entity) => (
+                        <option key={entity.id} value={entity.id}>
+                          {entity.name}
+                        </option>
+                      ))}
+                    </select>
+                    {meetingEntities.length === 0 && (
+                      <small className="text-muted">
+                        Önce bir {activeTab === 'sites' ? 'site' : 'firma'} eklemeniz gerekiyor.
+                      </small>
+                    )}
+                  </div>
                   <div className="alert alert-info">
                     <i className="bi bi-info-circle me-2"></i>
-                    <strong>{selectedEntity.name}</strong> ile görüşme notu ekleniyor.
-                    <br />
-                    <small>Tarih: {new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })} - Otomatik eklenecek</small>
+                    Tarih: {new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })} - Otomatik eklenecek
                   </div>
                   <div className="mb-3">
                     <label htmlFor="notes" className="form-label">
