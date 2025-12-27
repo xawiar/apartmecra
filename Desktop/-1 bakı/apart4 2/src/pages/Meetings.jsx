@@ -471,80 +471,58 @@ const Meetings = () => {
                             </small>
                           )}
                         </div>
-                        <div className="dropdown">
+                        <div className="btn-group btn-group-sm" role="group">
                           <button
-                            className="btn btn-sm btn-outline-secondary dropdown-toggle"
-                            type="button"
-                            id={`actionsMenu-${entity.id}`}
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false"
-                            title="İşlemler"
-                            onClick={(e) => e.stopPropagation()}
+                            className="btn btn-outline-primary"
+                            onClick={() => {
+                              setSelectedEntityForView(entity);
+                              setShowEntityDetailsModal(true);
+                            }}
+                            title="Göster"
                           >
-                            <i className="bi bi-three-dots-vertical"></i>
+                            <i className="bi bi-eye"></i>
                           </button>
-                          <ul className="dropdown-menu dropdown-menu-end" aria-labelledby={`actionsMenu-${entity.id}`}>
-                            <li>
-                              <button
-                                className="dropdown-item"
-                                onClick={() => {
-                                  setSelectedEntityForView(entity);
-                                  setShowEntityDetailsModal(true);
-                                }}
-                              >
-                                <i className="bi bi-eye me-2"></i>
-                                Göster
-                              </button>
-                            </li>
-                            <li>
-                              <button
-                                className="dropdown-item"
-                                onClick={() => {
-                                  setNoteFormEntityId(entity.id);
-                                  resetNoteForm();
-                                  setNoteFormData({
-                                    selectedEntityId: entity.id,
-                                    notes: '',
-                                    status: 'continuing'
-                                  });
-                                  setShowNoteForm(true);
-                                }}
-                              >
-                                <i className="bi bi-plus-circle me-2"></i>
-                                Görüşme Ekle
-                              </button>
-                            </li>
-                            <li><hr className="dropdown-divider" /></li>
-                            <li>
-                              <button
-                                className="dropdown-item"
-                                onClick={() => {
-                                  setEditingEntity(entity);
-                                  setEntityFormData({
-                                    name: entity.name,
-                                    manager: entity.manager || '',
-                                    phone: entity.phone || '',
-                                    address: entity.address || '',
-                                    contact: entity.contact || '',
-                                    email: entity.email || ''
-                                  });
-                                  setShowEntityForm(true);
-                                }}
-                              >
-                                <i className="bi bi-pencil me-2"></i>
-                                Düzenle
-                              </button>
-                            </li>
-                            <li>
-                              <button
-                                className="dropdown-item text-danger"
-                                onClick={() => handleDeleteEntity(entity)}
-                              >
-                                <i className="bi bi-trash me-2"></i>
-                                Sil
-                              </button>
-                            </li>
-                          </ul>
+                          <button
+                            className="btn btn-outline-success"
+                            onClick={() => {
+                              setNoteFormEntityId(entity.id);
+                              resetNoteForm();
+                              setNoteFormData({
+                                selectedEntityId: entity.id,
+                                notes: '',
+                                status: 'continuing'
+                              });
+                              setShowNoteForm(true);
+                            }}
+                            title="Görüşme Ekle"
+                          >
+                            <i className="bi bi-plus-circle"></i>
+                          </button>
+                          <button
+                            className="btn btn-outline-warning"
+                            onClick={() => {
+                              setEditingEntity(entity);
+                              setEntityFormData({
+                                name: entity.name,
+                                manager: entity.manager || '',
+                                phone: entity.phone || '',
+                                address: entity.address || '',
+                                contact: entity.contact || '',
+                                email: entity.email || ''
+                              });
+                              setShowEntityForm(true);
+                            }}
+                            title="Düzenle"
+                          >
+                            <i className="bi bi-pencil"></i>
+                          </button>
+                          <button
+                            className="btn btn-outline-danger"
+                            onClick={() => handleDeleteEntity(entity)}
+                            title="Sil"
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
                         </div>
                       </div>
                     </div>
