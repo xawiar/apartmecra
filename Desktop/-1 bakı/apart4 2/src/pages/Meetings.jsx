@@ -441,11 +441,7 @@ const Meetings = () => {
                   {meetingEntities.map((entity) => (
                     <div
                       key={entity.id}
-                      className={`list-group-item list-group-item-action ${
-                        selectedEntity && selectedEntity.id === entity.id ? 'active' : ''
-                      }`}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => handleViewEntity(entity)}
+                      className="list-group-item"
                     >
                       <div className="d-flex justify-content-between align-items-start">
                         <div className="flex-grow-1">
@@ -457,7 +453,7 @@ const Meetings = () => {
                             </small>
                           )}
                         </div>
-                        <div className="btn-group btn-group-sm" onClick={(e) => e.stopPropagation()}>
+                        <div className="btn-group btn-group-sm">
                           <button
                             className="btn btn-outline-primary"
                             onClick={() => {
