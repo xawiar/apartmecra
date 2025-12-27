@@ -119,7 +119,7 @@ const Meetings = () => {
             iban: '',
             neighborhood: 'Bilinmiyor'
           };
-          const newSite = await createSite(newSiteData);
+          const newSite = await createSite(newSiteData, null, null, false); // Don't create user for meetings
           if (newSite) {
             siteOrCompanyName = formData.name;
             siteOrCompanyData = { id: newSite.id, name: formData.name };
@@ -140,7 +140,7 @@ const Meetings = () => {
             taxNumber: '',
             credit: 0
           };
-          const newCompany = await createCompany(newCompanyData);
+          const newCompany = await createCompany(newCompanyData, false); // Don't create user for meetings
           if (newCompany) {
             siteOrCompanyName = formData.name;
             siteOrCompanyData = { id: newCompany.id, name: formData.name };
@@ -279,7 +279,7 @@ const Meetings = () => {
             notes: meeting.notes || ''
           };
           
-          const newSite = await createSite(siteData);
+          const newSite = await createSite(siteData, null, null, false); // Don't create user for meetings
           if (newSite) {
             await window.showAlert('Başarılı', 'Site sisteme eklendi.', 'success');
             await createLog({
@@ -302,7 +302,7 @@ const Meetings = () => {
             notes: meeting.notes || ''
           };
           
-          const newCompany = await createCompany(companyData);
+            const newCompany = await createCompany(companyData, false); // Don't create user for meetings
           if (newCompany) {
             await window.showAlert('Başarılı', 'Firma sisteme eklendi.', 'success');
             await createLog({

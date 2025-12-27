@@ -246,7 +246,7 @@ export const getArchivedSites = async () => {
   return result.data || [];
 };
 
-export const createSite = async (siteData) => {
+export const createSite = async (siteData, createUser = true) => {
   // Generate custom ID
   const sequenceNumber = await getNextSequenceNumber(COLLECTIONS.SITES);
   const customId = generateSiteId(siteData.name, sequenceNumber, siteData.siteType);
@@ -259,8 +259,8 @@ export const createSite = async (siteData) => {
   
   const result = await createDocument(COLLECTIONS.SITES, sitePayload);
   
-  if (result.success) {
-    // Create site user automatically
+  if (result.success && createUser) {
+    // Create site user automatically (only if createUser is true)
     await createSiteUser(customId, siteData);
   }
   
@@ -603,7 +603,7 @@ export const restoreCompany = async (companyId) => {
   }
 };
 
-export const createCompany = async (companyData) => {
+export const createCompany = async (companyData, createUser = true) => {
   const sequenceNumber = await getNextSequenceNumber(COLLECTIONS.COMPANIES);
   const customId = generateCompanyId(companyData.name, sequenceNumber);
   
@@ -616,6 +616,7 @@ export const createCompany = async (companyData) => {
   const result = await createDocument(COLLECTIONS.COMPANIES, companyPayload);
   
   // Note: Company user will be automatically created by Cloud Function (createCompanyUser)
+  // But only if createUser is true (for meetings, we don't want to create users)
   // No need to create manually here to avoid duplicates
   
   return result;

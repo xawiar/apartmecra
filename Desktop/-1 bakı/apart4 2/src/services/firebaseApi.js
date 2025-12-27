@@ -385,12 +385,12 @@ export const getSites = async () => {
   return await getSitesFromDb();
 };
 
-export const createSite = async (siteData, allSites = null, sequenceNumber = null) => {
+export const createSite = async (siteData, allSites = null, sequenceNumber = null, createUser = true) => {
   try {
     console.log('Creating site with data:', siteData);
     await initializeFirebase();
     
-    const result = await createSiteInDb(siteData);
+    const result = await createSiteInDb(siteData, createUser);
     console.log('Create site result:', result);
     
     if (result.success) {
@@ -436,10 +436,10 @@ export const getCompanies = async () => {
   return await getCompaniesFromDb();
 };
 
-export const createCompany = async (companyData) => {
+export const createCompany = async (companyData, createUser = true) => {
   await initializeFirebase();
   
-  const result = await createCompanyInDb(companyData);
+  const result = await createCompanyInDb(companyData, createUser);
   
   if (result.success) {
     return result.data;
