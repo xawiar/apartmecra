@@ -659,7 +659,7 @@ const Meetings = () => {
 
                     <div className="col-md-12">
                       <label htmlFor="notes" className="form-label">
-                        Görüşme Notları <span className="text-danger">*</span>
+                        Görüşme Notu <span className="text-danger">*</span>
                       </label>
                       <textarea
                         id="notes"
@@ -668,11 +668,12 @@ const Meetings = () => {
                         rows="6"
                         value={formData.notes}
                         onChange={handleFormChange}
-                        placeholder="Görüşme detaylarını buraya yazın..."
+                        placeholder="Görüşme notunu girin (Tarih otomatik eklenecek)"
                         required
                       ></textarea>
                       <small className="text-muted">
-                        Görüşme tarihi otomatik olarak eklenecektir.
+                        <i className="bi bi-info-circle me-1"></i>
+                        Tarih: {new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })} - Otomatik eklenecek
                       </small>
                     </div>
                   </div>
