@@ -208,75 +208,82 @@ export const login = async (username, password) => {
       }
       
       try {
-        // Check if user is archived before attempting login
-        let siteData = null;
-        if (attempt.role === 'site_user') {
-          const siteId = attempt.email.replace('@site.local', '');
-          // Try to get site by document ID first
-          let siteResult = await getDocument('sites', siteId);
-          
-          // If not found by document ID, try to find by custom 'id' field
-          if (!siteResult.success) {
-            const { collection, query, where, getDocs } = await import('firebase/firestore');
-            const { db } = await import('../config/firebase.js');
-            const sitesRef = collection(db, 'sites');
-            const q = query(sitesRef, where('id', '==', siteId));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-              const docSnap = querySnapshot.docs[0];
-              siteResult = {
-                success: true,
-                data: { id: docSnap.id, ...docSnap.data() }
-              };
-            }
-          }
-          
-          if (siteResult.success) {
-            if (siteResult.data.status === 'archived') {
-            logger.warn('Site user is archived, login denied:', siteId);
-            return { error: 'Bu site arşivlenmiş, giriş yapılamaz' };
-            }
-            siteData = siteResult.data;
-          }
-        }
-        
-        let companyData = null;
-        if (attempt.role === 'company') {
-          const companyId = attempt.email.replace('@company.local', '');
-          // Try to get company by document ID first
-          let companyResult = await getDocument('companies', companyId);
-          
-          // If not found by document ID, try to find by custom 'id' field
-          if (!companyResult.success) {
-            const { collection, query, where, getDocs } = await import('firebase/firestore');
-            const { db } = await import('../config/firebase.js');
-            const companiesRef = collection(db, 'companies');
-            const q = query(companiesRef, where('id', '==', companyId));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-              const docSnap = querySnapshot.docs[0];
-              companyResult = {
-                success: true,
-                data: { id: docSnap.id, ...docSnap.data() }
-              };
-            }
-          }
-          
-          if (companyResult.success) {
-            if (companyResult.data.status === 'archived') {
-            logger.warn('Company user is archived, login denied:', companyId);
-            return { error: 'Bu firma arşivlenmiş, giriş yapılamaz' };
-            }
-            companyData = companyResult.data;
-          }
-        }
-        
+        // FIRST: Authenticate the user (this must happen before Firestore reads)
         // Use silent mode for all attempts
         // Böylece auth/invalid-credential gibi beklenen hatalar konsolu kirletmez
         const result = await loginWithEmail(attempt.email, password, true);
         
         if (result.success) {
           logger.log('API login successful with role:', attempt.role);
+          
+          // AFTER authentication, check if site/company is archived
+          // Now user is authenticated, can read from Firestore
+          let siteData = null;
+          let companyData = null;
+          
+          if (attempt.role === 'site_user') {
+            const siteId = attempt.email.replace('@site.local', '');
+            // Try to get site by document ID first
+            let siteResult = await getDocument('sites', siteId);
+            
+            // If not found by document ID, try to find by custom 'id' field
+            if (!siteResult.success) {
+              const { collection, query, where, getDocs } = await import('firebase/firestore');
+              const { db } = await import('../config/firebase.js');
+              const sitesRef = collection(db, 'sites');
+              const q = query(sitesRef, where('id', '==', siteId));
+              const querySnapshot = await getDocs(q);
+              if (!querySnapshot.empty) {
+                const docSnap = querySnapshot.docs[0];
+                siteResult = {
+                  success: true,
+                  data: { id: docSnap.id, ...docSnap.data() }
+                };
+              }
+            }
+            
+            if (siteResult.success) {
+              if (siteResult.data.status === 'archived') {
+                // Logout the user since site is archived
+                await logoutUser();
+                logger.warn('Site user is archived, login denied:', siteId);
+                return { error: 'Bu site arşivlenmiş, giriş yapılamaz' };
+              }
+              siteData = siteResult.data;
+            }
+          }
+          
+          if (attempt.role === 'company') {
+            const companyId = attempt.email.replace('@company.local', '');
+            // Try to get company by document ID first
+            let companyResult = await getDocument('companies', companyId);
+            
+            // If not found by document ID, try to find by custom 'id' field
+            if (!companyResult.success) {
+              const { collection, query, where, getDocs } = await import('firebase/firestore');
+              const { db } = await import('../config/firebase.js');
+              const companiesRef = collection(db, 'companies');
+              const q = query(companiesRef, where('id', '==', companyId));
+              const querySnapshot = await getDocs(q);
+              if (!querySnapshot.empty) {
+                const docSnap = querySnapshot.docs[0];
+                companyResult = {
+                  success: true,
+                  data: { id: docSnap.id, ...docSnap.data() }
+                };
+              }
+            }
+            
+            if (companyResult.success) {
+              if (companyResult.data.status === 'archived') {
+                // Logout the user since company is archived
+                await logoutUser();
+                logger.warn('Company user is archived, login denied:', companyId);
+                return { error: 'Bu firma arşivlenmiş, giriş yapılamaz' };
+              }
+              companyData = companyResult.data;
+            }
+          }
           
           // Build user object with name for company and site users
           const userObj = {
