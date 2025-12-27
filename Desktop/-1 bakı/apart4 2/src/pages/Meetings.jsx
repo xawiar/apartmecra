@@ -495,72 +495,80 @@ const Meetings = () => {
             <div className="card-header bg-light d-flex justify-content-between align-items-center">
               <h5 className="mb-0">
                 <i className="bi bi-chat-dots me-2"></i>
-                {selectedEntity 
-                  ? `${selectedEntity.name} - Görüşme Notları (${meetingNotes.length})`
-                  : 'Görüşme Notları'}
+                Görüşme Notları (Site/Firma Bazında Gruplu)
               </h5>
-              {selectedEntity && (
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => {
-                    resetNoteForm();
-                    setShowNoteForm(true);
-                  }}
-                >
-                  <i className="bi bi-plus-circle me-1"></i>
-                  Görüşme Notu Ekle
-                </button>
-              )}
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  resetNoteForm();
+                  setShowNoteForm(true);
+                }}
+              >
+                <i className="bi bi-plus-circle me-1"></i>
+                Görüşme Notu Ekle
+              </button>
             </div>
-            <div className="card-body">
-              {!selectedEntity ? (
-                <div className="text-center py-5">
-                  <i className="bi bi-info-circle fs-1 text-muted d-block mb-3"></i>
-                  <p className="text-muted">Görüşme notlarını görmek için sol taraftan bir {activeTab === 'sites' ? 'site' : 'firma'} seçin.</p>
-                </div>
-              ) : meetingNotes.length === 0 ? (
+            <div className="card-body" style={{ maxHeight: '600px', overflowY: 'auto' }}>
+              {allMeetingNotes.length === 0 ? (
                 <div className="text-center py-5">
                   <i className="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-                  <p className="text-muted">Bu {activeTab === 'sites' ? 'site' : 'firma'} için henüz görüşme notu eklenmemiş.</p>
+                  <p className="text-muted">Henüz görüşme notu eklenmemiş.</p>
                 </div>
               ) : (
-                <div className="list-group">
-                  {meetingNotes.map((note) => (
-                    <div key={note.id || note._docId} className="list-group-item">
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <div className="flex-grow-1">
-                          <div className="d-flex align-items-center gap-2 mb-2">
-                            <span className="badge bg-secondary">
-                              <i className="bi bi-calendar me-1"></i>
-                              {formatDate(note.date)}
-                            </span>
-                            {getStatusBadge(note.status)}
+                <div>
+                  {allMeetingNotes.map((group) => (
+                    <div key={group.entityId} className="mb-4">
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h6 className="mb-0 fw-bold text-primary">
+                          <i className="bi bi-building me-2"></i>
+                          {group.entityName}
+                        </h6>
+                        <span className="badge bg-secondary">
+                          {group.notes.length} görüşme
+                        </span>
+                      </div>
+                      <div className="list-group">
+                        {group.notes.map((note) => (
+                          <div key={note.id || note._docId} className="list-group-item">
+                            <div className="d-flex justify-content-between align-items-start mb-2">
+                              <div className="flex-grow-1">
+                                <div className="d-flex align-items-center gap-2 mb-2">
+                                  <span className="badge bg-secondary">
+                                    <i className="bi bi-calendar me-1"></i>
+                                    {formatDate(note.date)}
+                                  </span>
+                                  {getStatusBadge(note.status)}
+                                </div>
+                                <p className="mb-0">{note.notes}</p>
+                              </div>
+                              <div className="btn-group btn-group-sm ms-2">
+                                <button
+                                  className="btn btn-outline-primary"
+                                  onClick={() => {
+                                    setEditingNote(note);
+                                    const entityId = activeTab === 'sites' ? note.siteId : note.companyId;
+                                    setNoteFormData({
+                                      selectedEntityId: entityId || '',
+                                      notes: note.notes || '',
+                                      status: note.status || 'continuing'
+                                    });
+                                    setShowNoteForm(true);
+                                  }}
+                                  title="Düzenle"
+                                >
+                                  <i className="bi bi-pencil"></i>
+                                </button>
+                                <button
+                                  className="btn btn-outline-danger"
+                                  onClick={() => handleDeleteNote(note)}
+                                  title="Sil"
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                          <p className="mb-0">{note.notes}</p>
-                        </div>
-                        <div className="btn-group btn-group-sm ms-2">
-                          <button
-                            className="btn btn-outline-primary"
-                            onClick={() => {
-                              setEditingNote(note);
-                              setNoteFormData({
-                                notes: note.notes || '',
-                                status: note.status || 'continuing'
-                              });
-                              setShowNoteForm(true);
-                            }}
-                            title="Düzenle"
-                          >
-                            <i className="bi bi-pencil"></i>
-                          </button>
-                          <button
-                            className="btn btn-outline-danger"
-                            onClick={() => handleDeleteNote(note)}
-                            title="Sil"
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
-                        </div>
+                        ))}
                       </div>
                     </div>
                   ))}
