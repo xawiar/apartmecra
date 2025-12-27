@@ -6,7 +6,6 @@ import logger from '../utils/logger';
 const Meetings = () => {
   const [activeTab, setActiveTab] = useState('sites'); // 'sites' or 'companies'
   const [meetingEntities, setMeetingEntities] = useState([]); // Sites or companies for meetings
-  const [selectedEntity, setSelectedEntity] = useState(null); // Selected site/company for viewing
   const [allMeetingNotes, setAllMeetingNotes] = useState([]); // All meeting notes grouped by entity
   const [loading, setLoading] = useState(true);
   const [showEntityForm, setShowEntityForm] = useState(false);
@@ -301,9 +300,6 @@ const Meetings = () => {
     }
   };
 
-  const handleViewEntity = (entity) => {
-    setSelectedEntity(entity);
-  };
 
   const resetEntityForm = () => {
     setEntityFormData({
@@ -320,7 +316,7 @@ const Meetings = () => {
 
   const resetNoteForm = () => {
     setNoteFormData({
-      selectedEntityId: selectedEntity?.id || '',
+      selectedEntityId: '',
       notes: '',
       status: 'continuing'
     });
@@ -394,8 +390,6 @@ const Meetings = () => {
             className={`nav-link ${activeTab === 'sites' ? 'active' : ''}`}
             onClick={() => {
               setActiveTab('sites');
-              setSelectedEntity(null);
-              setMeetingNotes([]);
               resetEntityForm();
               resetNoteForm();
             }}
@@ -409,8 +403,6 @@ const Meetings = () => {
             className={`nav-link ${activeTab === 'companies' ? 'active' : ''}`}
             onClick={() => {
               setActiveTab('companies');
-              setSelectedEntity(null);
-              setMeetingNotes([]);
               resetEntityForm();
               resetNoteForm();
             }}
