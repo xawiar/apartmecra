@@ -271,6 +271,10 @@ const Meetings = () => {
           });
         
         fetchAllMeetingNotes();
+        if (selectedEntityForView && selectedEntityForView.id === entity.id) {
+          setSelectedEntityForView(null);
+          setSelectedEntityNotes([]);
+        }
       } catch (error) {
         logger.error('Error deleting entity:', error);
         await window.showAlert('Hata', 'Silinirken bir hata oluştu.', 'error');
