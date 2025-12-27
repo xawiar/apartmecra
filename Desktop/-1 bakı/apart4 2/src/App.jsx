@@ -223,9 +223,20 @@ function App() {
           } />
           <Route path="/sites-map" element={
             <PrivateRoute>
-              <Suspense fallback={<PageLoader />}>
-                <SitesMap />
-              </Suspense>
+              <BootstrapLayout>
+                <Suspense fallback={<PageLoader />}>
+                  <SitesMap />
+                </Suspense>
+              </BootstrapLayout>
+            </PrivateRoute>
+          } />
+          <Route path="/meetings" element={
+            <PrivateRoute>
+              <BootstrapLayout>
+                <Suspense fallback={<PageLoader />}>
+                  <Meetings />
+                </Suspense>
+              </BootstrapLayout>
             </PrivateRoute>
           } />
         </Routes>
