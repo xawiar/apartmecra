@@ -463,32 +463,79 @@ const Meetings = () => {
                             </small>
                           )}
                         </div>
-                        <div className="btn-group btn-group-sm">
+                        <div className="dropdown">
                           <button
-                            className="btn btn-outline-primary"
-                            onClick={() => {
-                              setEditingEntity(entity);
-                              setEntityFormData({
-                                name: entity.name,
-                                manager: entity.manager || '',
-                                phone: entity.phone || '',
-                                address: entity.address || '',
-                                contact: entity.contact || '',
-                                email: entity.email || ''
-                              });
-                              setShowEntityForm(true);
-                            }}
-                            title="Düzenle"
+                            className="btn btn-sm btn-outline-secondary dropdown-toggle"
+                            type="button"
+                            id={`actionsMenu-${entity.id}`}
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                            title="İşlemler"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <i className="bi bi-pencil"></i>
+                            <i className="bi bi-three-dots-vertical"></i>
                           </button>
-                          <button
-                            className="btn btn-outline-danger"
-                            onClick={() => handleDeleteEntity(entity)}
-                            title="Sil"
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
+                          <ul className="dropdown-menu dropdown-menu-end" aria-labelledby={`actionsMenu-${entity.id}`}>
+                            <li>
+                              <button
+                                className="dropdown-item"
+                                onClick={() => {
+                                  setSelectedEntityForView(entity);
+                                }}
+                              >
+                                <i className="bi bi-eye me-2"></i>
+                                Göster
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                className="dropdown-item"
+                                onClick={() => {
+                                  setNoteFormEntityId(entity.id);
+                                  resetNoteForm();
+                                  setNoteFormData({
+                                    selectedEntityId: entity.id,
+                                    notes: '',
+                                    status: 'continuing'
+                                  });
+                                  setShowNoteForm(true);
+                                }}
+                              >
+                                <i className="bi bi-plus-circle me-2"></i>
+                                Görüşme Ekle
+                              </button>
+                            </li>
+                            <li><hr className="dropdown-divider" /></li>
+                            <li>
+                              <button
+                                className="dropdown-item"
+                                onClick={() => {
+                                  setEditingEntity(entity);
+                                  setEntityFormData({
+                                    name: entity.name,
+                                    manager: entity.manager || '',
+                                    phone: entity.phone || '',
+                                    address: entity.address || '',
+                                    contact: entity.contact || '',
+                                    email: entity.email || ''
+                                  });
+                                  setShowEntityForm(true);
+                                }}
+                              >
+                                <i className="bi bi-pencil me-2"></i>
+                                Düzenle
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                className="dropdown-item text-danger"
+                                onClick={() => handleDeleteEntity(entity)}
+                              >
+                                <i className="bi bi-trash me-2"></i>
+                                Sil
+                              </button>
+                            </li>
+                          </ul>
                         </div>
                       </div>
                     </div>
@@ -499,90 +546,168 @@ const Meetings = () => {
           </div>
         </div>
 
-        {/* Right Panel: Meeting Notes */}
+        {/* Right Panel: Selected Entity Details and Notes */}
         <div className="col-lg-8">
           <div className="card shadow-sm">
-            <div className="card-header bg-light d-flex justify-content-between align-items-center">
+            <div className="card-header bg-light">
               <h5 className="mb-0">
-                <i className="bi bi-chat-dots me-2"></i>
-                Görüşme Notları (Site/Firma Bazında Gruplu)
+                <i className="bi bi-info-circle me-2"></i>
+                {selectedEntityForView 
+                  ? `${selectedEntityForView.name} - Detaylar ve Görüşme Notları`
+                  : 'Detaylar ve Görüşme Notları'}
               </h5>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => {
-                  resetNoteForm();
-                  setShowNoteForm(true);
-                }}
-              >
-                <i className="bi bi-plus-circle me-1"></i>
-                Görüşme Notu Ekle
-              </button>
             </div>
             <div className="card-body" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-              {allMeetingNotes.length === 0 ? (
+              {!selectedEntityForView ? (
                 <div className="text-center py-5">
-                  <i className="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-                  <p className="text-muted">Henüz görüşme notu eklenmemiş.</p>
+                  <i className="bi bi-info-circle fs-1 text-muted d-block mb-3"></i>
+                  <p className="text-muted">Detayları görmek için sol taraftan bir {activeTab === 'sites' ? 'site' : 'firma'} seçin ve "Göster" butonuna tıklayın.</p>
                 </div>
               ) : (
-                <div>
-                  {allMeetingNotes.map((group) => (
-                    <div key={group.entityId} className="mb-4">
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h6 className="mb-0 fw-bold text-primary">
-                          <i className="bi bi-building me-2"></i>
-                          {group.entityName}
-                        </h6>
-                        <span className="badge bg-secondary">
-                          {group.notes.length} görüşme
-                        </span>
-                      </div>
-                      <div className="list-group">
-                        {group.notes.map((note) => (
-                          <div key={note.id || note._docId} className="list-group-item">
-                            <div className="d-flex justify-content-between align-items-start mb-2">
-                              <div className="flex-grow-1">
-                                <div className="d-flex align-items-center gap-2 mb-2">
-                                  <span className="badge bg-secondary">
-                                    <i className="bi bi-calendar me-1"></i>
-                                    {formatDate(note.date)}
-                                  </span>
-                                  {getStatusBadge(note.status)}
-                                </div>
-                                <p className="mb-0">{note.notes}</p>
+                <>
+                  {/* Entity Details */}
+                  <div className="card mb-4 border-primary">
+                    <div className="card-header bg-primary text-white">
+                      <h6 className="mb-0">
+                        <i className="bi bi-building me-2"></i>
+                        {activeTab === 'sites' ? 'Site' : 'Firma'} Bilgileri
+                      </h6>
+                    </div>
+                    <div className="card-body">
+                      <div className="row g-3">
+                        <div className="col-md-6">
+                          <strong>{activeTab === 'sites' ? 'Site Adı' : 'Firma Adı'}:</strong>
+                          <p className="mb-0">{selectedEntityForView.name}</p>
+                        </div>
+                        {activeTab === 'sites' ? (
+                          <>
+                            {selectedEntityForView.manager && (
+                              <div className="col-md-6">
+                                <strong>Yönetici:</strong>
+                                <p className="mb-0">{selectedEntityForView.manager}</p>
                               </div>
-                              <div className="btn-group btn-group-sm ms-2">
-                                <button
-                                  className="btn btn-outline-primary"
-                                  onClick={() => {
-                                    setEditingNote(note);
-                                    const entityId = activeTab === 'sites' ? note.siteId : note.companyId;
-                                    setNoteFormData({
-                                      selectedEntityId: entityId || '',
-                                      notes: note.notes || '',
-                                      status: note.status || 'continuing'
-                                    });
-                                    setShowNoteForm(true);
-                                  }}
-                                  title="Düzenle"
-                                >
-                                  <i className="bi bi-pencil"></i>
-                                </button>
-                                <button
-                                  className="btn btn-outline-danger"
-                                  onClick={() => handleDeleteNote(note)}
-                                  title="Sil"
-                                >
-                                  <i className="bi bi-trash"></i>
-                                </button>
+                            )}
+                            {selectedEntityForView.phone && (
+                              <div className="col-md-6">
+                                <strong>Telefon:</strong>
+                                <p className="mb-0">{selectedEntityForView.phone}</p>
                               </div>
-                            </div>
-                          </div>
-                        ))}
+                            )}
+                            {selectedEntityForView.address && (
+                              <div className="col-md-12">
+                                <strong>Adres:</strong>
+                                <p className="mb-0">{selectedEntityForView.address}</p>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {selectedEntityForView.contact && (
+                              <div className="col-md-6">
+                                <strong>Yetkili:</strong>
+                                <p className="mb-0">{selectedEntityForView.contact}</p>
+                              </div>
+                            )}
+                            {selectedEntityForView.phone && (
+                              <div className="col-md-6">
+                                <strong>Telefon:</strong>
+                                <p className="mb-0">{selectedEntityForView.phone}</p>
+                              </div>
+                            )}
+                            {selectedEntityForView.email && (
+                              <div className="col-md-6">
+                                <strong>Email:</strong>
+                                <p className="mb-0">{selectedEntityForView.email}</p>
+                              </div>
+                            )}
+                            {selectedEntityForView.address && (
+                              <div className="col-md-12">
+                                <strong>Adres:</strong>
+                                <p className="mb-0">{selectedEntityForView.address}</p>
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+
+                  {/* Meeting Notes */}
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h6 className="mb-0">
+                      <i className="bi bi-chat-dots me-2"></i>
+                      Görüşme Notları ({selectedEntityNotes.length})
+                    </h6>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => {
+                        setNoteFormEntityId(selectedEntityForView.id);
+                        resetNoteForm();
+                        setNoteFormData({
+                          selectedEntityId: selectedEntityForView.id,
+                          notes: '',
+                          status: 'continuing'
+                        });
+                        setShowNoteForm(true);
+                      }}
+                    >
+                      <i className="bi bi-plus-circle me-1"></i>
+                      Görüşme Notu Ekle
+                    </button>
+                  </div>
+
+                  {selectedEntityNotes.length === 0 ? (
+                    <div className="text-center py-4">
+                      <i className="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                      <p className="text-muted">Bu {activeTab === 'sites' ? 'site' : 'firma'} için henüz görüşme notu eklenmemiş.</p>
+                    </div>
+                  ) : (
+                    <div className="list-group">
+                      {selectedEntityNotes.map((note) => (
+                        <div key={note.id || note._docId} className="list-group-item">
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <div className="flex-grow-1">
+                              <div className="d-flex align-items-center gap-2 mb-2">
+                                <span className="badge bg-secondary">
+                                  <i className="bi bi-calendar me-1"></i>
+                                  {formatDate(note.date)}
+                                </span>
+                                {getStatusBadge(note.status)}
+                              </div>
+                              <p className="mb-0">{note.notes}</p>
+                            </div>
+                            <div className="btn-group btn-group-sm ms-2">
+                              <button
+                                className="btn btn-outline-primary"
+                                onClick={() => {
+                                  setEditingNote(note);
+                                  const entityId = activeTab === 'sites' ? note.siteId : note.companyId;
+                                  setNoteFormEntityId(entityId);
+                                  setNoteFormData({
+                                    selectedEntityId: entityId || '',
+                                    notes: note.notes || '',
+                                    status: note.status || 'continuing'
+                                  });
+                                  setShowNoteForm(true);
+                                }}
+                                title="Düzenle"
+                              >
+                                <i className="bi bi-pencil"></i>
+                              </button>
+                              <button
+                                className="btn btn-outline-danger"
+                                onClick={() => handleDeleteNote(note)}
+                                title="Sil"
+                              >
+                                <i className="bi bi-trash"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -734,31 +859,39 @@ const Meetings = () => {
               </div>
               <form onSubmit={handleNoteSubmit}>
                 <div className="modal-body">
-                  <div className="mb-3">
-                    <label htmlFor="selectedEntityId" className="form-label">
-                      {activeTab === 'sites' ? 'Site' : 'Firma'} Seçin <span className="text-danger">*</span>
-                    </label>
-                    <select
-                      id="selectedEntityId"
-                      className="form-select"
-                      value={noteFormData.selectedEntityId}
-                      onChange={(e) => setNoteFormData({ ...noteFormData, selectedEntityId: e.target.value })}
-                      required
-                      disabled={!!editingNote} // Disable when editing
-                    >
-                      <option value="">-- {activeTab === 'sites' ? 'Site' : 'Firma'} Seçin --</option>
-                      {meetingEntities.map((entity) => (
-                        <option key={entity.id} value={entity.id}>
-                          {entity.name}
-                        </option>
-                      ))}
-                    </select>
-                    {meetingEntities.length === 0 && (
-                      <small className="text-muted">
-                        Önce bir {activeTab === 'sites' ? 'site' : 'firma'} eklemeniz gerekiyor.
-                      </small>
-                    )}
-                  </div>
+                  {!noteFormEntityId && (
+                    <div className="mb-3">
+                      <label htmlFor="selectedEntityId" className="form-label">
+                        {activeTab === 'sites' ? 'Site' : 'Firma'} Seçin <span className="text-danger">*</span>
+                      </label>
+                      <select
+                        id="selectedEntityId"
+                        className="form-select"
+                        value={noteFormData.selectedEntityId}
+                        onChange={(e) => setNoteFormData({ ...noteFormData, selectedEntityId: e.target.value })}
+                        required
+                        disabled={!!editingNote} // Disable when editing
+                      >
+                        <option value="">-- {activeTab === 'sites' ? 'Site' : 'Firma'} Seçin --</option>
+                        {meetingEntities.map((entity) => (
+                          <option key={entity.id} value={entity.id}>
+                            {entity.name}
+                          </option>
+                        ))}
+                      </select>
+                      {meetingEntities.length === 0 && (
+                        <small className="text-muted">
+                          Önce bir {activeTab === 'sites' ? 'site' : 'firma'} eklemeniz gerekiyor.
+                        </small>
+                      )}
+                    </div>
+                  )}
+                  {noteFormEntityId && (
+                    <div className="alert alert-info">
+                      <i className="bi bi-info-circle me-2"></i>
+                      <strong>{meetingEntities.find(e => e.id === noteFormEntityId)?.name || ''}</strong> için görüşme notu ekleniyor.
+                    </div>
+                  )}
                   <div className="alert alert-info">
                     <i className="bi bi-info-circle me-2"></i>
                     Tarih: {new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })} - Otomatik eklenecek
