@@ -108,7 +108,13 @@ import {
   getAnnouncements as getAnnouncementsFromDb,
   createAnnouncement as createAnnouncementInDb,
   updateAnnouncement as updateAnnouncementInDb,
-  deleteAnnouncement as deleteAnnouncementFromDb
+  deleteAnnouncement as deleteAnnouncementFromDb,
+  
+  // Meetings
+  getMeetings as getMeetingsFromDb,
+  createMeeting as createMeetingInDb,
+  updateMeeting as updateMeetingInDb,
+  deleteMeeting as deleteMeetingFromDb
 } from './firebaseDb.js';
 
 // Initialize Firebase services
@@ -1179,6 +1185,30 @@ export const updateAnnouncement = async (announcementId, announcementData) => {
 export const deleteAnnouncement = async (announcementId) => {
   await initializeFirebase();
   const result = await deleteAnnouncementFromDb(announcementId);
+  return result.success;
+};
+
+// Meetings
+export const getMeetings = async (type = null) => {
+  await initializeFirebase();
+  return await getMeetingsFromDb(type);
+};
+
+export const createMeeting = async (meetingData) => {
+  await initializeFirebase();
+  const result = await createMeetingInDb(meetingData);
+  return result.success ? result.data : null;
+};
+
+export const updateMeeting = async (meetingId, meetingData) => {
+  await initializeFirebase();
+  const result = await updateMeetingInDb(meetingId, meetingData);
+  return result.success;
+};
+
+export const deleteMeeting = async (meetingId) => {
+  await initializeFirebase();
+  const result = await deleteMeetingFromDb(meetingId);
   return result.success;
 };
 

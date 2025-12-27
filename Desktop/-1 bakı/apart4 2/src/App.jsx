@@ -23,6 +23,7 @@ const PartnerShares = lazy(() => import('./pages/NewPartnerShares'));
 const Settings = lazy(() => import('./pages/NewSettings'));
 const CurrentStatus = lazy(() => import('./pages/CurrentStatus'));
 const SitesMap = lazy(() => import('./pages/SitesMap'));
+const Meetings = lazy(() => import('./pages/Meetings'));
 
 // Loading component for Suspense fallback
 const PageLoader = () => (

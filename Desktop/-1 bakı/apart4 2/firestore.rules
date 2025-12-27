@@ -267,6 +267,12 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin() || isPersonnel();
     }
     
+    // Meetings collection - Sadece admin erişebilir
+    match /meetings/{meetingId} {
+      // Okuma, Oluşturma, Güncelleme, Silme: Sadece admin
+      allow read, create, update, delete: if isAdmin();
+    }
+    
     // Default: deny all other collections
     match /{document=**} {
       allow read, write: if false;

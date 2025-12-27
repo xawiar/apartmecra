@@ -49,7 +49,8 @@ const BootstrapLayout = ({ children }) => {
       '/partner-shares': 'Ortak Payları',
       '/current-status': 'Güncel Durum',
       '/settings': 'Ayarlar',
-      '/settings/archive': 'Arşiv'
+      '/settings/archive': 'Arşiv',
+      '/meetings': 'Görüşmeler'
     };
     
     return pathTitles[location.pathname] || 'Apart Mecra';
@@ -72,7 +73,10 @@ const BootstrapLayout = ({ children }) => {
           { name: 'Kasa', path: '/cashier', icon: 'bi-wallet2' },
           { name: 'Ortak Payları', path: '/partner-shares', icon: 'bi-people' },
           { name: 'Güncel Durum', path: '/current-status', icon: 'bi-graph-up-arrow' },
-          ...(isObserver ? [] : [{ name: 'Ayarlar', path: '/settings', icon: 'bi-gear' }])
+          ...(isObserver ? [] : [
+            { name: 'Görüşmeler', path: '/meetings', icon: 'bi-chat-dots' },
+            { name: 'Ayarlar', path: '/settings', icon: 'bi-gear' }
+          ])
         ])
       ];
 

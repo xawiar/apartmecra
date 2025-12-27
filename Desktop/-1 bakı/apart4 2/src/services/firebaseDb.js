@@ -38,7 +38,8 @@ export const COLLECTIONS = {
   SITE_UPDATE_REQUESTS: 'siteUpdateRequests',
   COMPANY_UPDATE_REQUESTS: 'companyUpdateRequests',
   NOTIFICATIONS: 'notifications',
-  ANNOUNCEMENTS: 'announcements'
+  ANNOUNCEMENTS: 'announcements',
+  MEETINGS: 'meetings'
 };
 
 // Generic CRUD operations
@@ -1791,6 +1792,74 @@ export const deleteAnnouncement = async (announcementId) => {
     return result;
   } catch (error) {
     console.error('Error deleting announcement:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Meetings operations
+export const getMeetings = async (type = null) => {
+  try {
+    const filters = [];
+    if (type) {
+      filters.push({ field: 'type', operator: '==', value: type });
+    }
+    
+    const result = await getCollection(
+      COLLECTIONS.MEETINGS,
+      filters,
+      'date',
+      'desc'
+    );
+    
+    return result.data || [];
+  } catch (error) {
+    console.error('Error getting meetings:', error);
+    return [];
+  }
+};
+
+export const createMeeting = async (meetingData) => {
+  try {
+    const meeting = {
+      ...meetingData,
+      date: meetingData.date || new Date().toISOString().split('T')[0],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+    
+    const result = await createDocument(COLLECTIONS.MEETINGS, meeting);
+    
+    if (result.success) {
+      return { success: true, data: result.data };
+    }
+    
+    return { success: false, error: 'Failed to create meeting' };
+  } catch (error) {
+    console.error('Error creating meeting:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const updateMeeting = async (meetingId, meetingData) => {
+  try {
+    const result = await updateDocument(COLLECTIONS.MEETINGS, meetingId, {
+      ...meetingData,
+      updatedAt: serverTimestamp()
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Error updating meeting:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const deleteMeeting = async (meetingId) => {
+  try {
+    const result = await deleteDocument(COLLECTIONS.MEETINGS, meetingId);
+    return result;
+  } catch (error) {
+    console.error('Error deleting meeting:', error);
     return { success: false, error: error.message };
   }
 };
