@@ -201,9 +201,11 @@ const SiteDashboard = () => {
           );
           
           const unsubscribe = onSnapshot(announcementsQuery, (snapshot) => {
+            // Build fresh list from current snapshot (handles deletions properly)
             const newAnnouncements = [];
+            
             snapshot.forEach((doc) => {
-              // Only process existing documents (skip deleted ones)
+              // Only process existing documents
               if (!doc.exists()) {
                 return;
               }
@@ -227,6 +229,7 @@ const SiteDashboard = () => {
               return bTime - aTime;
             });
             
+            // Always update state with fresh list (this ensures deleted items are removed)
             setAnnouncements(newAnnouncements);
           }, (error) => {
             console.error('Error in announcements listener:', error);
