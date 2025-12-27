@@ -683,6 +683,190 @@ const Meetings = () => {
         </div>
       )}
 
+      {/* Entity Details Modal */}
+      {showEntityDetailsModal && selectedEntityForView && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
+          <div className="modal-dialog modal-xl">
+            <div className="modal-content">
+              <div className="modal-header bg-primary text-white">
+                <h5 className="modal-title">
+                  <i className="bi bi-info-circle me-2"></i>
+                  {selectedEntityForView.name} - Detaylar ve Görüşme Notları
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => {
+                    setShowEntityDetailsModal(false);
+                    setSelectedEntityForView(null);
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                {/* Entity Details */}
+                <div className="card mb-4 border-primary">
+                  <div className="card-header bg-primary text-white">
+                    <h6 className="mb-0">
+                      <i className="bi bi-building me-2"></i>
+                      {activeTab === 'sites' ? 'Site' : 'Firma'} Bilgileri
+                    </h6>
+                  </div>
+                  <div className="card-body">
+                    <div className="row g-3">
+                      <div className="col-md-6">
+                        <strong>{activeTab === 'sites' ? 'Site Adı' : 'Firma Adı'}:</strong>
+                        <p className="mb-0">{selectedEntityForView.name}</p>
+                      </div>
+                      {activeTab === 'sites' ? (
+                        <>
+                          {selectedEntityForView.manager && (
+                            <div className="col-md-6">
+                              <strong>Yönetici:</strong>
+                              <p className="mb-0">{selectedEntityForView.manager}</p>
+                            </div>
+                          )}
+                          {selectedEntityForView.phone && (
+                            <div className="col-md-6">
+                              <strong>Telefon:</strong>
+                              <p className="mb-0">{selectedEntityForView.phone}</p>
+                            </div>
+                          )}
+                          {selectedEntityForView.address && (
+                            <div className="col-md-12">
+                              <strong>Adres:</strong>
+                              <p className="mb-0">{selectedEntityForView.address}</p>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {selectedEntityForView.contact && (
+                            <div className="col-md-6">
+                              <strong>Yetkili:</strong>
+                              <p className="mb-0">{selectedEntityForView.contact}</p>
+                            </div>
+                          )}
+                          {selectedEntityForView.phone && (
+                            <div className="col-md-6">
+                              <strong>Telefon:</strong>
+                              <p className="mb-0">{selectedEntityForView.phone}</p>
+                            </div>
+                          )}
+                          {selectedEntityForView.email && (
+                            <div className="col-md-6">
+                              <strong>Email:</strong>
+                              <p className="mb-0">{selectedEntityForView.email}</p>
+                            </div>
+                          )}
+                          {selectedEntityForView.address && (
+                            <div className="col-md-12">
+                              <strong>Adres:</strong>
+                              <p className="mb-0">{selectedEntityForView.address}</p>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Meeting Notes */}
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h6 className="mb-0">
+                    <i className="bi bi-chat-dots me-2"></i>
+                    Görüşme Notları ({selectedEntityNotes.length})
+                  </h6>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      setShowEntityDetailsModal(false);
+                      setNoteFormEntityId(selectedEntityForView.id);
+                      resetNoteForm();
+                      setNoteFormData({
+                        selectedEntityId: selectedEntityForView.id,
+                        notes: '',
+                        status: 'continuing'
+                      });
+                      setShowNoteForm(true);
+                    }}
+                  >
+                    <i className="bi bi-plus-circle me-1"></i>
+                    Görüşme Notu Ekle
+                  </button>
+                </div>
+
+                {selectedEntityNotes.length === 0 ? (
+                  <div className="text-center py-4">
+                    <i className="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                    <p className="text-muted">Bu {activeTab === 'sites' ? 'site' : 'firma'} için henüz görüşme notu eklenmemiş.</p>
+                  </div>
+                ) : (
+                  <div className="list-group">
+                    {selectedEntityNotes.map((note) => (
+                      <div key={note.id || note._docId} className="list-group-item">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <div className="flex-grow-1">
+                            <div className="d-flex align-items-center gap-2 mb-2">
+                              <span className="badge bg-secondary">
+                                <i className="bi bi-calendar me-1"></i>
+                                {formatDate(note.date)}
+                              </span>
+                              {getStatusBadge(note.status)}
+                            </div>
+                            <p className="mb-0">{note.notes}</p>
+                          </div>
+                          <div className="btn-group btn-group-sm ms-2">
+                            <button
+                              className="btn btn-outline-primary"
+                              onClick={() => {
+                                setShowEntityDetailsModal(false);
+                                setEditingNote(note);
+                                const entityId = activeTab === 'sites' ? note.siteId : note.companyId;
+                                setNoteFormEntityId(entityId);
+                                setNoteFormData({
+                                  selectedEntityId: entityId || '',
+                                  notes: note.notes || '',
+                                  status: note.status || 'continuing'
+                                });
+                                setShowNoteForm(true);
+                              }}
+                              title="Düzenle"
+                            >
+                              <i className="bi bi-pencil"></i>
+                            </button>
+                            <button
+                              className="btn btn-outline-danger"
+                              onClick={() => {
+                                handleDeleteNote(note);
+                              }}
+                              title="Sil"
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowEntityDetailsModal(false);
+                    setSelectedEntityForView(null);
+                  }}
+                >
+                  Kapat
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Note Form Modal */}
       {showNoteForm && (
         <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
