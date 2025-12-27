@@ -205,21 +205,27 @@ const SiteDashboard = () => {
           const unsubscribe = onSnapshot(announcementsQuery, (snapshot) => {
             const newAnnouncements = [];
             snapshot.forEach((doc) => {
+              // Only process existing documents (skip deleted ones)
+              if (!doc.exists()) {
+                return;
+              }
+              
               const announcement = {
                 _docId: doc.id,
                 ...doc.data(),
                 id: doc.data().id || doc.id
               };
+              
               // Filter for this site
-              if (announcement.targetSite === 'all' || announcement.targetSite === siteId) {
+              if (announcement.targetSite === 'all' || String(announcement.targetSite) === String(siteId)) {
                 newAnnouncements.push(announcement);
               }
             });
             
             // Sort by createdAt descending
             newAnnouncements.sort((a, b) => {
-              const aTime = a.createdAt?.seconds || (a.createdAt ? new Date(a.createdAt).getTime() : 0);
-              const bTime = b.createdAt?.seconds || (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+              const aTime = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+              const bTime = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
               return bTime - aTime;
             });
             
