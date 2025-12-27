@@ -19,14 +19,19 @@ service cloud.firestore {
 
     // Helper function to check if user is admin
     function isAdmin() {
-      // users koleksiyonundaki rol + email bazlı yedek kontrol
+      // Email kontrolü önce (daha hızlı ve güvenilir)
+      // Sonra users koleksiyonundaki rol kontrolü
       return isAuthenticated() &&
              (
-               (hasUserDoc() && getUserDoc().data.role == 'admin') ||
+               // Email bazlı admin kontrolü (öncelikli)
                (request.auth.token.email != null &&
-                request.auth.token.email == 'admin@apartmecra.com') ||
-               (request.auth.token.email != null &&
-                request.auth.token.email.split('@')[0] == 'admin')
+                (request.auth.token.email == 'admin@apartmecra.com' ||
+                 request.auth.token.email.split('@')[0] == 'admin' ||
+                 request.auth.token.email.split('@')[0] == 'administrator')) ||
+               // Users koleksiyonundaki rol kontrolü
+               (hasUserDoc() && 
+                (getUserDoc().data.role == 'admin' || 
+                 getUserDoc().data.role == 'administrator'))
              );
     }
 
