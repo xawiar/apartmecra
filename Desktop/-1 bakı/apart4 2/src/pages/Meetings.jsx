@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getMeetings, createMeeting, updateMeeting, deleteMeeting, createSite, createCompany, createLog } from '../services/api';
+import { getMeetings, createMeeting, updateMeeting, deleteMeeting, createSite, createCompany, createLog, getSites, getCompanies } from '../services/api';
 import { getUser } from '../utils/auth';
 import logger from '../utils/logger';
 
@@ -10,14 +10,20 @@ const Meetings = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'continuing', 'positive', 'rejected'
+  const [sites, setSites] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [showNewSiteForm, setShowNewSiteForm] = useState(false);
+  const [showNewCompanyForm, setShowNewCompanyForm] = useState(false);
   
   const [formData, setFormData] = useState({
-    // Site fields
+    // Selected site/company (by ID or name for new ones)
+    selectedId: '', // Existing site/company ID
+    isNew: false, // Whether creating new site/company
+    // New site/company fields (only if isNew is true)
     name: '',
     manager: '',
     phone: '',
     address: '',
-    // Company fields
     contact: '',
     email: '',
     // Common fields
@@ -35,7 +41,22 @@ const Meetings = () => {
     }
     
     fetchData();
+    fetchSitesAndCompanies();
   }, [isAdmin, activeTab, statusFilter]);
+
+  const fetchSitesAndCompanies = async () => {
+    try {
+      if (activeTab === 'sites') {
+        const sitesData = await getSites();
+        setSites(sitesData || []);
+      } else {
+        const companiesData = await getCompanies();
+        setCompanies(companiesData || []);
+      }
+    } catch (error) {
+      logger.error('Error fetching sites/companies:', error);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -69,20 +90,83 @@ const Meetings = () => {
     e.preventDefault();
     
     try {
+      let siteOrCompanyName = '';
+      let siteOrCompanyData = null;
+
+      // If creating new site/company, create it first
+      if (formData.isNew) {
+        if (activeTab === 'sites') {
+          const newSiteData = {
+            name: formData.name,
+            manager: formData.manager || '',
+            phone: formData.phone || '',
+            address: formData.address || '',
+            status: 'active',
+            siteType: 'site',
+            blocks: 1,
+            elevatorsPerBlock: 1,
+            apartmentCount: 1,
+            agreementPercentage: 25,
+            averagePeople: 100,
+            bankAccountName: '',
+            iban: '',
+            neighborhood: 'Bilinmiyor'
+          };
+          const newSite = await createSite(newSiteData);
+          if (newSite) {
+            siteOrCompanyName = formData.name;
+            siteOrCompanyData = { id: newSite.id, name: formData.name };
+            // Add to sites list
+            setSites(prev => [...prev, newSite]);
+          } else {
+            throw new Error('Site oluşturulamadı');
+          }
+        } else {
+          const newCompanyData = {
+            name: formData.name,
+            contact: formData.contact || '',
+            phone: formData.phone || '',
+            email: formData.email || '',
+            address: formData.address || '',
+            status: 'active',
+            taxOffice: '',
+            taxNumber: '',
+            credit: 0
+          };
+          const newCompany = await createCompany(newCompanyData);
+          if (newCompany) {
+            siteOrCompanyName = formData.name;
+            siteOrCompanyData = { id: newCompany.id, name: formData.name };
+            // Add to companies list
+            setCompanies(prev => [...prev, newCompany]);
+          } else {
+            throw new Error('Firma oluşturulamadı');
+          }
+        }
+      } else {
+        // Use existing site/company
+        const selected = activeTab === 'sites' 
+          ? sites.find(s => s.id === formData.selectedId)
+          : companies.find(c => c.id === formData.selectedId);
+        
+        if (!selected) {
+          throw new Error('Site/Firma seçilmedi');
+        }
+        
+        siteOrCompanyName = selected.name;
+        siteOrCompanyData = { id: selected.id, name: selected.name };
+      }
+
       const meetingData = {
         type: activeTab === 'sites' ? 'site' : 'company',
-        // Site fields
-        name: formData.name,
-        manager: activeTab === 'sites' ? formData.manager : null,
-        phone: formData.phone,
-        address: formData.address,
-        // Company fields
-        contact: activeTab === 'companies' ? formData.contact : null,
-        email: activeTab === 'companies' ? formData.email : null,
+        // Store site/company reference
+        siteId: activeTab === 'sites' ? siteOrCompanyData.id : null,
+        companyId: activeTab === 'companies' ? siteOrCompanyData.id : null,
+        name: siteOrCompanyName,
         // Common fields
         notes: formData.notes,
         status: formData.status,
-        date: new Date().toISOString().split('T')[0] // Auto date
+        date: new Date().toISOString().split('T')[0] // Auto date - always current date
       };
 
       if (editingMeeting) {
@@ -92,19 +176,19 @@ const Meetings = () => {
           await window.showAlert('Başarılı', 'Görüşme güncellendi.', 'success');
           await createLog({
             user: 'Admin',
-            action: `Görüşme güncellendi: ${activeTab === 'sites' ? 'Site' : 'Firma'} - ${formData.name}`
+            action: `Görüşme güncellendi: ${activeTab === 'sites' ? 'Site' : 'Firma'} - ${siteOrCompanyName}`
           });
           resetForm();
           fetchData();
         }
       } else {
-        // Create new meeting
+        // Create new meeting note
         const result = await createMeeting(meetingData);
         if (result) {
-          await window.showAlert('Başarılı', 'Görüşme eklendi.', 'success');
+          await window.showAlert('Başarılı', 'Görüşme notu eklendi.', 'success');
           await createLog({
             user: 'Admin',
-            action: `Yeni görüşme eklendi: ${activeTab === 'sites' ? 'Site' : 'Firma'} - ${formData.name}`
+            action: `Yeni görüşme notu eklendi: ${activeTab === 'sites' ? 'Site' : 'Firma'} - ${siteOrCompanyName}`
           });
           resetForm();
           fetchData();
@@ -112,7 +196,7 @@ const Meetings = () => {
       }
     } catch (error) {
       logger.error('Error saving meeting:', error);
-      await window.showAlert('Hata', 'Görüşme kaydedilirken bir hata oluştu.', 'error');
+      await window.showAlert('Hata', error.message || 'Görüşme kaydedilirken bir hata oluştu.', 'error');
     }
   };
 
@@ -220,6 +304,8 @@ const Meetings = () => {
 
   const resetForm = () => {
     setFormData({
+      selectedId: '',
+      isNew: false,
       name: '',
       manager: '',
       phone: '',
@@ -231,6 +317,8 @@ const Meetings = () => {
     });
     setEditingMeeting(null);
     setShowForm(false);
+    setShowNewSiteForm(false);
+    setShowNewCompanyForm(false);
   };
 
   const formatDate = (dateString) => {
@@ -383,102 +471,173 @@ const Meetings = () => {
               <form onSubmit={handleSubmit}>
                 <div className="modal-body">
                   <div className="row g-3">
+                    {/* Site/Firma Seçimi */}
                     <div className="col-md-12">
-                      <label htmlFor="name" className="form-label">
-                        {activeTab === 'sites' ? 'Site Adı' : 'Firma Adı'} <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        className="form-control"
-                        value={formData.name}
-                        onChange={handleFormChange}
-                        required
-                        placeholder={activeTab === 'sites' ? 'Site adını girin' : 'Firma adını girin'}
-                      />
+                      <div className="form-check mb-2">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id="isNew"
+                          checked={formData.isNew}
+                          onChange={(e) => {
+                            setFormData({
+                              ...formData,
+                              isNew: e.target.checked,
+                              selectedId: '',
+                              name: '',
+                              manager: '',
+                              phone: '',
+                              address: '',
+                              contact: '',
+                              email: ''
+                            });
+                            if (activeTab === 'sites') {
+                              setShowNewSiteForm(e.target.checked);
+                            } else {
+                              setShowNewCompanyForm(e.target.checked);
+                            }
+                          }}
+                        />
+                        <label className="form-check-label" htmlFor="isNew">
+                          Yeni {activeTab === 'sites' ? 'Site' : 'Firma'} Ekle
+                        </label>
+                      </div>
                     </div>
 
-                    {activeTab === 'sites' ? (
+                    {formData.isNew ? (
+                      // Yeni Site/Firma Formu
                       <>
-                        <div className="col-md-6">
-                          <label htmlFor="manager" className="form-label">Yönetici Adı</label>
+                        <div className="col-md-12">
+                          <label htmlFor="name" className="form-label">
+                            {activeTab === 'sites' ? 'Site Adı' : 'Firma Adı'} <span className="text-danger">*</span>
+                          </label>
                           <input
                             type="text"
-                            id="manager"
-                            name="manager"
+                            id="name"
+                            name="name"
                             className="form-control"
-                            value={formData.manager}
+                            value={formData.name}
                             onChange={handleFormChange}
-                            placeholder="Yönetici adını girin"
+                            required
+                            placeholder={activeTab === 'sites' ? 'Site adını girin' : 'Firma adını girin'}
                           />
                         </div>
-                        <div className="col-md-6">
-                          <label htmlFor="phone" className="form-label">Telefon</label>
-                          <input
-                            type="text"
-                            id="phone"
-                            name="phone"
-                            className="form-control"
-                            value={formData.phone}
-                            onChange={handleFormChange}
-                            placeholder="Telefon numarası"
-                          />
-                        </div>
+
+                        {activeTab === 'sites' ? (
+                          <>
+                            <div className="col-md-6">
+                              <label htmlFor="manager" className="form-label">Yönetici Adı</label>
+                              <input
+                                type="text"
+                                id="manager"
+                                name="manager"
+                                className="form-control"
+                                value={formData.manager}
+                                onChange={handleFormChange}
+                                placeholder="Yönetici adını girin"
+                              />
+                            </div>
+                            <div className="col-md-6">
+                              <label htmlFor="phone" className="form-label">Telefon</label>
+                              <input
+                                type="text"
+                                id="phone"
+                                name="phone"
+                                className="form-control"
+                                value={formData.phone}
+                                onChange={handleFormChange}
+                                placeholder="Telefon numarası"
+                              />
+                            </div>
+                            <div className="col-md-12">
+                              <label htmlFor="address" className="form-label">Adres</label>
+                              <input
+                                type="text"
+                                id="address"
+                                name="address"
+                                className="form-control"
+                                value={formData.address}
+                                onChange={handleFormChange}
+                                placeholder="Adres bilgisi"
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="col-md-6">
+                              <label htmlFor="contact" className="form-label">Yetkili Adı</label>
+                              <input
+                                type="text"
+                                id="contact"
+                                name="contact"
+                                className="form-control"
+                                value={formData.contact}
+                                onChange={handleFormChange}
+                                placeholder="Yetkili adını girin"
+                              />
+                            </div>
+                            <div className="col-md-6">
+                              <label htmlFor="phone" className="form-label">Telefon</label>
+                              <input
+                                type="text"
+                                id="phone"
+                                name="phone"
+                                className="form-control"
+                                value={formData.phone}
+                                onChange={handleFormChange}
+                                placeholder="Telefon numarası"
+                              />
+                            </div>
+                            <div className="col-md-12">
+                              <label htmlFor="email" className="form-label">Email</label>
+                              <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                className="form-control"
+                                value={formData.email}
+                                onChange={handleFormChange}
+                                placeholder="Email adresi"
+                              />
+                            </div>
+                            <div className="col-md-12">
+                              <label htmlFor="address" className="form-label">Adres</label>
+                              <input
+                                type="text"
+                                id="address"
+                                name="address"
+                                className="form-control"
+                                value={formData.address}
+                                onChange={handleFormChange}
+                                placeholder="Adres bilgisi"
+                              />
+                            </div>
+                          </>
+                        )}
                       </>
                     ) : (
-                      <>
-                        <div className="col-md-6">
-                          <label htmlFor="contact" className="form-label">Yetkili Adı</label>
-                          <input
-                            type="text"
-                            id="contact"
-                            name="contact"
-                            className="form-control"
-                            value={formData.contact}
-                            onChange={handleFormChange}
-                            placeholder="Yetkili adını girin"
-                          />
-                        </div>
-                        <div className="col-md-6">
-                          <label htmlFor="phone" className="form-label">Telefon</label>
-                          <input
-                            type="text"
-                            id="phone"
-                            name="phone"
-                            className="form-control"
-                            value={formData.phone}
-                            onChange={handleFormChange}
-                            placeholder="Telefon numarası"
-                          />
-                        </div>
-                        <div className="col-md-12">
-                          <label htmlFor="email" className="form-label">Email</label>
-                          <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            className="form-control"
-                            value={formData.email}
-                            onChange={handleFormChange}
-                            placeholder="Email adresi"
-                          />
-                        </div>
-                      </>
+                      // Mevcut Site/Firma Seçimi
+                      <div className="col-md-12">
+                        <label htmlFor="selectedId" className="form-label">
+                          {activeTab === 'sites' ? 'Site' : 'Firma'} Seçin <span className="text-danger">*</span>
+                        </label>
+                        <select
+                          id="selectedId"
+                          name="selectedId"
+                          className="form-select"
+                          value={formData.selectedId}
+                          onChange={handleFormChange}
+                          required={!formData.isNew}
+                        >
+                          <option value="">-- {activeTab === 'sites' ? 'Site' : 'Firma'} Seçin --</option>
+                          {(activeTab === 'sites' ? sites : companies).map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     )}
-
-                    <div className="col-md-12">
-                      <label htmlFor="address" className="form-label">Adres</label>
-                      <input
-                        type="text"
-                        id="address"
-                        name="address"
-                        className="form-control"
-                        value={formData.address}
-                        onChange={handleFormChange}
-                        placeholder="Adres bilgisi"
-                      />
-                    </div>
 
                     <div className="col-md-12">
                       <label htmlFor="status" className="form-label">
