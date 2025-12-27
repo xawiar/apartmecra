@@ -142,18 +142,18 @@ const CurrentStatus = () => {
                   );
                 }
                 
-                return {
-                  isUsed: true,
-                  companyName: getCompanyName(agreement.companyId),
-                  startDate: agreement.startDate,
-                  endDate: agreement.endDate,
-                  agreementId: agreement.id,
-                  status: agreement.status,
+            return {
+              isUsed: true,
+              companyName: getCompanyName(agreement.companyId),
+              startDate: agreement.startDate,
+              endDate: agreement.endDate,
+              agreementId: agreement.id,
+              status: agreement.status,
                   photoUrl: agreement.photoUrl,
                   panelImage: panelImage
-                };
-              }
-            }
+            };
+          }
+        }
           } else {
             // Old format: direct array check
             if (Array.isArray(sitePanelData[blockId]) && sitePanelData[blockId].includes(panelId)) {

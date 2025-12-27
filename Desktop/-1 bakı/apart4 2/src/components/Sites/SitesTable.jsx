@@ -46,12 +46,12 @@ const SitesTable = ({
                   </td>
                   {site.siteType !== 'business_center' && (
                     <>
-                      <td className="py-2 px-2 text-center small">
-                        {site.blocks}
-                      </td>
-                      <td className="py-2 px-2 text-center small">
-                        {site.elevators}
-                      </td>
+                  <td className="py-2 px-2 text-center small">
+                    {site.blocks}
+                  </td>
+                  <td className="py-2 px-2 text-center small">
+                    {site.elevators}
+                  </td>
                     </>
                   )}
                   <td className="py-2 px-2 text-center small">
@@ -177,8 +177,8 @@ const SitesTable = ({
                 <tbody>
                   {renderTableRows(businessCenters)}
                   {businessCenters.length === 0 && (
-                    <tr>
-                      <td colSpan="9" className="text-center py-5">
+                <tr>
+                  <td colSpan="9" className="text-center py-5">
                         <div className="empty-state">
                           <i className="bi bi-briefcase"></i>
                           <p className="mb-3 text-muted">Henüz iş merkezi bulunmamaktadır.</p>
@@ -250,21 +250,21 @@ const SitesTable = ({
                   {regularSites.length === 0 && (
                     <tr>
                       <td colSpan="11" className="text-center py-5">
-                        <div className="empty-state">
-                          <i className="bi bi-building"></i>
+                    <div className="empty-state">
+                      <i className="bi bi-building"></i>
                           <p className="mb-3 text-muted">Henüz site bulunmamaktadır.</p>
-                          <button 
-                            onClick={uiHandlers.handleAddSite}
-                            className="btn btn-sites-primary"
-                          >
-                            Site Ekle
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                      <button 
+                        onClick={uiHandlers.handleAddSite}
+                        className="btn btn-sites-primary"
+                      >
+                        Site Ekle
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
             </div>
           </div>
         </div>

@@ -257,10 +257,10 @@ const SitesExcelHandlers = ({
           // Calculate elevators and panels only for sites (not business centers)
           // İş merkezleri için panels manuel girilir, bu yüzden hesaplama yapılmaz
           if (siteData.siteType === 'site') {
-            const blocks = parseInt(siteData.blocks) || 0;
-            const elevatorsPerBlock = parseInt(siteData.elevatorsPerBlock) || 0;
-            siteData.elevators = blocks * elevatorsPerBlock;
-            siteData.panels = siteData.elevators * 2;
+          const blocks = parseInt(siteData.blocks) || 0;
+          const elevatorsPerBlock = parseInt(siteData.elevatorsPerBlock) || 0;
+          siteData.elevators = blocks * elevatorsPerBlock;
+          siteData.panels = siteData.elevators * 2;
           }
           
           sitesToImport.push(siteData);

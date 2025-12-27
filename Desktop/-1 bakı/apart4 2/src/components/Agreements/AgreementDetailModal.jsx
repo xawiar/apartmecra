@@ -146,8 +146,8 @@ const AgreementDetailModal = ({ showModal, currentAgreement, uiHandlers, helpers
                                  (currentAgreement.paidAmount > 0 ? 'partial' : 'unpaid'));
                               if (paymentStatus === 'paid') {
                                 return (
-                                  <span className="text-success">
-                                    <i className="bi bi-check-circle-fill me-1"></i>
+                              <span className="text-success">
+                                <i className="bi bi-check-circle-fill me-1"></i>
                                     Ödendi
                                   </span>
                                 );
@@ -156,14 +156,14 @@ const AgreementDetailModal = ({ showModal, currentAgreement, uiHandlers, helpers
                                   <span className="text-warning">
                                     <i className="bi bi-clock-history me-1"></i>
                                     Kısmi Ödendi
-                                  </span>
+                              </span>
                                 );
                               } else {
                                 return (
-                                  <span className="text-danger">
-                                    <i className="bi bi-x-circle-fill me-1"></i>
+                              <span className="text-danger">
+                                <i className="bi bi-x-circle-fill me-1"></i>
                                     Ödenmedi
-                                  </span>
+                              </span>
                                 );
                               }
                             })()}

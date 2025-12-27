@@ -127,9 +127,9 @@ function App() {
 
   return (
     <ErrorBoundary showDetails={import.meta.env.DEV}>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <div className="App">
-          <Routes>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <div className="App">
+        <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={
@@ -143,7 +143,7 @@ function App() {
             <PrivateRoute>
               <BootstrapLayout>
                 <Suspense fallback={<PageLoader />}>
-                  <CompanyDashboard />
+                <CompanyDashboard />
                 </Suspense>
               </BootstrapLayout>
             </PrivateRoute>
@@ -161,7 +161,7 @@ function App() {
             <PrivateRoute>
               <BootstrapLayout>
                 <Suspense fallback={<PageLoader />}>
-                  <ObserverRestrictedSites />
+                <ObserverRestrictedSites />
                 </Suspense>
               </BootstrapLayout>
             </PrivateRoute>
@@ -170,7 +170,7 @@ function App() {
             <PrivateRoute>
               <BootstrapLayout>
                 <Suspense fallback={<PageLoader />}>
-                  <ObserverRestrictedCompanies />
+                <ObserverRestrictedCompanies />
                 </Suspense>
               </BootstrapLayout>
             </PrivateRoute>
@@ -179,7 +179,7 @@ function App() {
             <PrivateRoute>
               <BootstrapLayout>
                 <Suspense fallback={<PageLoader />}>
-                  <ObserverRestrictedAgreements />
+                <ObserverRestrictedAgreements />
                 </Suspense>
               </BootstrapLayout>
             </PrivateRoute>
@@ -188,7 +188,7 @@ function App() {
             <PrivateRoute>
               <BootstrapLayout>
                 <Suspense fallback={<PageLoader />}>
-                  <ObserverRestrictedCashier />
+                <ObserverRestrictedCashier />
                 </Suspense>
               </BootstrapLayout>
             </PrivateRoute>
@@ -197,7 +197,7 @@ function App() {
             <PrivateRoute>
               <BootstrapLayout>
                 <Suspense fallback={<PageLoader />}>
-                  <ObserverRestrictedPartnerShares />
+                <ObserverRestrictedPartnerShares />
                 </Suspense>
               </BootstrapLayout>
             </PrivateRoute>
@@ -206,7 +206,7 @@ function App() {
             <PrivateRoute>
               <BootstrapLayout>
                 <Suspense fallback={<PageLoader />}>
-                  <Settings />
+                <Settings />
                 </Suspense>
               </BootstrapLayout>
             </PrivateRoute>
@@ -215,7 +215,7 @@ function App() {
             <PrivateRoute>
               <BootstrapLayout>
                 <Suspense fallback={<PageLoader />}>
-                  <ObserverRestrictedCurrentStatus />
+                <ObserverRestrictedCurrentStatus />
                 </Suspense>
               </BootstrapLayout>
             </PrivateRoute>
@@ -227,9 +227,9 @@ function App() {
               </Suspense>
             </PrivateRoute>
           } />
-          </Routes>
-        </div>
-      </Router>
+        </Routes>
+      </div>
+    </Router>
     </ErrorBoundary>
   );
 }

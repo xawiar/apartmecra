@@ -1353,7 +1353,7 @@ const Cashier = () => {
                 <p className="mb-0 small">Gelir, gider ve borç işlemleri</p>
           </div>
           <div className="d-flex gap-2 flex-wrap w-100 w-md-auto">
-                <button 
+            <button 
                   onClick={() => {
                     setShowDebtsView(!showDebtsView);
                     setShowSitePaymentCalc(false);
@@ -2194,9 +2194,9 @@ const Cashier = () => {
                         <td className="text-muted small">{transaction.description}</td>
                         <td>
                           <div className="d-flex flex-column">
-                            <span className={`fw-medium ${transaction.type === 'income' ? 'text-success' : 'text-danger'}`}>
-                              {transaction.type === 'income' ? '+' : ''}{formatCurrency(transaction.amount)}
-                            </span>
+                          <span className={`fw-medium ${transaction.type === 'income' ? 'text-success' : 'text-danger'}`}>
+                            {transaction.type === 'income' ? '+' : ''}{formatCurrency(transaction.amount)}
+                          </span>
                             {/* Ortak giderlerinde originalAmount göster */}
                             {transaction.type === 'expense' && transaction.originalAmount && transaction.amount === 0 && (
                               <span className="text-info small fw-medium" style={{ fontSize: '0.85rem' }}>

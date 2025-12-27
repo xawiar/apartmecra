@@ -132,7 +132,7 @@ const AgreementHelpers = ({
     Object.values(siteSelections).forEach(blockSelections => {
       if (Array.isArray(blockSelections)) {
         // Old format: array of panel keys
-        totalSelectedPanels += blockSelections.length;
+      totalSelectedPanels += blockSelections.length;
       } else if (typeof blockSelections === 'object') {
         // New format: object with date range keys
         Object.values(blockSelections).forEach(rangePanels => {
@@ -233,17 +233,17 @@ const AgreementHelpers = ({
       const newStart = new Date(newRange.startDate);
       const newEnd = new Date(newRange.endDate);
     
-      // Check each existing agreement for date overlap and panel usage
-      for (const agreement of siteAgreements) {
+    // Check each existing agreement for date overlap and panel usage
+    for (const agreement of siteAgreements) {
         const existingRanges = getAgreementRanges(agreement);
         
         for (const existingRange of existingRanges) {
           const existingStart = new Date(existingRange.startDate);
           const existingEnd = new Date(existingRange.endDate);
       
-          // Check if date ranges overlap
-          if (dateRangesOverlap(newStart, newEnd, existingStart, existingEnd)) {
-            // Check if this specific panel is used in the overlapping agreement
+      // Check if date ranges overlap
+      if (dateRangesOverlap(newStart, newEnd, existingStart, existingEnd)) {
+        // Check if this specific panel is used in the overlapping agreement
             // Support both old format and new format (with date ranges)
             let isPanelUsed = false;
             
@@ -279,14 +279,14 @@ const AgreementHelpers = ({
               }
             } else {
               // Old format: siteBlockSelections[siteId] and sitePanelSelections[siteId][blockKey]
-              if (agreement.siteBlockSelections && agreement.siteBlockSelections[siteId]) {
+        if (agreement.siteBlockSelections && agreement.siteBlockSelections[siteId]) {
                 const usedBlocks = Array.isArray(agreement.siteBlockSelections[siteId]) 
                   ? agreement.siteBlockSelections[siteId]
                   : [];
-                if (usedBlocks.includes(blockKey)) {
-                  // Check if this specific panel is used in this block
-                  if (agreement.sitePanelSelections && 
-                      agreement.sitePanelSelections[siteId] && 
+          if (usedBlocks.includes(blockKey)) {
+            // Check if this specific panel is used in this block
+            if (agreement.sitePanelSelections && 
+                agreement.sitePanelSelections[siteId] && 
                       agreement.sitePanelSelections[siteId][blockKey]) {
                     const blockPanels = agreement.sitePanelSelections[siteId][blockKey];
                     if (Array.isArray(blockPanels) && blockPanels.includes(panelKey)) {
@@ -377,8 +377,8 @@ const AgreementHelpers = ({
       for (const existingRange of existingRanges) {
         const existingStart = new Date(existingRange.startDate);
         const existingEnd = new Date(existingRange.endDate);
-        
-        if (dateRangesOverlap(newStart, newEnd, existingStart, existingEnd)) {
+      
+      if (dateRangesOverlap(newStart, newEnd, existingStart, existingEnd)) {
           // Check if agreement uses new format (has dateRanges)
           if (agreement.dateRanges && Array.isArray(agreement.dateRanges) && agreement.dateRanges.length > 0) {
             // New format: siteBlockSelections[rangeKey][siteId] and sitePanelSelections[siteId][blockKey][rangeKey]
@@ -415,22 +415,22 @@ const AgreementHelpers = ({
             }
           } else {
             // Old format: siteBlockSelections[siteId] and sitePanelSelections[siteId][blockKey]
-            if (agreement.siteBlockSelections && agreement.siteBlockSelections[siteId]) {
+        if (agreement.siteBlockSelections && agreement.siteBlockSelections[siteId]) {
               const usedBlocks = Array.isArray(agreement.siteBlockSelections[siteId]) 
                 ? agreement.siteBlockSelections[siteId]
                 : [];
-              if (usedBlocks.includes(blockKey)) {
-                if (agreement.sitePanelSelections && 
-                    agreement.sitePanelSelections[siteId] && 
+          if (usedBlocks.includes(blockKey)) {
+            if (agreement.sitePanelSelections && 
+                agreement.sitePanelSelections[siteId] && 
                     agreement.sitePanelSelections[siteId][blockKey]) {
                   const blockPanels = agreement.sitePanelSelections[siteId][blockKey];
                   if (Array.isArray(blockPanels) && blockPanels.includes(panelKey)) {
-                    return {
-                      agreementId: agreement.id,
-                      companyName: getCompanyName(agreement.companyId),
-                      startDate: agreement.startDate,
-                      endDate: agreement.endDate
-                    };
+              return {
+                agreementId: agreement.id,
+                companyName: getCompanyName(agreement.companyId),
+                startDate: agreement.startDate,
+                endDate: agreement.endDate
+              };
                   }
                 }
               }
