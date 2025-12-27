@@ -305,10 +305,19 @@ export const login = async (username, password) => {
           };
         }
       } catch (error) {
+        // Log all errors for debugging (especially network/auth domain issues)
+        logger.error('Login attempt error:', {
+          email: attempt.email,
+          role: attempt.role,
+          code: error.code,
+          message: error.message,
+          error: error
+        });
+        
         // Store error for final reporting, but don't log each failed attempt
         // auth/invalid-credential is expected when trying different login types
         if (error.code !== 'auth/invalid-credential') {
-          loginErrors.push({ email: attempt.email, error: error.message });
+          loginErrors.push({ email: attempt.email, error: error.message, code: error.code });
         }
         continue; // Try next attempt
       }

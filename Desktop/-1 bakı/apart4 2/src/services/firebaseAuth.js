@@ -74,6 +74,15 @@ export const loginWithEmail = async (email, password, silentMode = false) => {
     };
     
   } catch (error) {
+    // Log all errors for debugging (especially network/auth domain issues)
+    logger.error('❌ Login error:', {
+      code: error.code,
+      message: error.message,
+      email: email,
+      silentMode: silentMode,
+      errorObject: error
+    });
+    
     // auth/invalid-credential is expected during multi-attempt login, don't log it in silent mode
     if (error.code === 'auth/invalid-credential' && silentMode) {
       // Silent - this is expected when trying different login types
@@ -83,11 +92,16 @@ export const loginWithEmail = async (email, password, silentMode = false) => {
       };
     }
     
-    // Only log errors that are not expected or when not in silent mode
-    if (!silentMode || error.code !== 'auth/invalid-credential') {
-      logger.error('❌ Login error:', error);
-      logger.error('Error code:', error.code);
-      logger.error('Error message:', error.message);
+    // Check for network or domain-related errors
+    if (error.code === 'auth/network-request-failed' || 
+        error.message?.includes('400') || 
+        error.message?.includes('Bad Request') ||
+        error.code?.includes('400')) {
+      logger.error('⚠️ Network or domain error detected. Check Firebase authorized domains.');
+      return {
+        success: false,
+        error: 'Ağ bağlantısı hatası veya yetkilendirme sorunu. Lütfen Firebase Console\'da authorized domains ayarlarını kontrol edin.'
+      };
     }
     
     return {
