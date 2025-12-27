@@ -58,6 +58,7 @@ const Meetings = () => {
 
   const fetchEntities = async () => {
     try {
+      setLoading(true);
       const type = activeTab === 'sites' ? 'site' : 'company';
       const allMeetings = await getMeetings(type);
       
@@ -83,6 +84,8 @@ const Meetings = () => {
       setMeetingEntities(Array.from(entitiesMap.values()));
     } catch (error) {
       logger.error('Error fetching entities:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
