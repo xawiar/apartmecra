@@ -48,6 +48,11 @@ const Meetings = () => {
     fetchEntities();
   }, [isAdmin, activeTab]);
 
+  // Refetch when entityFilter changes
+  useEffect(() => {
+    if (isAdmin) fetchEntities();
+  }, [entityFilter]);
+
   useEffect(() => {
     if (selectedEntityForView && showEntityDetailsModal) {
       fetchEntityNotes(selectedEntityForView.id);
@@ -62,32 +67,50 @@ const Meetings = () => {
       const type = activeTab === 'sites' ? 'site' : 'company';
       const allMeetings = await getMeetings(type);
 
-      // Optionally filter meetings by selected entityFilter status
-      let meetingsToConsider = allMeetings;
-      if (entityFilter && entityFilter !== 'all') {
-        meetingsToConsider = allMeetings.filter(m => m.status === entityFilter);
-      }
-
-      // Get unique entities (sites/companies) from meetings
-      const entitiesMap = new Map();
-      meetingsToConsider.forEach(meeting => {
+      // Build map of entity -> its meetings
+      const entityMeetingsMap = new Map();
+      allMeetings.forEach(meeting => {
         const entityId = activeTab === 'sites' ? meeting.siteId : meeting.companyId;
-        const entityName = meeting.name;
-
-        if (entityId && !entitiesMap.has(entityId)) {
-          entitiesMap.set(entityId, {
-            id: entityId,
-            name: entityName,
-            manager: meeting.manager || '',
-            phone: meeting.phone || '',
-            address: meeting.address || '',
-            contact: meeting.contact || '',
-            email: meeting.email || ''
-          });
-        }
+        if (!entityId) return;
+        if (!entityMeetingsMap.has(entityId)) entityMeetingsMap.set(entityId, []);
+        entityMeetingsMap.get(entityId).push(meeting);
       });
 
-      setMeetingEntities(Array.from(entitiesMap.values()));
+      // Decide which entities to include based on entityFilter
+      const entities = [];
+      for (const [entityId, meetings] of entityMeetingsMap.entries()) {
+        // If filter is 'all' include entity
+        if (!entityFilter || entityFilter === 'all') {
+          const m = meetings[0];
+          entities.push({
+            id: entityId,
+            name: m.name,
+            manager: m.manager || '',
+            phone: m.phone || '',
+            address: m.address || '',
+            contact: m.contact || '',
+            email: m.email || ''
+          });
+          continue;
+        }
+
+        // If any meeting for this entity matches selected status, include it
+        const match = meetings.some(m => m.status === entityFilter);
+        if (match) {
+          const m = meetings[0];
+          entities.push({
+            id: entityId,
+            name: m.name,
+            manager: m.manager || '',
+            phone: m.phone || '',
+            address: m.address || '',
+            contact: m.contact || '',
+            email: m.email || ''
+          });
+        }
+      }
+
+      setMeetingEntities(entities);
     } catch (error) {
       logger.error('Error fetching entities:', error);
     } finally {
@@ -441,21 +464,17 @@ const Meetings = () => {
                   <i className="bi bi-list-ul me-2"></i>
                   {activeTab === 'sites' ? 'Siteler' : 'Firmalar'} ({meetingEntities.length})
                 </h5>
-                <div className="ms-3">
-                  <select
-                    className="form-select form-select-sm"
-                    value={entityFilter}
-                    onChange={(e) => {
-                      setEntityFilter(e.target.value);
-                      // re-fetch entities with new filter
-                      fetchEntities();
-                    }}
-                  >
-                    <option value="all">Hepsi</option>
-                    <option value="continuing">Devam Eden</option>
-                    <option value="positive">Onaylanan</option>
-                    <option value="rejected">Reddedilen</option>
-                  </select>
+                <div className="ms-3 d-flex gap-2">
+                  {['all','continuing','positive','rejected'].map(key => (
+                    <button
+                      key={key}
+                      className={`btn btn-sm ${entityFilter===key ? 'btn-light text-primary' : 'btn-outline-light text-white'}`}
+                      onClick={() => setEntityFilter(key)}
+                      title={key}
+                    >
+                      {key==='all' ? 'Hepsi' : key==='continuing' ? 'Devam' : key==='positive' ? 'Onay' : 'Reddedilen'}
+                    </button>
+                  ))}
                 </div>
               </div>
               <button
@@ -776,20 +795,16 @@ const Meetings = () => {
                       <i className="bi bi-chat-dots me-2"></i>
                       Görüşme Notları ({selectedEntityNotes.length})
                     </h6>
-                    <div className="ms-3">
-                      <select
-                        className="form-select form-select-sm"
-                        value={notesFilter}
-                        onChange={(e) => {
-                          setNotesFilter(e.target.value);
-                          if (selectedEntityForView) fetchEntityNotes(selectedEntityForView.id);
-                        }}
-                      >
-                        <option value="all">Hepsi</option>
-                        <option value="continuing">Devam Eden</option>
-                        <option value="positive">Onaylanan</option>
-                        <option value="rejected">Reddedilen</option>
-                      </select>
+                    <div className="ms-3 d-flex gap-2">
+                      {['all','continuing','positive','rejected'].map(k => (
+                        <button
+                          key={k}
+                          className={`btn btn-sm ${notesFilter===k ? 'btn-primary' : 'btn-outline-secondary'}`}
+                          onClick={() => { setNotesFilter(k); if (selectedEntityForView) fetchEntityNotes(selectedEntityForView.id); }}
+                        >
+                          {k==='all' ? 'Hepsi' : k==='continuing' ? 'Devam Eden' : k==='positive' ? 'Onaylanan' : 'Reddedilen'}
+                        </button>
+                      ))}
                     </div>
                   </div>
                   <button
