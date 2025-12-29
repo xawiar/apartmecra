@@ -9,6 +9,7 @@ const Meetings = () => {
   const [selectedEntityForView, setSelectedEntityForView] = useState(null); // Selected entity for viewing notes
   const [selectedEntityNotes, setSelectedEntityNotes] = useState([]); // Notes for selected entity
   const [notesFilter, setNotesFilter] = useState('all'); // all | continuing | rejected | positive
+  const [entityFilter, setEntityFilter] = useState('all'); // all | continuing | rejected | positive
   const [showEntityDetailsModal, setShowEntityDetailsModal] = useState(false); // Modal for entity details
   const [loading, setLoading] = useState(true);
   const [showEntityForm, setShowEntityForm] = useState(false);
@@ -60,13 +61,19 @@ const Meetings = () => {
       setLoading(true);
       const type = activeTab === 'sites' ? 'site' : 'company';
       const allMeetings = await getMeetings(type);
-      
+
+      // Optionally filter meetings by selected entityFilter status
+      let meetingsToConsider = allMeetings;
+      if (entityFilter && entityFilter !== 'all') {
+        meetingsToConsider = allMeetings.filter(m => m.status === entityFilter);
+      }
+
       // Get unique entities (sites/companies) from meetings
       const entitiesMap = new Map();
-      allMeetings.forEach(meeting => {
+      meetingsToConsider.forEach(meeting => {
         const entityId = activeTab === 'sites' ? meeting.siteId : meeting.companyId;
         const entityName = meeting.name;
-        
+
         if (entityId && !entitiesMap.has(entityId)) {
           entitiesMap.set(entityId, {
             id: entityId,
@@ -79,7 +86,7 @@ const Meetings = () => {
           });
         }
       });
-      
+
       setMeetingEntities(Array.from(entitiesMap.values()));
     } catch (error) {
       logger.error('Error fetching entities:', error);
@@ -429,10 +436,28 @@ const Meetings = () => {
         <div className="col-12">
           <div className="card shadow-sm">
             <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">
-                <i className="bi bi-list-ul me-2"></i>
-                {activeTab === 'sites' ? 'Siteler' : 'Firmalar'} ({meetingEntities.length})
-              </h5>
+              <div className="d-flex align-items-center">
+                <h5 className="mb-0">
+                  <i className="bi bi-list-ul me-2"></i>
+                  {activeTab === 'sites' ? 'Siteler' : 'Firmalar'} ({meetingEntities.length})
+                </h5>
+                <div className="ms-3">
+                  <select
+                    className="form-select form-select-sm"
+                    value={entityFilter}
+                    onChange={(e) => {
+                      setEntityFilter(e.target.value);
+                      // re-fetch entities with new filter
+                      fetchEntities();
+                    }}
+                  >
+                    <option value="all">Hepsi</option>
+                    <option value="continuing">Devam Eden</option>
+                    <option value="positive">Onaylanan</option>
+                    <option value="rejected">Reddedilen</option>
+                  </select>
+                </div>
+              </div>
               <button
                 className="btn btn-sm btn-light"
                 onClick={() => {

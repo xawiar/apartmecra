@@ -42,7 +42,7 @@ const RightSidebar = () => {
       {/* Desktop and Tablet Right Sidebar */}
       <div className="hidden md:block right-sidebar">
         <div className="p-4 border-b border-[#E2E8F0]">
-          <h2 className="text-lg font-bold text-[#2C3E50] sidebar-logo-text">Apart Mecra Yönetim Paneli</h2>
+          <h2 className="text-lg font-bold text-[#0A66C2] sidebar-logo-text">Apart Mecra Yönetim Paneli</h2>
         </div>
         <nav className="mt-2">
           <ul>
@@ -76,7 +76,7 @@ const RightSidebar = () => {
       <div className={`mobile-sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="mobile-sidebar-content">
           <div className="p-4 border-b border-[#E2E8F0] flex justify-between items-center">
-            <h2 className="text-lg font-bold text-[#2C3E50]">Apart Mecra Yönetim Paneli</h2>
+            <h2 className="text-lg font-bold text-[#0A66C2]">Apart Mecra Yönetim Paneli</h2>
             <button 
               onClick={() => setIsMobileMenuOpen(false)}
               className="text-gray-500 hover:text-[#0A66C2]"

@@ -27,11 +27,11 @@ const Header = () => {
         <div className="bg-gradient-to-r from-[#0A66C2] to-[#2ECC71] text-white w-10 h-10 rounded-lg flex items-center justify-center mr-3">
           <span className="font-bold">A</span>
         </div>
-        <h1 className="text-lg font-bold text-[#2C3E50] hidden md:block">Apart Mecra Yönetim Paneli</h1>
+  <h1 className="text-lg font-bold text-[#0A66C2] hidden md:block">Apart Mecra Yönetim Paneli</h1>
       </div>
       
       <div className="flex items-center">
-        <h2 className="text-xl font-semibold text-[#2C3E50]">{getPageTitle()}</h2>
+  <h2 className="text-xl font-semibold text-[#0A66C2]">{getPageTitle()}</h2>
       </div>
       
       <div className="flex items-center space-x-4">
