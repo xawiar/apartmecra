@@ -39,15 +39,12 @@ const Meetings = () => {
   useEffect(() => {
     if (!isAdmin) {
       logger.warn('Non-admin user attempted to access meetings page');
+      setLoading(false);
       return;
     }
     
     fetchEntities();
   }, [isAdmin, activeTab]);
-
-  useEffect(() => {
-    fetchAllMeetingNotes();
-  }, [activeTab]);
 
   useEffect(() => {
     if (selectedEntityForView && showEntityDetailsModal) {
@@ -90,13 +87,6 @@ const Meetings = () => {
     }
   };
 
-  const fetchAllMeetingNotes = async () => {
-    try {
-      await fetchEntities();
-    } catch (error) {
-      logger.error('Error fetching entities:', error);
-    }
-  };
 
   const fetchEntityNotes = async (entityId) => {
     try {
@@ -237,7 +227,7 @@ const Meetings = () => {
       }
       
       resetNoteForm();
-      fetchAllMeetingNotes();
+      fetchEntities();
       if (selectedEntityForView && selectedEntityForView.id === entityId) {
         fetchEntityNotes(entityId);
       }
@@ -302,7 +292,7 @@ const Meetings = () => {
             user: 'Admin',
             action: `Görüşme notu silindi`
           });
-          fetchAllMeetingNotes();
+          fetchEntities();
           if (selectedEntityForView) {
             fetchEntityNotes(selectedEntityForView.id);
           }
