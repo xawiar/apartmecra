@@ -175,7 +175,7 @@ const Meetings = () => {
       }
       
       resetEntityForm();
-      fetchAllMeetingNotes();
+      fetchEntities();
     } catch (error) {
       logger.error('Error saving entity:', error);
       await window.showAlert('Hata', 'Kaydedilirken bir hata oluştu.', 'error');
