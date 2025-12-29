@@ -8,6 +8,7 @@ const Meetings = () => {
   const [meetingEntities, setMeetingEntities] = useState([]); // Sites or companies for meetings
   const [selectedEntityForView, setSelectedEntityForView] = useState(null); // Selected entity for viewing notes
   const [selectedEntityNotes, setSelectedEntityNotes] = useState([]); // Notes for selected entity
+  const [notesFilter, setNotesFilter] = useState('all'); // all | continuing | rejected | positive
   const [showEntityDetailsModal, setShowEntityDetailsModal] = useState(false); // Modal for entity details
   const [loading, setLoading] = useState(true);
   const [showEntityForm, setShowEntityForm] = useState(false);
@@ -106,7 +107,12 @@ const Meetings = () => {
         return dateB - dateA;
       });
       
-      setSelectedEntityNotes(notes);
+      // Apply status filter if set
+      let filtered = notes;
+      if (notesFilter && notesFilter !== 'all') {
+        filtered = notes.filter(n => n.status === notesFilter);
+      }
+      setSelectedEntityNotes(filtered);
     } catch (error) {
       logger.error('Error fetching entity notes:', error);
     }
@@ -740,10 +746,27 @@ const Meetings = () => {
 
                 {/* Meeting Notes */}
                 <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h6 className="mb-0">
-                    <i className="bi bi-chat-dots me-2"></i>
-                    Görüşme Notları ({selectedEntityNotes.length})
-                  </h6>
+                  <div className="d-flex align-items-center">
+                    <h6 className="mb-0">
+                      <i className="bi bi-chat-dots me-2"></i>
+                      Görüşme Notları ({selectedEntityNotes.length})
+                    </h6>
+                    <div className="ms-3">
+                      <select
+                        className="form-select form-select-sm"
+                        value={notesFilter}
+                        onChange={(e) => {
+                          setNotesFilter(e.target.value);
+                          if (selectedEntityForView) fetchEntityNotes(selectedEntityForView.id);
+                        }}
+                      >
+                        <option value="all">Hepsi</option>
+                        <option value="continuing">Devam Eden</option>
+                        <option value="positive">Onaylanan</option>
+                        <option value="rejected">Reddedilen</option>
+                      </select>
+                    </div>
+                  </div>
                   <button
                     className="btn btn-primary btn-sm"
                     onClick={() => {
