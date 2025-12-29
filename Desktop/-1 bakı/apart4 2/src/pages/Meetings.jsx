@@ -264,7 +264,7 @@ const Meetings = () => {
             action: `${activeTab === 'sites' ? 'Site' : 'Firma'} silindi: ${entity.name}`
           });
         
-        fetchAllMeetingNotes();
+        fetchEntities();
         if (selectedEntityForView && selectedEntityForView.id === entity.id) {
           setSelectedEntityForView(null);
           setSelectedEntityNotes([]);
