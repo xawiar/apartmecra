@@ -49,7 +49,31 @@ const SiteDashboard = () => {
 
   const user = getUser();
   const siteId = user?.siteId;
-  
+
+  // Robust ID comparison helper
+  const isIdMatch = (id1, id2) => {
+    if (id1 === id2) return true;
+    if (!id1 || !id2) return false;
+
+    const s1 = String(id1).trim().toLowerCase();
+    const s2 = String(id2).trim().toLowerCase();
+
+    if (s1 === s2) return true;
+
+    // Check with/without ADA- prefix
+    const clean1 = s1.replace(/^ada-?/, '');
+    const clean2 = s2.replace(/^ada-?/, '');
+
+    if (clean1 === clean2 && clean1 !== '') return true;
+
+    // Numeric check
+    if (!isNaN(Number(clean1)) && !isNaN(Number(clean2)) && Number(clean1) === Number(clean2)) {
+      return true;
+    }
+
+    return false;
+  };
+
   // Function to play notification sound
   const playNotificationSound = () => {
     try {
@@ -70,24 +94,24 @@ const SiteDashboard = () => {
   const playBeepSound = () => {
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      
+
       // Resume audio context if suspended (required by some browsers)
       if (audioContext.state === 'suspended') {
         audioContext.resume();
       }
-      
+
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
+
       oscillator.frequency.value = 800; // Frequency in Hz
       oscillator.type = 'sine';
-      
+
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
+
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.3);
     } catch (e) {
@@ -103,9 +127,9 @@ const SiteDashboard = () => {
           playNotificationSound();
         }
       };
-      
+
       navigator.serviceWorker.addEventListener('message', handleMessage);
-      
+
       return () => {
         navigator.serviceWorker.removeEventListener('message', handleMessage);
       };
@@ -119,7 +143,7 @@ const SiteDashboard = () => {
       const body = notification.message || 'Yeni bir bildiriminiz var';
       const icon = '/icon-192x192.png';
       const badge = '/icon-72x72.png';
-      
+
       const notificationOptions = {
         body: body,
         icon: icon,
@@ -136,18 +160,18 @@ const SiteDashboard = () => {
           type: notification.type || 'info'
         }
       };
-      
+
       const pushNotification = new Notification(title, notificationOptions);
-      
+
       // Play notification sound
       playNotificationSound();
-      
+
       // Handle notification click
       pushNotification.onclick = (event) => {
         event.preventDefault();
         window.focus();
         pushNotification.close();
-        
+
         if (notification.link) {
           window.location.href = notification.link;
         } else {
@@ -156,7 +180,7 @@ const SiteDashboard = () => {
       };
     }
   };
-  
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -173,11 +197,11 @@ const SiteDashboard = () => {
           getAgreements(),
           getTransactions()
         ]);
-        
+
         setSiteData(data);
         setCompanies(companiesData);
         setPanelImages(allPanelImages);
-        
+
         // Fetch announcements for this site
         try {
           const allAnnouncements = await getAnnouncements();
@@ -190,7 +214,7 @@ const SiteDashboard = () => {
               return bTime - aTime;
             });
           setAnnouncements(siteAnnouncements);
-          
+
           // Set up real-time listener for announcements
           const { onSnapshot, collection, query, orderBy } = await import('firebase/firestore');
           const { db } = await import('../config/firebase.js');
@@ -199,42 +223,42 @@ const SiteDashboard = () => {
             announcementsRef,
             orderBy('createdAt', 'desc')
           );
-          
+
           const unsubscribe = onSnapshot(announcementsQuery, (snapshot) => {
             // Build fresh list from current snapshot (handles deletions properly)
             const newAnnouncements = [];
-            
+
             snapshot.forEach((doc) => {
               // Only process existing documents
               if (!doc.exists()) {
                 return;
               }
-              
+
               const announcement = {
                 _docId: doc.id,
                 ...doc.data(),
                 id: doc.data().id || doc.id
               };
-              
+
               // Filter for this site
               if (announcement.targetSite === 'all' || String(announcement.targetSite) === String(siteId)) {
                 newAnnouncements.push(announcement);
               }
             });
-            
+
             // Sort by createdAt descending
             newAnnouncements.sort((a, b) => {
               const aTime = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
               const bTime = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
               return bTime - aTime;
             });
-            
+
             // Always update state with fresh list (this ensures deleted items are removed)
             setAnnouncements(newAnnouncements);
           }, (error) => {
             console.error('Error in announcements listener:', error);
           });
-          
+
           // Store unsubscribe function for cleanup
           return () => {
             if (unsubscribe) unsubscribe();
@@ -242,7 +266,7 @@ const SiteDashboard = () => {
         } catch (error) {
           console.error('Error fetching announcements:', error);
         }
-        
+
         // Set initial site form data
         if (data.site) {
           setSiteFormData({
@@ -257,7 +281,7 @@ const SiteDashboard = () => {
             notes: data.site.notes || ''
           });
         }
-        
+
         // Debug: Log panel images with full details
         console.log('SiteDashboard - Loaded panel images:', allPanelImages);
         console.log('SiteDashboard - Site ID:', siteId);
@@ -280,7 +304,7 @@ const SiteDashboard = () => {
             });
           });
         }
-        
+
         // Also log agreements to see what we're searching for
         console.log('SiteDashboard - ALL agreements:', data.agreements.length);
         console.log('SiteDashboard - ALL agreements details:', data.agreements.map(a => ({
@@ -294,66 +318,76 @@ const SiteDashboard = () => {
           siteIdsType: Array.isArray(a.siteIds) ? 'array' : typeof a.siteIds,
           siteIdsIncludesADA52: Array.isArray(a.siteIds) ? a.siteIds.includes(siteId) : false
         })));
-        
-        const activeAgreements = data.agreements.filter(a => 
-          a.status === 'active' && 
-          (a.paymentReceived || a.creditPaymentReceived) && 
-          Array.isArray(a.siteIds) && a.siteIds.includes(siteId)
+
+        const siteActiveAgreements = data.agreements.filter(a =>
+          a.status === 'active' &&
+          (a.paymentReceived || a.creditPaymentReceived) &&
+          Array.isArray(a.siteIds) && a.siteIds.some(sid => isIdMatch(sid, siteId))
         );
-        
-        console.log('SiteDashboard - Active agreements for site:', activeAgreements.length);
-        console.log('SiteDashboard - Active agreements details:', activeAgreements.map(a => ({
-          id: a.id,
-          idType: typeof a.id,
-          idString: String(a.id),
-          companyId: a.companyId,
-          siteIds: a.siteIds,
-          sitePanelSelections: a.sitePanelSelections ? Object.keys(a.sitePanelSelections) : null
-        })));
-        
+
+        console.log('SiteDashboard - Active agreements for site:', siteActiveAgreements.length);
+
         // Calculate statistics
         if (data.site) {
-          const totalPanels = parseInt(data.site.panels) || 0;
-          
+          // Total panels from site record, or fallback calculation
+          let totalPanels = parseInt(data.site.panels) || 0;
+          if (totalPanels === 0 && data.site.blocks && data.site.elevatorsPerBlock) {
+            // Default: 2 panels per elevator
+            totalPanels = parseInt(data.site.blocks) * parseInt(data.site.elevatorsPerBlock) * 2;
+            console.log('SiteDashboard - Calculated totalPanels from blocks:', totalPanels);
+          }
+
           // Count only panels from active and paid agreements
           const isAgreementPaid = (agreement) => agreement.paymentReceived || agreement.creditPaymentReceived;
-          
+
           // Count used panels by checking all active and paid agreements
-          let usedPanels = 0;
+          let usedPanelsCount = 0;
           data.agreements
-            .filter(a => a.status === 'active' && isAgreementPaid(a) && Array.isArray(a.siteIds) && a.siteIds.includes(siteId))
+            .filter(a => a.status === 'active' && isAgreementPaid(a) && Array.isArray(a.siteIds) && a.siteIds.some(sid => isIdMatch(sid, siteId)))
             .forEach(agreement => {
-              // Add the panel count for this site in this agreement
-              usedPanels += agreement.sitePanelCounts?.[siteId] || 0;
+              // Add the panel count for this site in this agreement - handle many possible ID keys
+              let count = 0;
+              if (agreement.sitePanelCounts) {
+                // Try to find the matching key in sitePanelCounts
+                const matchingKey = Object.keys(agreement.sitePanelCounts).find(key => isIdMatch(key, siteId));
+                if (matchingKey) {
+                  count = agreement.sitePanelCounts[matchingKey] || 0;
+                }
+              }
+              usedPanelsCount += count;
             });
-          
-          const activeAgreements = data.agreements.filter(a => a.status === 'active' && Array.isArray(a.siteIds) && a.siteIds.includes(siteId)).length;
-          
+
+          const activeAgreementsCount = data.agreements.filter(a =>
+            a.status === 'active' &&
+            Array.isArray(a.siteIds) &&
+            a.siteIds.some(sid => isIdMatch(sid, siteId))
+          ).length;
+
           // Calculate total revenue from both income and expense transactions
           // Income: payments received from companies for agreements
           // Expense: payments made to sites (these count as revenue for the site)
-          const incomeTransactions = data.transactions.filter(t => 
-            t.type === 'income' && 
+          const incomeTransactions = data.transactions.filter(t =>
+            t.type === 'income' &&
             t.source?.includes('Anlaşma Ödemesi') &&
             // Make sure this transaction is related to an agreement for this site
-            data.agreements.some(a => 
-              Array.isArray(a.siteIds) && a.siteIds.includes(siteId) && 
+            data.agreements.some(a =>
+              Array.isArray(a.siteIds) && a.siteIds.some(sid => isIdMatch(sid, siteId)) &&
               t.source?.includes(a.id)
             )
           );
-          
-          const expenseTransactions = data.transactions.filter(t => 
-            t.type === 'expense' && 
-            t.source?.includes('Site Ödemesi') && 
-            t.source?.includes(data.site.name)
+
+          const expenseTransactions = data.transactions.filter(t =>
+            t.type === 'expense' &&
+            t.source?.includes('Site Ödemesi') &&
+            (t.source?.includes(data.site.name) || (data.site.id && t.source?.includes(data.site.id)) || (data.site.siteId && t.source?.includes(data.site.siteId)))
           );
-          
+
           const totalRevenue = [
             ...incomeTransactions,
             ...expenseTransactions
-          ].reduce((sum, t) => sum + Math.abs(t.amount), 0);
-          
-          
+          ].reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
+
+
           // Calculate future payments using the same logic as SitesMain
           const helpers = SiteHelpers({
             companies: companiesData,
@@ -422,37 +456,37 @@ const SiteDashboard = () => {
       console.log('getPanelImage: No images available');
       return null;
     }
-    
+
     const searchAgreementId = agreementId?.toString();
     const searchSiteId = siteId;
     const searchBlockId = blockId;
     const searchPanelId = panelId?.toString();
-    
+
     console.log('getPanelImage: Searching for', {
       agreementId: searchAgreementId,
       siteId: searchSiteId,
       blockId: searchBlockId,
       panelId: searchPanelId
     });
-    
+
     const found = images.find(img => {
       const imgAgreementId = img.agreementId?.toString();
       const imgSiteId = img.siteId;
       const imgBlockId = img.blockId;
       const imgPanelId = img.panelId?.toString();
-      
-      const match = imgAgreementId === searchAgreementId && 
-                    imgSiteId === searchSiteId && 
-                    imgBlockId === searchBlockId && 
-                    imgPanelId === searchPanelId;
-      
+
+      const match = imgAgreementId === searchAgreementId &&
+        imgSiteId === searchSiteId &&
+        imgBlockId === searchBlockId &&
+        imgPanelId === searchPanelId;
+
       if (match) {
         console.log('getPanelImage: FOUND MATCH', img);
       }
-      
+
       return match;
     });
-    
+
     if (!found) {
       console.log('getPanelImage: NO MATCH FOUND. Available images:', images.map(img => ({
         agreementId: img.agreementId?.toString(),
@@ -461,7 +495,7 @@ const SiteDashboard = () => {
         panelId: img.panelId?.toString()
       })));
     }
-    
+
     return found || null;
   };
 
@@ -485,7 +519,7 @@ const SiteDashboard = () => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('tr-TR');
   };
-  
+
   // Handle edit site
   const handleEditSite = () => {
     if (siteData.site) {
@@ -503,7 +537,7 @@ const SiteDashboard = () => {
       setShowEditSiteModal(true);
     }
   };
-  
+
   // Handle site form change
   const handleSiteFormChange = (e) => {
     const { name, value } = e.target;
@@ -512,12 +546,12 @@ const SiteDashboard = () => {
       [name]: value
     }));
   };
-  
+
   // Handle site form submit - Create update request instead of direct update
   const handleSiteFormSubmit = async (e) => {
     e.preventDefault();
     if (!siteData.site) return;
-    
+
     try {
       // Create update request instead of direct update
       // Helper function to remove undefined values (Firestore doesn't accept undefined)
@@ -530,7 +564,7 @@ const SiteDashboard = () => {
         });
         return cleaned;
       };
-      
+
       const requestData = {
         siteId: siteData.site.id,
         siteName: siteData.site.name,
@@ -550,7 +584,7 @@ const SiteDashboard = () => {
         requestedData: cleanData(siteFormData),
         changes: {} // Will be calculated
       };
-      
+
       // Calculate changes
       const changes = {};
       Object.keys(siteFormData).forEach(key => {
@@ -561,21 +595,21 @@ const SiteDashboard = () => {
           };
         }
       });
-      
+
       requestData.changes = changes;
-      
+
       if (Object.keys(changes).length === 0) {
         await window.showAlert('Bilgi', 'Değişiklik yapılmadı.', 'info');
         setShowEditSiteModal(false);
         return;
       }
-      
+
       const request = await createSiteUpdateRequest(requestData);
       if (request) {
         setShowEditSiteModal(false);
         await window.showAlert(
-          'Başarılı', 
-          'Site bilgileri güncelleme talebi oluşturuldu. Admin onayından sonra değişiklikler uygulanacaktır.', 
+          'Başarılı',
+          'Site bilgileri güncelleme talebi oluşturuldu. Admin onayından sonra değişiklikler uygulanacaktır.',
           'success'
         );
       }
@@ -597,7 +631,7 @@ const SiteDashboard = () => {
   // Calculate panel distribution across blocks
   const getPanelBlockInfo = () => {
     if (!siteData.site) return [];
-    
+
     const isBusinessCenter = siteData.site.siteType === 'business_center';
 
     // İş merkezleri için blok/panel hesabı farklı:
@@ -609,17 +643,17 @@ const SiteDashboard = () => {
     const panelsPerBlock = isBusinessCenter
       ? (parseInt(siteData.site.panels) || 0)
       : elevatorsPerBlock * panelsPerElevator;
-    
+
     const blockInfo = [];
     let panelCounter = 1;
-    
+
     const blockLabels = isBusinessCenter ? ['A'] : generateBlockLabels(blocks);
-    
+
     for (let blockIndex = 0; blockIndex < blocks; blockIndex++) {
       const blockNumber = blockIndex + 1;
       const blockLabel = blockLabels[blockIndex] || 'A';
       const blockPanels = [];
-      
+
       for (let panelInBlock = 0; panelInBlock < panelsPerBlock; panelInBlock++) {
         if (panelCounter <= stats.totalPanels) {
           const panelId = `panel-${panelInBlock + 1}`; // Panel IDs are 1-based
@@ -636,7 +670,7 @@ const SiteDashboard = () => {
           panelCounter++;
         }
       }
-      
+
       if (blockPanels.length > 0) {
         blockInfo.push({
           blockNumber,
@@ -647,7 +681,7 @@ const SiteDashboard = () => {
         });
       }
     }
-    
+
     return blockInfo;
   };
 
@@ -656,21 +690,21 @@ const SiteDashboard = () => {
   const isPanelUsedInActiveAgreements = (blockIndex, panelInBlock) => {
     const isAgreementPaid = (agreement) => agreement.paymentReceived || agreement.creditPaymentReceived;
     // Filter for active agreements that are also paid and include this site
-    const activeAgreements = siteData.agreements.filter(a => 
-      a.status === 'active' && 
-      isAgreementPaid(a) && 
+    const activeAgreements = siteData.agreements.filter(a =>
+      a.status === 'active' &&
+      isAgreementPaid(a) &&
       Array.isArray(a.siteIds) && a.siteIds.includes(siteId)
     );
-    
+
     const blockLabel = String.fromCharCode(65 + blockIndex); // A, B, C, etc.
     const blockId = `${siteId}-block-${blockLabel}`; // Format: siteId-block-A, siteId-block-B, etc.
     const panelId = `panel-${panelInBlock + 1}`; // Panel IDs are 1-based
-    
+
     for (const agreement of activeAgreements) {
       // Check if this site has panel selections for this agreement
       if (agreement.sitePanelSelections && agreement.sitePanelSelections[siteId]) {
         const sitePanelData = agreement.sitePanelSelections[siteId];
-        
+
         // Check if this block is selected for this site in this agreement
         if (sitePanelData[blockId]) {
           // Check if new format (with date ranges)
@@ -692,7 +726,7 @@ const SiteDashboard = () => {
         }
       }
     }
-    
+
     return false;
   };
 
@@ -701,16 +735,16 @@ const SiteDashboard = () => {
   const getPanelUsageInfo = (blockIndex, panelInBlock) => {
     const isAgreementPaid = (agreement) => agreement.paymentReceived || agreement.creditPaymentReceived;
     // Filter for active agreements that are also paid and include this site
-    const activeAgreements = siteData.agreements.filter(a => 
-      a.status === 'active' && 
-      isAgreementPaid(a) && 
+    const activeAgreements = siteData.agreements.filter(a =>
+      a.status === 'active' &&
+      isAgreementPaid(a) &&
       Array.isArray(a.siteIds) && a.siteIds.includes(siteId)
     );
-    
+
     const blockLabel = String.fromCharCode(65 + blockIndex); // A, B, C, etc.
     const blockId = `${siteId}-block-${blockLabel}`; // Format: siteId-block-A, siteId-block-B, etc.
     const panelId = `panel-${panelInBlock + 1}`; // Panel IDs are 1-based
-    
+
     console.log('getPanelUsageInfo: Searching for panel:', {
       blockIndex,
       panelInBlock,
@@ -719,12 +753,12 @@ const SiteDashboard = () => {
       panelId,
       activeAgreementsCount: activeAgreements.length
     });
-    
+
     for (const agreement of activeAgreements) {
       // Check if this site has panel selections for this agreement
       if (agreement.sitePanelSelections && agreement.sitePanelSelections[siteId]) {
         const sitePanelData = agreement.sitePanelSelections[siteId];
-        
+
         // Check if this block is selected for this site in this agreement
         if (sitePanelData[blockId]) {
           // Check if new format (with date ranges)
@@ -769,19 +803,19 @@ const SiteDashboard = () => {
         }
       }
     }
-    
+
     console.log('getPanelUsageInfo: NOT FOUND for panel:', { blockIndex, panelInBlock, blockId, panelId });
     return null;
   };
 
   // Filter agreements based on payment filter and site
   const getFilteredAgreements = () => {
-    let filtered = siteData.agreements.filter(a => Array.isArray(a.siteIds) && a.siteIds.includes(siteId));
-    
+    let filtered = siteData.agreements.filter(a => Array.isArray(a.siteIds) && a.siteIds.some(sid => isIdMatch(sid, siteId)));
+
     // Filter by payment status
     if (!paymentFilter.showPaid || !paymentFilter.showUnpaid) {
       const isAgreementPaid = (agreement) => agreement.paymentReceived || agreement.creditPaymentReceived;
-      
+
       if (!paymentFilter.showPaid) {
         filtered = filtered.filter(a => !isAgreementPaid(a));
       }
@@ -789,19 +823,19 @@ const SiteDashboard = () => {
         filtered = filtered.filter(a => isAgreementPaid(a));
       }
     }
-    
+
     // Filter by date range
     if (paymentFilter.dateFrom) {
-      filtered = filtered.filter(a => 
+      filtered = filtered.filter(a =>
         new Date(a.startDate) >= new Date(paymentFilter.dateFrom)
       );
     }
     if (paymentFilter.dateTo) {
-      filtered = filtered.filter(a => 
+      filtered = filtered.filter(a =>
         new Date(a.endDate) <= new Date(paymentFilter.dateTo)
       );
     }
-    
+
     return filtered;
   };
 
@@ -899,7 +933,7 @@ const SiteDashboard = () => {
           <p className="text-muted mb-0 small">Site ID: {siteData.site?.id || siteId}</p>
         </div>
         <div className="d-flex flex-wrap align-items-center gap-2 w-100 w-md-auto">
-          <button 
+          <button
             className="btn btn-outline-primary btn-sm"
             onClick={handleEditSite}
             title="Site Bilgilerini Düzenle"
@@ -929,13 +963,13 @@ const SiteDashboard = () => {
               </li>
             </ul>
           </div>
-          <button 
+          <button
             className="btn btn-outline-danger btn-sm"
             onClick={async () => {
               // Stop keep-alive mechanism
               const { cleanupKeepAlive } = await import('../utils/keepAlive');
               await cleanupKeepAlive();
-              
+
               localStorage.removeItem('token');
               localStorage.removeItem('user');
               window.location.href = '/';
@@ -966,12 +1000,12 @@ const SiteDashboard = () => {
                       <div
                         key={announcement.id || announcement._docId}
                         className="mb-2 p-2 rounded bg-white border-start border-3"
-                        style={{ 
+                        style={{
                           fontSize: '0.9rem',
-                          borderColor: announcement.type === 'payment' ? '#198754' : 
-                                      announcement.type === 'warning' ? '#ffc107' : 
-                                      announcement.type === 'error' ? '#dc3545' : 
-                                      '#0dcaf0'
+                          borderColor: announcement.type === 'payment' ? '#198754' :
+                            announcement.type === 'warning' ? '#ffc107' :
+                              announcement.type === 'error' ? '#dc3545' :
+                                '#0dcaf0'
                         }}
                       >
                         <div className="d-flex align-items-start">
@@ -982,13 +1016,13 @@ const SiteDashboard = () => {
                             <div className="fw-semibold">{announcement.title}</div>
                             <div className="text-muted small">{announcement.message}</div>
                             <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                              {announcement.createdAt 
+                              {announcement.createdAt
                                 ? new Date(announcement.createdAt.seconds * 1000 || announcement.createdAt).toLocaleDateString('tr-TR', {
-                                    day: 'numeric',
-                                    month: 'short',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })
+                                  day: 'numeric',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
                                 : 'Yeni'}
                             </div>
                           </div>
@@ -1081,10 +1115,10 @@ const SiteDashboard = () => {
               <div className="card-body p-2 p-md-3">
                 {(() => {
                   const site = siteData.site;
-                  
+
                   // Calculate panels based on site type
                   let blockCount, panelsPerBlock, blockLabels;
-                  
+
                   if (site.siteType === 'business_center') {
                     blockCount = 1;
                     panelsPerBlock = parseInt(site.panels) || 0;
@@ -1095,27 +1129,31 @@ const SiteDashboard = () => {
                     panelsPerBlock = elevatorsPerBlock * 2;
                     blockLabels = generateBlockLabels(blockCount);
                   }
-                  
+
                   // Collect all used blocks and panels from all active agreements
                   const allUsedBlocks = new Set();
                   const allPanelSelections = {};
-                  
+
                   siteData.agreements
-                    .filter(a => 
-                      a.status === 'active' && 
-                      Array.isArray(a.siteIds) && a.siteIds.includes(siteId)
+                    .filter(a =>
+                      a.status === 'active' &&
+                      Array.isArray(a.siteIds) && a.siteIds.some(sid => isIdMatch(sid, siteId))
                     )
                     .forEach((agreement) => {
                       let usedBlocks = [];
                       let panelSelections = {};
-                      
+
                       if (agreement.dateRanges && Array.isArray(agreement.dateRanges) && agreement.dateRanges.length > 0) {
                         agreement.dateRanges.forEach((range, rangeIndex) => {
                           const rangeKey = `range-${rangeIndex}`;
-                          const rangeBlocks = agreement.siteBlockSelections?.[rangeKey]?.[siteId] || [];
+                          const matchingKey = agreement.siteBlockSelections?.[rangeKey] ?
+                            Object.keys(agreement.siteBlockSelections[rangeKey]).find(key => isIdMatch(key, siteId)) : null;
+                          const rangeBlocks = matchingKey ? (agreement.siteBlockSelections[rangeKey][matchingKey] || []) : [];
                           usedBlocks = [...new Set([...usedBlocks, ...rangeBlocks])];
-                          
-                          const sitePanelData = agreement.sitePanelSelections?.[siteId] || {};
+
+                          const sitePanelMatchingKey = agreement.sitePanelSelections ?
+                            Object.keys(agreement.sitePanelSelections).find(key => isIdMatch(key, siteId)) : null;
+                          const sitePanelData = sitePanelMatchingKey ? (agreement.sitePanelSelections[sitePanelMatchingKey] || {}) : {};
                           Object.keys(sitePanelData).forEach(blockKey => {
                             if (!panelSelections[blockKey]) {
                               panelSelections[blockKey] = [];
@@ -1125,10 +1163,15 @@ const SiteDashboard = () => {
                           });
                         });
                       } else {
-                        usedBlocks = agreement.siteBlockSelections?.[siteId] || [];
-                        panelSelections = agreement.sitePanelSelections?.[siteId] || {};
+                        const matchingKey = agreement.siteBlockSelections ?
+                          Object.keys(agreement.siteBlockSelections).find(key => isIdMatch(key, siteId)) : null;
+                        usedBlocks = matchingKey ? (agreement.siteBlockSelections[matchingKey] || []) : [];
+
+                        const panelMatchingKey = agreement.sitePanelSelections ?
+                          Object.keys(agreement.sitePanelSelections).find(key => isIdMatch(key, siteId)) : null;
+                        panelSelections = panelMatchingKey ? (agreement.sitePanelSelections[panelMatchingKey] || {}) : {};
                       }
-                      
+
                       usedBlocks.forEach(blockId => allUsedBlocks.add(blockId));
                       Object.keys(panelSelections).forEach(blockKey => {
                         if (!allPanelSelections[blockKey]) {
@@ -1137,33 +1180,37 @@ const SiteDashboard = () => {
                         allPanelSelections[blockKey] = [...new Set([...allPanelSelections[blockKey], ...panelSelections[blockKey]])];
                       });
                     });
-                  
+
                   // Generate all block keys for this site
                   const allBlockKeys = blockLabels.map(label => `site-${siteId}-${label}`);
-                  
+
                   return (
                     <div className="row g-2 g-md-3">
                       {allBlockKeys.map((blockId) => {
                         const blockLabel = blockId.split('-')[2];
                         const usedPanels = allPanelSelections[blockId] || [];
                         const isBlockUsed = allUsedBlocks.has(blockId);
-                        
+
                         // Find which agreement uses this block (for panel images)
                         const agreementForBlock = siteData.agreements.find(a => {
-                          if (a.status !== 'active' || !Array.isArray(a.siteIds) || !a.siteIds.includes(siteId)) return false;
-                          
+                          if (a.status !== 'active' || !Array.isArray(a.siteIds) || !a.siteIds.some(sid => isIdMatch(sid, siteId))) return false;
+
                           if (a.dateRanges && Array.isArray(a.dateRanges) && a.dateRanges.length > 0) {
                             return a.dateRanges.some((range, rangeIndex) => {
                               const rangeKey = `range-${rangeIndex}`;
-                              const rangeBlocks = a.siteBlockSelections?.[rangeKey]?.[siteId] || [];
+                              const matchingKey = a.siteBlockSelections?.[rangeKey] ?
+                                Object.keys(a.siteBlockSelections[rangeKey]).find(key => isIdMatch(key, siteId)) : null;
+                              const rangeBlocks = matchingKey ? (a.siteBlockSelections[rangeKey][matchingKey] || []) : [];
                               return rangeBlocks.includes(blockId);
                             });
                           } else {
-                            const blocks = a.siteBlockSelections?.[siteId] || [];
+                            const matchingKey = a.siteBlockSelections ?
+                              Object.keys(a.siteBlockSelections).find(key => isIdMatch(key, siteId)) : null;
+                            const blocks = matchingKey ? (a.siteBlockSelections[matchingKey] || []) : [];
                             return blocks.includes(blockId);
                           }
                         });
-                        
+
                         return (
                           <div key={blockId} className="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3">
                             <div className="card border-info h-100">
@@ -1189,28 +1236,27 @@ const SiteDashboard = () => {
                                     const panelKey = `panel-${panelId}`;
                                     const isPanelUsed = usedPanels.includes(panelKey);
                                     const fullPanelNumber = `${siteId}${blockLabel}${panelId}`;
-                                    
+
                                     // Try to find panel image from any agreement for this site/block/panel
                                     let panelImage = null;
                                     if (agreementForBlock) {
                                       panelImage = getPanelImage(agreementForBlock.id.toString(), siteId, blockId, panelId.toString(), panelImages);
                                     }
-                                    
+
                                     // If not found, search in all panel images for this site/block/panel
                                     if (!panelImage) {
-                                      panelImage = panelImages.find(img => 
-                                        img.siteId === siteId && 
-                                        img.blockId === blockId && 
+                                      panelImage = panelImages.find(img =>
+                                        isIdMatch(img.siteId, siteId) &&
+                                        img.blockId === blockId &&
                                         img.panelId?.toString() === panelId.toString()
                                       );
                                     }
-                                    
+
                                     return (
                                       <div
                                         key={panelKey}
-                                        className={`d-flex align-items-center justify-content-center ${
-                                          isPanelUsed ? 'bg-primary text-white' : 'bg-light text-muted'
-                                        } border rounded position-relative`}
+                                        className={`d-flex align-items-center justify-content-center panel-box ${isPanelUsed ? 'bg-primary text-white' : 'bg-light text-muted'
+                                          } border rounded position-relative`}
                                         style={{
                                           width: panelImage ? '70px' : '50px',
                                           height: panelImage ? '100px' : '70px',
@@ -1224,7 +1270,6 @@ const SiteDashboard = () => {
                                           backgroundRepeat: 'no-repeat',
                                           minHeight: panelImage ? '100px' : '70px'
                                         }}
-                                        className="panel-box"
                                         title={isPanelUsed ? `Panel ${fullPanelNumber} - ${agreementForBlock ? getCompanyName(agreementForBlock.companyId) : 'Kullanılıyor'}${panelImage ? ' (Fotoğraf var)' : ''}` : `Panel ${panelId} - Boş`}
                                       >
                                         {!panelImage && (
@@ -1296,7 +1341,7 @@ const SiteDashboard = () => {
                     onChange={(e) => handleFilterChange('dateTo', e.target.value)}
                     placeholder="Bitiş"
                   />
-                  <button 
+                  <button
                     className="btn btn-sm btn-outline-secondary"
                     onClick={clearFilters}
                     title="Filtreleri Temizle"
@@ -1343,26 +1388,30 @@ const SiteDashboard = () => {
                             </td>
                             <td className="small d-none d-md-table-cell">{formatDate(agreement.startDate)}</td>
                             <td className="small d-none d-md-table-cell">{formatDate(agreement.endDate)}</td>
-                            <td className="small">{agreement.sitePanelCounts?.[siteId] || 0}</td>
+                            <td className="small">
+                              {(() => {
+                                if (!agreement.sitePanelCounts) return 0;
+                                const matchingKey = Object.keys(agreement.sitePanelCounts).find(key => isIdMatch(key, siteId));
+                                return matchingKey ? (agreement.sitePanelCounts[matchingKey] || 0) : 0;
+                              })()}
+                            </td>
                             <td className="small d-none d-lg-table-cell">{formatCurrency(agreement.weeklyRatePerPanel || 0)}</td>
                             <td className={`small ${isPaid ? 'text-success fw-bold' : 'text-danger fw-bold'}`}>
                               {formatCurrency(agreement.totalAmount || 0)}
                             </td>
                             <td>
-                              <span className={`badge small ${
-                                agreement.status === 'active' 
-                                  ? 'bg-success-subtle text-success-emphasis' 
-                                  : 'bg-danger-subtle text-danger-emphasis'
-                              }`}>
+                              <span className={`badge small ${agreement.status === 'active'
+                                ? 'bg-success-subtle text-success-emphasis'
+                                : 'bg-danger-subtle text-danger-emphasis'
+                                }`}>
                                 {agreement.status === 'active' ? 'Aktif' : 'Pasif'}
                               </span>
                             </td>
                             <td>
-                              <span className={`badge small ${
-                                isPaid
-                                  ? 'bg-success-subtle text-success-emphasis' 
-                                  : 'bg-warning-subtle text-warning-emphasis'
-                              }`}>
+                              <span className={`badge small ${isPaid
+                                ? 'bg-success-subtle text-success-emphasis'
+                                : 'bg-warning-subtle text-warning-emphasis'
+                                }`}>
                                 {isPaid ? 'Ödendi' : 'Bekliyor'}
                               </span>
                             </td>
@@ -1390,10 +1439,10 @@ const SiteDashboard = () => {
             </div>
             <div className="card-body">
               {siteData.transactions
-                .filter(t => 
-                  (t.type === 'income' && t.source?.includes('Anlaşma Ödemesi') && 
-                   siteData.agreements.some(a => Array.isArray(a.siteIds) && a.siteIds.includes(siteId) && t.source?.includes(a.id))) ||
-                  (t.type === 'expense' && t.source?.includes('Site Ödemesi') && t.source?.includes(siteData.site?.name))
+                .filter(t =>
+                  (t.type === 'income' && t.source?.includes('Anlaşma Ödemesi') &&
+                    siteData.agreements.some(a => Array.isArray(a.siteIds) && a.siteIds.some(sid => isIdMatch(sid, siteId)) && t.source?.includes(a.id))) ||
+                  (t.type === 'expense' && t.source?.includes('Site Ödemesi') && (t.source?.includes(siteData.site?.name) || (siteData.site?.id && t.source?.includes(siteData.site.id))))
                 )
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .length === 0 ? (
@@ -1414,9 +1463,9 @@ const SiteDashboard = () => {
                     </thead>
                     <tbody>
                       {siteData.transactions
-                        .filter(t => 
-                          (t.type === 'income' && t.source?.includes('Anlaşma Ödemesi') && 
-                           siteData.agreements.some(a => Array.isArray(a.siteIds) && a.siteIds.includes(siteId) && t.source?.includes(a.id))) ||
+                        .filter(t =>
+                          (t.type === 'income' && t.source?.includes('Anlaşma Ödemesi') &&
+                            siteData.agreements.some(a => Array.isArray(a.siteIds) && a.siteIds.includes(siteId) && t.source?.includes(a.id))) ||
                           (t.type === 'expense' && t.source?.includes('Site Ödemesi') && t.source?.includes(siteData.site?.name))
                         )
                         .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -1425,7 +1474,7 @@ const SiteDashboard = () => {
                           let transactionType = '';
                           let description = '';
                           let amountClass = '';
-                          
+
                           if (transaction.type === 'income' && transaction.source?.includes('Anlaşma Ödemesi')) {
                             transactionType = 'Firma Ödemesi';
                             amountClass = 'text-success fw-bold';
@@ -1443,16 +1492,15 @@ const SiteDashboard = () => {
                             const companyName = companyMatch ? companyMatch[1] : 'Bilinmeyen Firma';
                             description = `${companyName} tarafından ödeme`;
                           }
-                          
+
                           return (
                             <tr key={transaction.id}>
                               <td className="small">{formatDate(transaction.date)}</td>
                               <td>
-                                <span className={`badge small ${
-                                  transaction.type === 'income' 
-                                    ? 'bg-success-subtle text-success-emphasis' 
-                                    : 'bg-primary-subtle text-primary-emphasis'
-                                }`}>
+                                <span className={`badge small ${transaction.type === 'income'
+                                  ? 'bg-success-subtle text-success-emphasis'
+                                  : 'bg-primary-subtle text-primary-emphasis'
+                                  }`}>
                                   {transactionType}
                                 </span>
                               </td>
@@ -1519,11 +1567,10 @@ const SiteDashboard = () => {
                           <td>{formatDate(payment.startDate)}</td>
                           <td>{formatDate(payment.endDate)}</td>
                           <td>
-                            <span className={`badge ${
-                              payment.paymentReceived
-                                ? 'bg-success-subtle text-success-emphasis' 
-                                : 'bg-primary-subtle text-primary-emphasis'
-                            }`}>
+                            <span className={`badge ${payment.paymentReceived
+                              ? 'bg-success-subtle text-success-emphasis'
+                              : 'bg-primary-subtle text-primary-emphasis'
+                              }`}>
                               {payment.paymentReceived ? 'Nakit Ödendi' : 'Kredi ile Ödendi'}
                             </span>
                           </td>
