@@ -12,6 +12,7 @@ const SiteDashboard = () => {
   });
   const [companies, setCompanies] = useState([]);
   const [panelImages, setPanelImages] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [futurePayments, setFuturePayments] = useState([]);
   const [paymentFilter, setPaymentFilter] = useState({
     dateFrom: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
