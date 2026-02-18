@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getAgreements, createAgreement, updateAgreement, deleteAgreement, archiveAgreement } from '../../services/api';
 import { getSites, updateSite } from '../../services/api';
 import { getCompanies, updateCompany } from '../../services/api';
-import { createTransaction } from '../../services/api';
+import { createTransaction, createCheck } from '../../services/api';
 import { createLog, getUsers, createUser, updateUser } from '../../services/api';
 import logger from '../../utils/logger';
 import { safeFilter, safeMap, safeFind } from '../../utils/safeAccess';
@@ -22,20 +22,20 @@ const AgreementsMain = () => {
   const [sites, setSites] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Helper function to remove duplicates from agreements array
   const removeDuplicateAgreements = (agreementsList) => {
     if (!Array.isArray(agreementsList)) {
       logger.warn('removeDuplicateAgreements: agreementsList is not an array', agreementsList);
       return [];
     }
-    
+
     const seenKeys = new Set();
     const uniqueAgreements = [];
-    
+
     for (const agreement of agreementsList) {
       if (!agreement) continue;
-      
+
       // Create a unique key: prefer _docId, fallback to id
       let uniqueKey = null;
       if (agreement._docId) {
@@ -43,27 +43,27 @@ const AgreementsMain = () => {
       } else if (agreement.id) {
         uniqueKey = `id:${String(agreement.id)}`;
       }
-      
+
       // If no unique key, skip this agreement (but log it)
       if (!uniqueKey) {
         logger.warn('Agreement has no _docId or id:', agreement);
         continue;
       }
-      
+
       // Check if we've seen this key before
       if (seenKeys.has(uniqueKey)) {
         logger.log('Duplicate agreement found:', uniqueKey);
         continue; // Skip duplicate
       }
-      
+
       // Add to seen set and include in unique list
       seenKeys.add(uniqueKey);
       uniqueAgreements.push(agreement);
     }
-    
+
     return uniqueAgreements;
   };
-  
+
   // Wrapper for setAgreements that always removes duplicates
   const setAgreementsUnique = (newAgreements) => {
     const unique = removeDuplicateAgreements(Array.isArray(newAgreements) ? newAgreements : []);
@@ -78,24 +78,24 @@ const AgreementsMain = () => {
   // New state for block and panel selection
   const [siteBlockSelections, setSiteBlockSelections] = useState({}); // {siteId: [selectedBlockIds]}
   const [sitePanelSelections, setSitePanelSelections] = useState({}); // {siteId: {blockId: [selectedPanelIds]}}
-  
+
   // State for photo upload
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [photoData, setPhotoData] = useState({
     file: null,
     previewUrl: null
   });
-  
+
   // State for payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentAgreement, setPaymentAgreement] = useState(null);
-  
+
   // State for check management modal
   const [showCheckManagement, setShowCheckManagement] = useState(false);
-  
+
   // State for active/expired/orders tabs
   const [activeTab, setActiveTab] = useState('active'); // 'active', 'expired', or 'orders'
-  
+
   const [formData, setFormData] = useState({
     companyId: '',
     startDate: '', // Geriye uyumluluk için
@@ -105,7 +105,7 @@ const AgreementsMain = () => {
     totalAmount: '', // Opsiyonel: Toplam anlaşma bedeli
     notes: ''
   });
-  
+
   // State for custom alert modals
   const [alertModal, setAlertModal] = useState({
     show: false,
@@ -145,7 +145,7 @@ const AgreementsMain = () => {
     selectedWeeks,
     formData
   });
-  
+
   // Use ref to prevent multiple fetches
   const hasFetchedRef = useRef(false);
 
@@ -165,12 +165,12 @@ const AgreementsMain = () => {
       `Tüm ${agreements.length} anlaşmayı arşivlemek istediğinize emin misiniz? Bu işlem geri alınamaz.`,
       'warning'
     );
-    
+
     if (result) {
       try {
         let successCount = 0;
         let errorCount = 0;
-        
+
         // Create an array of promises for archiving all agreements
         const archivePromises = (agreements || []).map(async (agreement) => {
           try {
@@ -181,7 +181,7 @@ const AgreementsMain = () => {
               logger.error('Agreement has no ID or _docId:', agreement);
               return { success: false, agreementId: null, error: 'Agreement has no ID' };
             }
-            
+
             const result = await archiveAgreement(agreementIdToUse);
             if (result && result.success) {
               successCount++;
@@ -202,15 +202,15 @@ const AgreementsMain = () => {
             return { success: false, agreementId: agreement._docId || agreement.id, error: error.message };
           }
         });
-        
+
         // Wait for all archive operations to complete
         await Promise.all(archivePromises);
-        
+
         // Reload agreements from server to reflect changes
         const updatedAgreements = await getAgreements();
         const uniqueAgreements = removeDuplicateAgreements(updatedAgreements);
         setAgreementsUnique(uniqueAgreements);
-        
+
         await window.showAlert(
           'İşlem Tamamlandı',
           `${successCount} anlaşma başarıyla arşivlendi. ${errorCount} anlaşma arşivlenirken hata oluştu.`,
@@ -283,52 +283,52 @@ const AgreementsMain = () => {
     if (hasFetchedRef.current) {
       return;
     }
-    
+
     const fetchData = async () => {
       try {
         hasFetchedRef.current = true;
         setLoading(true);
-        
+
         logger.log('Starting to fetch data...');
         const [agreementsData, sitesData, companiesData] = await Promise.all([
           getAgreements(),
           getSites(),
           getCompanies()
         ]);
-        
+
         logger.log('Fetched agreements data:', agreementsData);
         logger.log('Agreements count:', agreementsData?.length || 0);
         logger.log('Agreements data type:', Array.isArray(agreementsData) ? 'array' : typeof agreementsData);
         if (agreementsData && agreementsData.length > 0) {
           logger.log('First agreement sample:', agreementsData[0]);
         }
-        
+
         // Initialize sites with payment properties
         const initializedSites = safeMap(sitesData, site => ({
           ...site,
           pendingPayments: site.pendingPayments || [],
           hasPendingPayment: (site.pendingPayments && site.pendingPayments.length > 0) || false
         }));
-        
+
         // Remove duplicates from agreements data using helper function
         const uniqueAgreements = removeDuplicateAgreements(agreementsData || []);
         logger.log('Unique agreements after filtering:', uniqueAgreements.length);
-        
+
         // Remove duplicates from sites data (by id or _docId)
-        const uniqueSites = safeFilter(initializedSites, (site, index, self) => 
-          index === self.findIndex(s => 
+        const uniqueSites = safeFilter(initializedSites, (site, index, self) =>
+          index === self.findIndex(s =>
             (s.id === site.id && s._docId === site._docId) ||
             (s.id && site.id && s.id === site.id) ||
             (s._docId && site._docId && s._docId === site._docId)
           )
         );
-        
+
         // Remove duplicates from companies data (by id or _docId)
         const seenCompanyIds = new Set();
         const seenCompanyDocIds = new Set();
         const uniqueCompanies = safeFilter(companiesData, company => {
           if (!company) return false;
-          
+
           // Check by _docId first (most reliable)
           if (company._docId) {
             const docId = String(company._docId);
@@ -338,7 +338,7 @@ const AgreementsMain = () => {
             seenCompanyDocIds.add(docId);
             return true;
           }
-          
+
           // Fallback to id
           if (company.id) {
             const id = String(company.id);
@@ -348,11 +348,11 @@ const AgreementsMain = () => {
             seenCompanyIds.add(id);
             return true;
           }
-          
+
           // If no id or _docId, exclude it
           return false;
         });
-        
+
         logger.log('Setting agreements:', uniqueAgreements.length);
         setAgreementsUnique(uniqueAgreements);
         setSites(uniqueSites);
@@ -367,14 +367,14 @@ const AgreementsMain = () => {
     };
 
     fetchData();
-    
+
     // Check for expired agreements every 5 minutes (reduced frequency to prevent issues)
     const interval = setInterval(() => {
       if (handlers && typeof handlers.checkExpiredAgreements === 'function') {
         handlers.checkExpiredAgreements();
       }
     }, 5 * 60 * 1000); // 5 minutes instead of 1 minute
-    
+
     return () => {
       clearInterval(interval);
     };
@@ -385,7 +385,7 @@ const AgreementsMain = () => {
   // Use debounce to prevent excessive updates
   useEffect(() => {
     if (selectedSites.length === 0) return;
-    
+
     const timeoutId = setTimeout(() => {
       selectedSites.forEach(siteId => {
         if (helpers && typeof helpers.updateSitePanelCount === 'function') {
@@ -393,7 +393,7 @@ const AgreementsMain = () => {
         }
       });
     }, 100); // Debounce 100ms
-    
+
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sitePanelSelections, selectedSites]); // Keep dependencies but debounce updates
@@ -417,13 +417,13 @@ const AgreementsMain = () => {
         window.showAlert('Hata', 'Lütfen sadece resim dosyası seçin.', 'error');
         return;
       }
-      
+
       // Check file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         window.showAlert('Hata', 'Dosya boyutu 5MB\'dan büyük olamaz.', 'error');
         return;
       }
-      
+
       const previewUrl = URL.createObjectURL(file);
       setPhotoData({
         file,
@@ -467,7 +467,7 @@ const AgreementsMain = () => {
           status: 'pending', // 'pending', 'cleared', 'returned', 'protested'
           createdAt: new Date().toISOString()
         };
-        
+
         const createdCheck = await createCheck(checkRecord);
         if (createdCheck) {
           checkId = createdCheck.id || createdCheck._docId;
@@ -491,7 +491,7 @@ const AgreementsMain = () => {
       if (newTransaction) {
         // Update agreement with new paid amount
         const paymentStatus = remainingAmount <= 0.01 ? 'paid' : (newPaidAmount > 0 ? 'partial' : 'unpaid');
-        
+
         const updatedAgreement = {
           ...agreement,
           paidAmount: newPaidAmount,
@@ -503,11 +503,11 @@ const AgreementsMain = () => {
         };
 
         const savedAgreement = await updateAgreement(agreement.id, updatedAgreement);
-        
+
         if (savedAgreement) {
           // Update agreement in state
           setAgreementsUnique(agreements.map(a => a.id === agreement.id ? savedAgreement : a));
-          
+
           // Close modal
           setShowPaymentModal(false);
           setPaymentAgreement(null);
@@ -545,36 +545,36 @@ const AgreementsMain = () => {
       window.showAlert('Hata', 'Lütfen bir resim seçin.', 'error');
       return;
     }
-    
+
     try {
       let photoUrl = photoData.previewUrl;
-      
+
       // If we have a file, convert it to base64 for persistent storage
       if (photoData.file) {
         photoUrl = await fileToBase64(photoData.file);
       }
-      
+
       const updatedAgreement = {
         ...currentAgreement,
         photoUrl: photoUrl,
         photoUploadedAt: new Date().toISOString()
       };
-      
+
       // Update agreement in database
       const savedAgreement = await updateAgreement(currentAgreement.id, updatedAgreement);
-      
+
       if (savedAgreement) {
         // Update agreement in state
         setAgreementsUnique(agreements.map(a => a.id === currentAgreement.id ? savedAgreement : a));
-        
+
         // Update current agreement if it's the same
         if (currentAgreement.id === (currentAgreement?.id)) {
           setCurrentAgreement(savedAgreement);
         }
-        
+
         // Close modal
         setShowPhotoModal(false);
-        
+
         window.showAlert('Başarılı', 'Fotoğraf başarıyla kaydedildi.', 'success');
       } else {
         throw new Error('Failed to save agreement');
@@ -589,10 +589,10 @@ const AgreementsMain = () => {
   const getFilteredAgreements = () => {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
-    
+
     if (activeTab === 'orders') {
       // Orders: agreements with isOrder flag or status 'pending'
-      return agreements.filter(agreement => 
+      return agreements.filter(agreement =>
         agreement && (agreement.isOrder === true || agreement.status === 'pending')
       ).sort((a, b) => {
         const aId = typeof a.id === 'string' ? a.id : a.id;
@@ -603,24 +603,24 @@ const AgreementsMain = () => {
         return bId - aId;
       });
     }
-    
+
     let filteredAgreements = agreements.filter(agreement => {
       if (!agreement) return false;
-      
+
       const status = agreement.status || 'active';
-      
+
       // Exclude archived
       if (status === 'archived') return false;
-      
+
       // Require valid endDate
       if (!agreement.endDate) return false;
       const endDate = new Date(agreement.endDate);
       endDate.setHours(0, 0, 0, 0);
       if (isNaN(endDate.getTime())) return false;
-      
+
       const isExpired = endDate < currentDate;
       const isActiveLike = !isExpired;
-      
+
       if (activeTab === 'active') {
         // Show all non-archived agreements whose end date is today or future (regardless of status)
         return isActiveLike;
@@ -629,28 +629,28 @@ const AgreementsMain = () => {
         return isExpired || status === 'expired' || status === 'terminated' || status === 'completed';
       }
     });
-    
+
     // Remove duplicates based on id or _docId
-    const uniqueAgreements = filteredAgreements.filter((agreement, index, self) => 
-      index === self.findIndex(a => 
+    const uniqueAgreements = filteredAgreements.filter((agreement, index, self) =>
+      index === self.findIndex(a =>
         (a.id && agreement.id && String(a.id) === String(agreement.id)) ||
         (a._docId && agreement._docId && String(a._docId) === String(agreement._docId)) ||
         (a.id && agreement.id && a.id === agreement.id) ||
         (a._docId && agreement._docId && a._docId === agreement._docId)
       )
     );
-    
+
     // Sort by creation date (most recent first) - using id as proxy for creation order
     return uniqueAgreements.sort((a, b) => {
       // Handle both numeric and string IDs
       const aId = typeof a.id === 'string' ? a.id : a.id;
       const bId = typeof b.id === 'string' ? b.id : b.id;
-      
+
       // For string IDs, sort alphabetically (most recent first)
       if (typeof aId === 'string' && typeof bId === 'string') {
         return bId.localeCompare(aId);
       }
-      
+
       // For numeric IDs, sort numerically
       return bId - aId;
     });
@@ -660,16 +660,16 @@ const AgreementsMain = () => {
   const getTabStatistics = () => {
     const filteredAgreements = getFilteredAgreements();
     const totalAmount = filteredAgreements.reduce((sum, agreement) => sum + (agreement.totalAmount || 0), 0);
-    const averageWeeks = filteredAgreements.length > 0 
+    const averageWeeks = filteredAgreements.length > 0
       ? Math.round(filteredAgreements.reduce((sum, agreement) => sum + (agreement.totalWeeks || 0), 0) / filteredAgreements.length)
       : 0;
-    
+
     // Calculate payment statistics
     const paidAgreements = filteredAgreements.filter(a => a.paymentReceived || a.creditPaymentReceived);
     const unpaidAgreements = filteredAgreements.filter(a => !a.paymentReceived && !a.creditPaymentReceived);
     const paidAmount = paidAgreements.reduce((sum, agreement) => sum + (agreement.totalAmount || 0), 0);
     const unpaidAmount = unpaidAgreements.reduce((sum, agreement) => sum + (agreement.totalAmount || 0), 0);
-    
+
     return {
       count: filteredAgreements.length,
       totalAmount,
@@ -704,7 +704,7 @@ const AgreementsMain = () => {
             <p className="mb-0">Firma anlaşmalarını yönetin ve takip edin</p>
           </div>
           <div className="d-flex gap-2 flex-wrap">
-            <button 
+            <button
               onClick={() => setShowCheckManagement(true)}
               className="btn btn-outline-primary btn-icon d-flex align-items-center"
               disabled={isObserver()}
@@ -712,7 +712,7 @@ const AgreementsMain = () => {
               <i className="bi bi-receipt me-2"></i>
               <span>Çek Yönetimi</span>
             </button>
-            <button 
+            <button
               onClick={uiHandlers.handleAddAgreement}
               className="btn btn-page-primary btn-icon d-flex align-items-center"
               disabled={isObserver()}
@@ -877,8 +877,8 @@ const AgreementsMain = () => {
                 <div>
                   <h6 className="text-muted mb-1">Ödeme Oranı</h6>
                   <h3 className="mb-0 fw-bold">
-                    {tabStats.count > 0 
-                      ? Math.round((tabStats.paidAgreements / tabStats.count) * 100) 
+                    {tabStats.count > 0
+                      ? Math.round((tabStats.paidAgreements / tabStats.count) * 100)
                       : 0}%
                   </h3>
                 </div>
@@ -924,7 +924,7 @@ const AgreementsMain = () => {
       {/* Agreements Table */}
       <div className="card border-0 shadow-sm">
         <div className="card-body p-0">
-          <AgreementTable 
+          <AgreementTable
             agreements={getFilteredAgreements()}
             handlers={handlers}
             uiHandlers={uiHandlers}
@@ -936,7 +936,7 @@ const AgreementsMain = () => {
       </div>
 
       {/* Agreement Detail Modal */}
-      <AgreementDetailModal 
+      <AgreementDetailModal
         showModal={showModal}
         currentAgreement={currentAgreement}
         uiHandlers={uiHandlers}
@@ -945,7 +945,7 @@ const AgreementsMain = () => {
       />
 
       {/* Photo Upload Modal */}
-      <AgreementPhotoModal 
+      <AgreementPhotoModal
         showPhotoModal={showPhotoModal}
         currentAgreement={currentAgreement}
         setShowPhotoModal={setShowPhotoModal}
@@ -957,7 +957,7 @@ const AgreementsMain = () => {
       />
 
       {/* Add/Edit Agreement Form Modal */}
-      <AgreementFormModal 
+      <AgreementFormModal
         showAddForm={showAddForm}
         currentAgreement={currentAgreement}
         uiHandlers={uiHandlers}
