@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { getMeetings, createMeeting, updateMeeting, deleteMeeting, createLog } from '../services/api';
 import { getUser } from '../utils/auth';
 import logger from '../utils/logger';
+import { useDebounce } from '../hooks/useDebounce';
 
 const Meetings = () => {
   const [activeTab, setActiveTab] = useState('sites'); // 'sites' or 'companies'
   const [meetingEntities, setMeetingEntities] = useState([]); // Sites or companies for meetings
+  const [allMeetingEntities, setAllMeetingEntities] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedEntityForView, setSelectedEntityForView] = useState(null); // Selected entity for viewing notes
   const [selectedEntityNotes, setSelectedEntityNotes] = useState([]); // Notes for selected entity
   const [notesFilter, setNotesFilter] = useState('all'); // all | continuing | rejected | positive
@@ -54,6 +58,21 @@ const Meetings = () => {
   }, [entityFilter]);
 
   useEffect(() => {
+    const q = debouncedSearch.trim().toLowerCase();
+    if (!q) {
+      setMeetingEntities(allMeetingEntities);
+      return;
+    }
+    const filtered = allMeetingEntities.filter(e => {
+      const hay = [
+        e.name, e.manager, e.contact, e.phone, e.email, e.address
+      ].filter(Boolean).join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+    setMeetingEntities(filtered);
+  }, [debouncedSearch, allMeetingEntities]);
+
+  useEffect(() => {
     if (selectedEntityForView && showEntityDetailsModal) {
       fetchEntityNotes(selectedEntityForView.id);
     } else {
@@ -79,6 +98,12 @@ const Meetings = () => {
       // Decide which entities to include based on entityFilter
       const entities = [];
       for (const [entityId, meetings] of entityMeetingsMap.entries()) {
+        const sorted = [...meetings].sort((a, b) => {
+          const da = a.date ? new Date(a.date).getTime() : 0;
+          const db = b.date ? new Date(b.date).getTime() : 0;
+          return db - da;
+        });
+        const last = sorted[0] || {};
         // If filter is 'all' include entity
         if (!entityFilter || entityFilter === 'all') {
           const m = meetings[0];
@@ -89,7 +114,10 @@ const Meetings = () => {
             phone: m.phone || '',
             address: m.address || '',
             contact: m.contact || '',
-            email: m.email || ''
+            email: m.email || '',
+            notesCount: meetings.length,
+            lastStatus: last.status || 'continuing',
+            lastDate: last.date || null
           });
           continue;
         }
@@ -105,11 +133,15 @@ const Meetings = () => {
             phone: m.phone || '',
             address: m.address || '',
             contact: m.contact || '',
-            email: m.email || ''
+            email: m.email || '',
+            notesCount: meetings.length,
+            lastStatus: last.status || 'continuing',
+            lastDate: last.date || null
           });
         }
       }
 
+      setAllMeetingEntities(entities);
       setMeetingEntities(entities);
     } catch (error) {
       logger.error('Error fetching entities:', error);
@@ -422,10 +454,25 @@ const Meetings = () => {
           <h2 className="h3 h4-md fw-bold mb-1">Görüşmeler</h2>
           <p className="mb-0 small text-muted">Potansiyel site ve firma görüşmelerini yönetin</p>
         </div>
+        <div className="mt-3 mt-md-0 d-flex gap-2 align-items-center" style={{maxWidth:'420px', width:'100%'}}>
+          <div className="input-group">
+            <span className="input-group-text bg-light border-0">
+              <i className="bi bi-search text-muted"></i>
+            </span>
+            <input
+              type="search"
+              className="form-control border-0"
+              placeholder={`${activeTab === 'sites' ? 'Site' : 'Firma'} adı, kişi veya telefon ara`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{backgroundColor:'#f8f9fa'}}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Tab Navigation */}
-      <ul className="nav nav-tabs mb-4">
+      <ul className="nav nav-pills bg-light rounded p-1 mb-4">
         <li className="nav-item">
           <button
             className={`nav-link ${activeTab === 'sites' ? 'active' : ''}`}
@@ -458,37 +505,40 @@ const Meetings = () => {
         {/* Entity List */}
         <div className="col-12">
           <div className="card shadow-sm">
-            <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-              <div className="d-flex align-items-center">
-                <h5 className="mb-0">
-                  <i className="bi bi-list-ul me-2"></i>
-                  {activeTab === 'sites' ? 'Siteler' : 'Firmalar'} ({meetingEntities.length})
+            <div className="card-header bg-white d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+              <div className="d-flex align-items-center flex-wrap gap-2">
+                <h5 className="mb-0 me-2">
+                  <i className="bi bi-list-ul me-2 text-primary"></i>
+                  {activeTab === 'sites' ? 'Siteler' : 'Firmalar'} <span className="badge bg-primary-subtle text-primary ms-1">{meetingEntities.length}</span>
                 </h5>
-                <div className="ms-3 d-flex gap-2">
+                <div className="d-flex flex-wrap gap-2">
                   {['all','continuing','positive','rejected'].map(key => (
                     <button
                       key={key}
-                      className={`btn btn-sm ${entityFilter===key ? 'btn-light text-primary' : 'btn-outline-light text-white'}`}
+                      className={`btn btn-sm rounded-pill ${entityFilter===key ? 'btn-primary' : 'btn-outline-secondary'}`}
                       onClick={() => setEntityFilter(key)}
                       title={key}
                     >
-                      {key==='all' ? 'Hepsi' : key==='continuing' ? 'Devam' : key==='positive' ? 'Onay' : 'Reddedilen'}
+                      {key==='all' ? 'Hepsi' : key==='continuing' ? 'Devam' : key==='positive' ? 'Olumlu' : 'Red'}
                     </button>
                   ))}
                 </div>
               </div>
-              <button
-                className="btn btn-sm btn-light"
-                onClick={() => {
-                  resetEntityForm();
-                  setShowEntityForm(true);
-                }}
-                title={`Yeni ${activeTab === 'sites' ? 'Site' : 'Firma'} Ekle`}
-              >
-                <i className="bi bi-plus-circle"></i>
-              </button>
+              <div className="mt-3 mt-md-0">
+                <button
+                  className="btn btn-primary btn-sm rounded-pill"
+                  onClick={() => {
+                    resetEntityForm();
+                    setShowEntityForm(true);
+                  }}
+                  title={`Yeni ${activeTab === 'sites' ? 'Site' : 'Firma'} Ekle`}
+                >
+                  <i className="bi bi-plus-circle me-1"></i>
+                  Yeni {activeTab === 'sites' ? 'Site' : 'Firma'}
+                </button>
+              </div>
             </div>
-            <div className="card-body p-0" style={{ maxHeight: '600px', overflowY: 'auto' }}>
+            <div className="card-body p-0" style={{ maxHeight: '640px', overflowY: 'auto' }}>
               {meetingEntities.length === 0 ? (
                 <div className="text-center py-5">
                   <i className="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
@@ -501,15 +551,28 @@ const Meetings = () => {
                       key={entity.id}
                       className="list-group-item"
                     >
-                      <div className="d-flex justify-content-between align-items-start">
+                      <div className="d-flex justify-content-between align-items-center">
                         <div className="flex-grow-1">
-                          <h6 className="mb-1 fw-bold">{entity.name}</h6>
-                          {entity.phone && (
-                            <small className="text-muted d-block">
-                              <i className="bi bi-telephone me-1"></i>
-                              {entity.phone}
-                            </small>
-                          )}
+                          <div className="d-flex align-items-center gap-2">
+                            <h6 className="mb-0 fw-bold">{entity.name}</h6>
+                            {entity.lastStatus === 'positive' && <span className="badge bg-success">Olumlu</span>}
+                            {entity.lastStatus === 'continuing' && <span className="badge bg-primary">Devam</span>}
+                            {entity.lastStatus === 'rejected' && <span className="badge bg-danger">Red</span>}
+                            {typeof entity.notesCount === 'number' && (
+                              <span className="badge text-bg-light"><i className="bi bi-chat-dots me-1"></i>{entity.notesCount}</span>
+                            )}
+                          </div>
+                          <div className="mt-1 d-flex flex-wrap gap-3 small text-muted">
+                            {entity.phone && (
+                              <span><i className="bi bi-telephone me-1"></i>{entity.phone}</span>
+                            )}
+                            {entity.manager && activeTab === 'sites' && (
+                              <span><i className="bi bi-person me-1"></i>{entity.manager}</span>
+                            )}
+                            {entity.contact && activeTab !== 'sites' && (
+                              <span><i className="bi bi-person-badge me-1"></i>{entity.contact}</span>
+                            )}
+                          </div>
                         </div>
                         <div className="btn-group btn-group-sm" role="group">
                           <button
@@ -722,14 +785,22 @@ const Meetings = () => {
               </div>
               <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                 {/* Entity Details */}
-                <div className="card mb-4 border-primary">
-                  <div className="card-header bg-primary text-white">
-                    <h6 className="mb-0">
-                      <i className="bi bi-building me-2"></i>
-                      {activeTab === 'sites' ? 'Site' : 'Firma'} Bilgileri
-                    </h6>
-                  </div>
+                <div className="card mb-4">
                   <div className="card-body">
+                    <div className="d-flex align-items-center justify-content-between mb-3">
+                      <h6 className="mb-0">
+                        <i className="bi bi-building me-2 text-primary"></i>
+                        {activeTab === 'sites' ? 'Site' : 'Firma'} Bilgileri
+                      </h6>
+                      <div className="d-flex gap-2">
+                        {selectedEntityForView.lastStatus === 'positive' && <span className="badge bg-success">Olumlu</span>}
+                        {selectedEntityForView.lastStatus === 'continuing' && <span className="badge bg-primary">Devam</span>}
+                        {selectedEntityForView.lastStatus === 'rejected' && <span className="badge bg-danger">Red</span>}
+                        {typeof selectedEntityForView.notesCount === 'number' && (
+                          <span className="badge text-bg-light"><i className="bi bi-chat-dots me-1"></i>{selectedEntityForView.notesCount}</span>
+                        )}
+                      </div>
+                    </div>
                     <div className="row g-3">
                       <div className="col-md-6">
                         <strong>{activeTab === 'sites' ? 'Site Adı' : 'Firma Adı'}:</strong>
@@ -834,46 +905,51 @@ const Meetings = () => {
                 ) : (
                   <div className="list-group">
                     {selectedEntityNotes.map((note) => (
-                      <div key={note.id || note._docId} className="list-group-item">
-                        <div className="d-flex justify-content-between align-items-start mb-2">
-                          <div className="flex-grow-1">
-                            <div className="d-flex align-items-center gap-2 mb-2">
-                              <span className="badge bg-secondary">
-                                <i className="bi bi-calendar me-1"></i>
-                                {formatDate(note.date)}
-                              </span>
-                              {getStatusBadge(note.status)}
+                      <div key={note.id || note._docId} className="list-group-item border-0">
+                        <div className="position-relative ps-4">
+                          <span className="position-absolute top-0 start-0 translate-middle-y" style={{width:'8px',height:'8px',borderRadius:'50%',background:'#0d6efd',marginTop:'10px'}}></span>
+                          <div className="border-start ps-3">
+                            <div className="d-flex justify-content-between align-items-start mb-2">
+                              <div className="flex-grow-1">
+                                <div className="d-flex align-items-center gap-2 mb-2">
+                                  <span className="badge bg-light text-dark">
+                                    <i className="bi bi-calendar me-1"></i>
+                                    {formatDate(note.date)}
+                                  </span>
+                                  {getStatusBadge(note.status)}
+                                </div>
+                                <p className="mb-0">{note.notes}</p>
+                              </div>
+                              <div className="btn-group btn-group-sm ms-2">
+                                <button
+                                  className="btn btn-outline-primary"
+                                  onClick={() => {
+                                    setShowEntityDetailsModal(false);
+                                    setEditingNote(note);
+                                    const entityId = activeTab === 'sites' ? note.siteId : note.companyId;
+                                    setNoteFormEntityId(entityId);
+                                    setNoteFormData({
+                                      selectedEntityId: entityId || '',
+                                      notes: note.notes || '',
+                                      status: note.status || 'continuing'
+                                    });
+                                    setShowNoteForm(true);
+                                  }}
+                                  title="Düzenle"
+                                >
+                                  <i className="bi bi-pencil"></i>
+                                </button>
+                                <button
+                                  className="btn btn-outline-danger"
+                                  onClick={() => {
+                                    handleDeleteNote(note);
+                                  }}
+                                  title="Sil"
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </button>
+                              </div>
                             </div>
-                            <p className="mb-0">{note.notes}</p>
-                          </div>
-                          <div className="btn-group btn-group-sm ms-2">
-                            <button
-                              className="btn btn-outline-primary"
-                              onClick={() => {
-                                setShowEntityDetailsModal(false);
-                                setEditingNote(note);
-                                const entityId = activeTab === 'sites' ? note.siteId : note.companyId;
-                                setNoteFormEntityId(entityId);
-                                setNoteFormData({
-                                  selectedEntityId: entityId || '',
-                                  notes: note.notes || '',
-                                  status: note.status || 'continuing'
-                                });
-                                setShowNoteForm(true);
-                              }}
-                              title="Düzenle"
-                            >
-                              <i className="bi bi-pencil"></i>
-                            </button>
-                            <button
-                              className="btn btn-outline-danger"
-                              onClick={() => {
-                                handleDeleteNote(note);
-                              }}
-                              title="Sil"
-                            >
-                              <i className="bi bi-trash"></i>
-                            </button>
                           </div>
                         </div>
                       </div>
