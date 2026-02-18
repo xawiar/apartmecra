@@ -1089,6 +1089,23 @@ export const resetPanelImages = async () => {
   }
 };
 
+// Delete a single panel image by ID
+export const deletePanelImage = async (imageId) => {
+  try {
+    const { deletePanelImage: deleteFromStorage } = await import('./firebaseStorage.js');
+    const result = await deleteFromStorage(imageId);
+    console.log('deletePanelImage called - result:', result);
+    return result;
+  } catch (error) {
+    console.error('Error deleting panel image:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+
 // Accounting Records endpoints
 export const getAccountingRecords = async () => {
   await initializeFirebase();
