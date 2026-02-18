@@ -1,12 +1,10 @@
 // Service Worker for Apart4 PWA
-const CACHE_NAME = 'apart4-v1.0.4'; // Updated to force cache refresh
-const KEEP_ALIVE_INTERVAL = 30000; // 30 seconds
+const CACHE_NAME = 'apart4-v1.0.5'; // Forced refresh for Vite migration
+const KEEP_ALIVE_INTERVAL = 30000;
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
   '/manifest.json',
-  // Icons are now embedded as data URIs in manifest.json
+  '/index.html'
 ];
 
 // Install event - cache resources
@@ -64,7 +62,7 @@ function startKeepAlive() {
       // Ignore errors
     });
   }, KEEP_ALIVE_INTERVAL);
-  
+
   console.log('Service Worker: Keep-alive mechanism started');
 }
 
@@ -88,15 +86,15 @@ self.addEventListener('fetch', (event) => {
           console.log('Service Worker: Serving from cache', event.request.url);
           return response;
         }
-        
+
         console.log('Service Worker: Fetching from network', event.request.url);
         return fetch(event.request)
           .then((response) => {
             // Don't cache non-successful responses, HEAD requests, or non-GET requests
-            if (!response || 
-                response.status !== 200 || 
-                response.type !== 'basic' ||
-                event.request.method !== 'GET') {
+            if (!response ||
+              response.status !== 200 ||
+              response.type !== 'basic' ||
+              event.request.method !== 'GET') {
               return response;
             }
 
@@ -127,7 +125,7 @@ self.addEventListener('fetch', (event) => {
 // Background sync for offline data
 self.addEventListener('sync', (event) => {
   console.log('Service Worker: Background sync', event.tag);
-  
+
   if (event.tag === 'background-sync') {
     event.waitUntil(
       // Sync offline data when connection is restored
@@ -139,7 +137,7 @@ self.addEventListener('sync', (event) => {
 // Push notification handling
 self.addEventListener('push', (event) => {
   console.log('Service Worker: Push received');
-  
+
   let notificationData = {
     title: 'Apart4 Bildirimi',
     body: 'Yeni bildirim',
@@ -189,7 +187,7 @@ self.addEventListener('push', (event) => {
       return self.clients.matchAll().then(clients => {
         clients.forEach(client => {
           try {
-            client.postMessage({ 
+            client.postMessage({
               type: 'play-notification-sound',
               notificationId: notificationData.tag
             });
@@ -213,7 +211,7 @@ self.addEventListener('message', (event) => {
 // Notification click handling
 self.addEventListener('notificationclick', (event) => {
   console.log('Service Worker: Notification click received', event);
-  
+
   event.notification.close();
 
   const action = event.action;
@@ -230,7 +228,7 @@ self.addEventListener('notificationclick', (event) => {
             return client.focus();
           }
         }
-        
+
         // If app is not open, open it
         const urlToOpen = notificationData.link || '/';
         return clients.openWindow(urlToOpen);
@@ -247,13 +245,13 @@ async function syncOfflineData() {
   try {
     // Get offline data from IndexedDB
     const offlineData = await getOfflineData();
-    
+
     if (offlineData && offlineData.length > 0) {
       // Sync with server
       for (const data of offlineData) {
         await syncDataToServer(data);
       }
-      
+
       // Clear offline data after successful sync
       await clearOfflineData();
     }
@@ -281,7 +279,7 @@ async function clearOfflineData() {
 // Message handler for keep-alive and other messages
 self.addEventListener('message', (event) => {
   if (!event.data) return;
-  
+
   if (event.data.type === 'keep-alive') {
     // Respond to keep-alive message if port is available
     if (event.ports && event.ports[0]) {

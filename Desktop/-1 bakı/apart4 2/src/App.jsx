@@ -8,22 +8,39 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { getUser } from './utils/auth';
 import { initializeKeepAlive, cleanupKeepAlive } from './utils/keepAlive';
 
-// Lazy load pages for code splitting - reduces initial bundle size
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const SiteDashboard = lazy(() => import('./pages/SiteDashboard'));
-const CompanyDashboard = lazy(() => import('./pages/CompanyDashboard'));
-const CompanyOrders = lazy(() => import('./pages/CompanyOrders'));
-const ObserverDashboard = lazy(() => import('./pages/ObserverDashboard'));
-const PersonnelDashboard = lazy(() => import('./pages/PersonnelDashboard'));
-const Sites = lazy(() => import('./pages/Sites'));
-const Companies = lazy(() => import('./pages/Companies'));
-const Agreements = lazy(() => import('./pages/Agreements'));
-const Cashier = lazy(() => import('./pages/Cashier'));
-const PartnerShares = lazy(() => import('./pages/NewPartnerShares'));
-const Settings = lazy(() => import('./pages/NewSettings'));
-const CurrentStatus = lazy(() => import('./pages/CurrentStatus'));
-const SitesMap = lazy(() => import('./pages/SitesMap'));
-const Meetings = lazy(() => import('./pages/Meetings'));
+// Lazy load with retry mechanism to handle chunk loading errors after new deployments
+const lazyWithRetry = (componentImport) => {
+  return lazy(async () => {
+    try {
+      return await componentImport();
+    } catch (error) {
+      console.error('Lazy load error:', error);
+      // Check if it's a chunk loading error (common after new deployments)
+      const isChunkError = /dynamically imported module|Loading chunk|Failed to fetch/.test(error.message);
+      if (isChunkError) {
+        console.warn('Chunk loading error detected. Forcing full page reload to get latest version...');
+        window.location.reload();
+      }
+      throw error;
+    }
+  });
+};
+
+const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'));
+const SiteDashboard = lazyWithRetry(() => import('./pages/SiteDashboard'));
+const CompanyDashboard = lazyWithRetry(() => import('./pages/CompanyDashboard'));
+const CompanyOrders = lazyWithRetry(() => import('./pages/CompanyOrders'));
+const ObserverDashboard = lazyWithRetry(() => import('./pages/ObserverDashboard'));
+const PersonnelDashboard = lazyWithRetry(() => import('./pages/PersonnelDashboard'));
+const Sites = lazyWithRetry(() => import('./pages/Sites'));
+const Companies = lazyWithRetry(() => import('./pages/Companies'));
+const Agreements = lazyWithRetry(() => import('./pages/Agreements'));
+const Cashier = lazyWithRetry(() => import('./pages/Cashier'));
+const PartnerShares = lazyWithRetry(() => import('./pages/NewPartnerShares'));
+const Settings = lazyWithRetry(() => import('./pages/NewSettings'));
+const CurrentStatus = lazyWithRetry(() => import('./pages/CurrentStatus'));
+const SitesMap = lazyWithRetry(() => import('./pages/SitesMap'));
+const Meetings = lazyWithRetry(() => import('./pages/Meetings'));
 
 // Loading component for Suspense fallback
 const PageLoader = () => (
@@ -53,7 +70,7 @@ const DashboardRoute = () => {
     userRef.current = getUser();
   }
   const user = userRef.current;
-  
+
   if (user && user.role === 'site_user') {
     return (
       <Suspense fallback={<PageLoader />}>
@@ -103,7 +120,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-    
+
     if (token && userData) {
       // User is logged in, start keep-alive
       initializeKeepAlive().catch(error => {
@@ -115,7 +132,7 @@ function App() {
         console.error('Failed to cleanup keep-alive:', error);
       });
     }
-    
+
     // Cleanup on unmount
     return () => {
       if (!localStorage.getItem('token')) {
@@ -128,120 +145,120 @@ function App() {
 
   return (
     <ErrorBoundary showDetails={import.meta.env.DEV}>
-    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={
-            <PrivateRoute>
-              <BootstrapLayout>
-                <DashboardRoute />
-              </BootstrapLayout>
-            </PrivateRoute>
-          } />
-          <Route path="/company-dashboard" element={
-            <PrivateRoute>
-              <BootstrapLayout>
-                <Suspense fallback={<PageLoader />}>
-                <CompanyDashboard />
-                </Suspense>
-              </BootstrapLayout>
-            </PrivateRoute>
-          } />
-          <Route path="/company-orders" element={
-            <PrivateRoute>
-              <BootstrapLayout>
-                <Suspense fallback={<PageLoader />}>
-                  <CompanyOrders />
-                </Suspense>
-              </BootstrapLayout>
-            </PrivateRoute>
-          } />
-          <Route path="/sites" element={
-            <PrivateRoute>
-              <BootstrapLayout>
-                <Suspense fallback={<PageLoader />}>
-                <ObserverRestrictedSites />
-                </Suspense>
-              </BootstrapLayout>
-            </PrivateRoute>
-          } />
-          <Route path="/companies" element={
-            <PrivateRoute>
-              <BootstrapLayout>
-                <Suspense fallback={<PageLoader />}>
-                <ObserverRestrictedCompanies />
-                </Suspense>
-              </BootstrapLayout>
-            </PrivateRoute>
-          } />
-          <Route path="/agreements" element={
-            <PrivateRoute>
-              <BootstrapLayout>
-                <Suspense fallback={<PageLoader />}>
-                <ObserverRestrictedAgreements />
-                </Suspense>
-              </BootstrapLayout>
-            </PrivateRoute>
-          } />
-          <Route path="/cashier" element={
-            <PrivateRoute>
-              <BootstrapLayout>
-                <Suspense fallback={<PageLoader />}>
-                <ObserverRestrictedCashier />
-                </Suspense>
-              </BootstrapLayout>
-            </PrivateRoute>
-          } />
-          <Route path="/partner-shares" element={
-            <PrivateRoute>
-              <BootstrapLayout>
-                <Suspense fallback={<PageLoader />}>
-                <ObserverRestrictedPartnerShares />
-                </Suspense>
-              </BootstrapLayout>
-            </PrivateRoute>
-          } />
-          <Route path="/settings" element={
-            <PrivateRoute>
-              <BootstrapLayout>
-                <Suspense fallback={<PageLoader />}>
-                <Settings />
-                </Suspense>
-              </BootstrapLayout>
-            </PrivateRoute>
-          } />
-          <Route path="/current-status" element={
-            <PrivateRoute>
-              <BootstrapLayout>
-                <Suspense fallback={<PageLoader />}>
-                <ObserverRestrictedCurrentStatus />
-                </Suspense>
-              </BootstrapLayout>
-            </PrivateRoute>
-          } />
-          <Route path="/sites-map" element={
-            <PrivateRoute>
-              <BootstrapLayout>
-                <Suspense fallback={<PageLoader />}>
-                  <SitesMap />
-                </Suspense>
-              </BootstrapLayout>
-            </PrivateRoute>
-          } />
-          <Route path="/meetings" element={
-            <PrivateRoute>
-              <BootstrapLayout>
-                <Suspense fallback={<PageLoader />}>
-                  <Meetings />
-                </Suspense>
-              </BootstrapLayout>
-            </PrivateRoute>
-          } />
-        </Routes>
-      </div>
-    </Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={
+              <PrivateRoute>
+                <BootstrapLayout>
+                  <DashboardRoute />
+                </BootstrapLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/company-dashboard" element={
+              <PrivateRoute>
+                <BootstrapLayout>
+                  <Suspense fallback={<PageLoader />}>
+                    <CompanyDashboard />
+                  </Suspense>
+                </BootstrapLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/company-orders" element={
+              <PrivateRoute>
+                <BootstrapLayout>
+                  <Suspense fallback={<PageLoader />}>
+                    <CompanyOrders />
+                  </Suspense>
+                </BootstrapLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/sites" element={
+              <PrivateRoute>
+                <BootstrapLayout>
+                  <Suspense fallback={<PageLoader />}>
+                    <ObserverRestrictedSites />
+                  </Suspense>
+                </BootstrapLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/companies" element={
+              <PrivateRoute>
+                <BootstrapLayout>
+                  <Suspense fallback={<PageLoader />}>
+                    <ObserverRestrictedCompanies />
+                  </Suspense>
+                </BootstrapLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/agreements" element={
+              <PrivateRoute>
+                <BootstrapLayout>
+                  <Suspense fallback={<PageLoader />}>
+                    <ObserverRestrictedAgreements />
+                  </Suspense>
+                </BootstrapLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/cashier" element={
+              <PrivateRoute>
+                <BootstrapLayout>
+                  <Suspense fallback={<PageLoader />}>
+                    <ObserverRestrictedCashier />
+                  </Suspense>
+                </BootstrapLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/partner-shares" element={
+              <PrivateRoute>
+                <BootstrapLayout>
+                  <Suspense fallback={<PageLoader />}>
+                    <ObserverRestrictedPartnerShares />
+                  </Suspense>
+                </BootstrapLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/settings" element={
+              <PrivateRoute>
+                <BootstrapLayout>
+                  <Suspense fallback={<PageLoader />}>
+                    <Settings />
+                  </Suspense>
+                </BootstrapLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/current-status" element={
+              <PrivateRoute>
+                <BootstrapLayout>
+                  <Suspense fallback={<PageLoader />}>
+                    <ObserverRestrictedCurrentStatus />
+                  </Suspense>
+                </BootstrapLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/sites-map" element={
+              <PrivateRoute>
+                <BootstrapLayout>
+                  <Suspense fallback={<PageLoader />}>
+                    <SitesMap />
+                  </Suspense>
+                </BootstrapLayout>
+              </PrivateRoute>
+            } />
+            <Route path="/meetings" element={
+              <PrivateRoute>
+                <BootstrapLayout>
+                  <Suspense fallback={<PageLoader />}>
+                    <Meetings />
+                  </Suspense>
+                </BootstrapLayout>
+              </PrivateRoute>
+            } />
+          </Routes>
+        </div>
+      </Router>
     </ErrorBoundary>
   );
 }
