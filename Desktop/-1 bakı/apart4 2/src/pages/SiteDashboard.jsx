@@ -60,15 +60,18 @@ const SiteDashboard = () => {
 
     if (s1 === s2) return true;
 
-    // Check with/without ADA- prefix
-    const clean1 = s1.replace(/^ada-?/, '');
-    const clean2 = s2.replace(/^ada-?/, '');
+    // Check with/without common prefixes (ADA-, LIL-, etc.)
+    const clean1 = s1.replace(/^[a-z]+-?/, '');
+    const clean2 = s2.replace(/^[a-z]+-?/, '');
 
-    if (clean1 === clean2 && clean1 !== '') return true;
+    if (clean1 === clean2 && clean1 !== '' && !isNaN(Number(clean1))) return true;
 
-    // Numeric check
-    if (!isNaN(Number(clean1)) && !isNaN(Number(clean2)) && Number(clean1) === Number(clean2)) {
-      return true;
+    // Check if one contains the other (e.g. "53" in "LIL53")
+    if (s1.includes(s2) || s2.includes(s1)) {
+      // Only match if the numeric part matches to avoid "1" matching "10"
+      const num1 = s1.match(/\d+/)?.[0];
+      const num2 = s2.match(/\d+/)?.[0];
+      if (num1 && num2 && num1 === num2) return true;
     }
 
     return false;
@@ -406,9 +409,9 @@ const SiteDashboard = () => {
 
           setFuturePayments(calculatedFuturePayments);
           setStats({
-            totalPanels,
-            usedPanels,
-            activeAgreements,
+            totalPanels: totalPanels || 0,
+            usedPanels: usedPanelsCount || 0,
+            activeAgreements: activeAgreementsCount || 0,
             totalRevenue: totalRevenue || 0,
             futurePayments: calculatedFuturePayments.length,
             totalFutureAmount: isNaN(totalFutureAmount) ? 0 : totalFutureAmount

@@ -6,6 +6,33 @@ const SiteHelpers = ({
   companies, sites, agreements,
   transactions
 }) => {
+  // Robust ID comparison helper
+  const isIdMatch = (id1, id2) => {
+    if (id1 === id2) return true;
+    if (!id1 || !id2) return false;
+
+    const s1 = String(id1).trim().toLowerCase();
+    const s2 = String(id2).trim().toLowerCase();
+
+    if (s1 === s2) return true;
+
+    // Check with/without common prefixes (ADA-, LIL-, etc.)
+    const clean1 = s1.replace(/^[a-z]+-?/, '');
+    const clean2 = s2.replace(/^[a-z]+-?/, '');
+
+    if (clean1 === clean2 && clean1 !== '' && !isNaN(Number(clean1))) return true;
+
+    // Check if one contains the other (e.g. "53" in "LIL53")
+    if (s1.includes(s2) || s2.includes(s1)) {
+      // Only match if the numeric part matches to avoid "1" matching "10"
+      const num1 = s1.match(/\d+/)?.[0];
+      const num2 = s2.match(/\d+/)?.[0];
+      if (num1 && num2 && num1 === num2) return true;
+    }
+
+    return false;
+  };
+
   // Get company name by ID
   const getCompanyName = (companyId) => {
     const company = companies.find(c => String(c.id) === String(companyId));
@@ -112,9 +139,9 @@ const SiteHelpers = ({
 
   // Handle showing active agreements for a site
   const getActiveAgreementsForSite = (siteId) => {
-    return agreements.filter(agreement => 
-      agreement.siteIds && 
-      agreement.siteIds.includes(siteId) && 
+    return agreements.filter(agreement =>
+      agreement.siteIds &&
+      agreement.siteIds.includes(siteId) &&
       agreement.status === 'active'
     );
   };
@@ -122,8 +149,8 @@ const SiteHelpers = ({
   // Get payment history for a specific site with detailed agreement information
   const getSitePaymentHistoryDetailed = (siteId, transactions, agreements, companies) => {
     // Filter transactions to only include payments made to this site
-    return transactions.filter(transaction => 
-      transaction.type === 'expense' && 
+    return transactions.filter(transaction =>
+      transaction.type === 'expense' &&
       transaction.source.includes('Site Ödemesi') &&
       transaction.source.includes(sites.find(s => s.id === siteId)?.name || '')
     ).map(transaction => {
@@ -134,14 +161,14 @@ const SiteHelpers = ({
       let panelCount = 0;
       let weeklyRatePerPanel = 0;
       let weeklyTotalAmount = 0;
-      
+
       if (agreementIdMatch) {
         // Try to find the agreement by matching with existing agreements
-        const potentialAgreements = agreements.filter(a => 
+        const potentialAgreements = agreements.filter(a =>
           a.siteIds && a.siteIds.includes(siteId) &&
           transaction.description.includes(getCompanyName(a.companyId, companies))
         );
-        
+
         if (potentialAgreements.length > 0) {
           // Sort by date proximity to transaction date
           agreement = potentialAgreements.sort((a, b) => {
@@ -149,7 +176,7 @@ const SiteHelpers = ({
             const bDiff = Math.abs(new Date(b.startDate) - new Date(transaction.date));
             return aDiff - bDiff;
           })[0];
-          
+
           agreementId = agreement.id;
           panelCount = parseInt(agreement.sitePanelCounts?.[siteId]) || 0;
           weeklyRatePerPanel = parseFloat(agreement.weeklyRatePerPanel) || 0;
@@ -157,7 +184,7 @@ const SiteHelpers = ({
           weeklyTotalAmount = weeklyRatePerPanel;
         }
       }
-      
+
       return {
         ...transaction,
         agreementId,
@@ -173,9 +200,9 @@ const SiteHelpers = ({
   // Calculate pending payments for a site based on active agreements
   const calculatePendingPayments = (site, agreements, companies, transactions) => {
     if (!site || !agreements || !companies || !transactions) return [];
-    
+
     const pendingPayments = [];
-    
+
     // Get all possible site IDs for matching
     const possibleSiteIds = [
       site.id,
@@ -185,7 +212,7 @@ const SiteHelpers = ({
       String(site.siteId),
       String(site._docId)
     ].filter(id => id != null && id !== undefined);
-    
+
     // Find all agreements that include this site (not just active ones, but also expired ones with pending payments)
     // Exclude only archived or deleted agreements
     const siteAgreements = agreements.filter(agreement => {
@@ -193,65 +220,54 @@ const SiteHelpers = ({
       if (agreement.isDeleted || agreement.isArchived) return false;
       // Include active, expired, completed agreements - any that might have pending payments
       // Exclude only if status is explicitly 'archived' or 'terminated' (but even terminated might have pending payments)
-      
+
       // Check if any site ID matches
-      const siteMatches = agreement.siteIds.some(agreementSiteId => {
-        const agreementSiteIdStr = String(agreementSiteId);
-        return possibleSiteIds.some(possibleId => {
-          const possibleIdStr = String(possibleId);
-          return agreementSiteIdStr === possibleIdStr ||
-                 agreementSiteIdStr.toLowerCase() === possibleIdStr.toLowerCase();
-        });
-      });
-      
+      const siteMatches = agreement.siteIds.some(agreementSiteId => isIdMatch(agreementSiteId, site.id));
+
       return siteMatches;
     });
-    
+
     logger.log('calculatePendingPayments - Site:', site.id, 'Found agreements:', siteAgreements.length, siteAgreements.map(a => ({
       id: a.id,
       status: a.status,
       siteIds: a.siteIds,
       companyId: a.companyId
     })));
-    
+
     // Calculate pending payments for site
-    
+
     siteAgreements.forEach(agreement => {
       const company = companies.find(c => c.id === agreement.companyId);
       const companyName = company ? company.name : 'Bilinmeyen Firma';
-      
-      // Get panel count for this site in this agreement
-      // Try all possible site IDs
+
+      // Get panel count for this site in this agreement - handle many possible ID keys
       let panelCount = 0;
-      let matchedSiteId = null;
-      for (const possibleId of possibleSiteIds) {
-        if (agreement.sitePanelCounts && agreement.sitePanelCounts[possibleId]) {
-          panelCount = parseInt(agreement.sitePanelCounts[possibleId]) || 0;
-          if (panelCount > 0) {
-            matchedSiteId = possibleId;
-            break;
-          }
+      if (agreement.sitePanelCounts) {
+        // Try to find the matching key in sitePanelCounts
+        const matchingKey = Object.keys(agreement.sitePanelCounts).find(key => isIdMatch(key, site.id));
+        if (matchingKey) {
+          panelCount = parseInt(agreement.sitePanelCounts[matchingKey]) || 0;
         }
       }
-      
+
       logger.log('calculatePendingPayments - Agreement:', agreement.id, 'Site:', site.id, 'PanelCount:', panelCount, 'MatchedSiteId:', matchedSiteId);
-      
+
       if (panelCount > 0) {
         // Calculate weekly rate per panel
         const weeklyRatePerPanel = parseFloat(agreement.weeklyRatePerPanel) || 0;
-        
+
         // Calculate total weekly amount for this site
         const weeklyTotalAmount = weeklyRatePerPanel * panelCount;
-        
+
         // Calculate site's share percentage (default 25% if not specified)
         const sitePercentage = parseFloat(site.agreementPercentage) || 25;
-        
+
         // Calculate total payment amount for the entire agreement period
         // Support both old format (startDate/endDate) and new format (dateRanges)
         let totalWeeks = 0;
         let agreementStartDate = null;
         let agreementEndDate = null;
-        
+
         if (agreement.dateRanges && Array.isArray(agreement.dateRanges) && agreement.dateRanges.length > 0) {
           // New format: calculate weeks for all date ranges
           agreement.dateRanges.forEach(range => {
@@ -259,7 +275,7 @@ const SiteHelpers = ({
             const rangeEnd = new Date(range.endDate);
             const rangeWeeks = Math.ceil((rangeEnd - rangeStart) / (7 * 24 * 60 * 60 * 1000));
             totalWeeks += rangeWeeks;
-            
+
             // Track overall start and end dates
             if (!agreementStartDate || rangeStart < agreementStartDate) {
               agreementStartDate = rangeStart;
@@ -274,42 +290,40 @@ const SiteHelpers = ({
           agreementEndDate = new Date(agreement.endDate);
           totalWeeks = Math.ceil((agreementEndDate - agreementStartDate) / (7 * 24 * 60 * 60 * 1000));
         }
-        
+
         // Calculate site's total payment amount for the entire agreement
         const siteTotalAmount = (weeklyTotalAmount * sitePercentage * totalWeeks) / 100;
-        
+
         // Check if there are any transactions for this agreement and site
         // Transaction'lar genellikle 'source' field'ında site ve anlaşma bilgisi içerir
         // ÖNEMLİ: Tarih aralığına göre spesifik matching yapıyoruz
         const existingTransactions = transactions.filter(transaction => {
           if (transaction.type !== 'expense') return false;
-          
-          // Check if transaction is for this site
+
           const isForSite = transaction.source && (
             transaction.source.includes('Site Ödemesi') &&
             transaction.source.includes(site.name)
-          ) || (transaction.siteId && possibleSiteIds.some(id => String(transaction.siteId) === String(id)));
-          
+          ) || (transaction.siteId && isIdMatch(transaction.siteId, site.id));
+
           // Check if transaction is for this agreement
           const isForAgreement = (transaction.source && (
             transaction.source.includes(agreement.id) ||
             transaction.source.includes(`Anlaşma ${agreement.id}`) ||
             transaction.description?.includes(agreement.id)
           )) || (transaction.agreementId && String(transaction.agreementId) === String(agreement.id)) ||
-          (transaction.agreementIds && Array.isArray(transaction.agreementIds) && transaction.agreementIds.includes(agreement.id));
-          
-          // Also check direct field matches (if they exist)
+            (transaction.agreementIds && Array.isArray(transaction.agreementIds) && transaction.agreementIds.includes(agreement.id));
+
           const directMatch = transaction.agreementId && transaction.siteId &&
             String(transaction.agreementId) === String(agreement.id) &&
-            possibleSiteIds.some(id => String(transaction.siteId) === String(id));
-          
+            isIdMatch(transaction.siteId, site.id);
+
           // Check if transaction is for the same date range (paymentPeriod kontrolü)
           // Eğer transaction'da paymentPeriod varsa, anlaşmanın tarih aralığı ile eşleşmeli
           let isForDateRange = true;
           if (transaction.paymentPeriod) {
             const transactionDateFrom = new Date(transaction.paymentPeriod.dateFrom);
             const transactionDateTo = new Date(transaction.paymentPeriod.dateTo);
-            
+
             // Anlaşmanın tarih aralığını belirle
             let agreementDateFrom, agreementDateTo;
             if (agreement.dateRanges && Array.isArray(agreement.dateRanges) && agreement.dateRanges.length > 0) {
@@ -321,28 +335,28 @@ const SiteHelpers = ({
               agreementDateFrom = new Date(agreement.startDate);
               agreementDateTo = new Date(agreement.endDate);
             }
-            
+
             // Tarih aralıkları örtüşmeli (transaction'ın tarih aralığı anlaşmanın tarih aralığı içinde olmalı)
             isForDateRange = (
               transactionDateFrom >= agreementDateFrom && transactionDateFrom <= agreementDateTo
             ) || (
-              transactionDateTo >= agreementDateFrom && transactionDateTo <= agreementDateTo
-            ) || (
-              transactionDateFrom <= agreementDateFrom && transactionDateTo >= agreementDateTo
-            );
+                transactionDateTo >= agreementDateFrom && transactionDateTo <= agreementDateTo
+              ) || (
+                transactionDateFrom <= agreementDateFrom && transactionDateTo >= agreementDateTo
+              );
           }
-          
+
           return ((isForSite && isForAgreement) || directMatch) && isForDateRange;
         });
-        
+
         // Calculate total paid amount for this agreement and site
-        const totalPaid = existingTransactions.reduce((sum, transaction) => 
+        const totalPaid = existingTransactions.reduce((sum, transaction) =>
           sum + Math.abs(transaction.amount || 0), 0
         );
-        
+
         // Calculate pending amount (if any)
         const pendingAmount = Math.max(0, siteTotalAmount - totalPaid);
-        
+
         logger.log('calculatePendingPayments - Agreement:', agreement.id, {
           panelCount,
           weeklyRatePerPanel,
@@ -353,7 +367,7 @@ const SiteHelpers = ({
           totalPaid,
           pendingAmount
         });
-        
+
         if (pendingAmount > 0) {
           pendingPayments.push({
             agreementId: agreement.id,
@@ -372,27 +386,28 @@ const SiteHelpers = ({
         }
       }
     });
-    
+
     return pendingPayments;
   };
 
   // Get pending payments with detailed agreement information
   const getPendingPaymentsDetailed = (site, agreements, companies) => {
     if (!site.pendingPayments) return [];
-    
+
     return site.pendingPayments.map(payment => {
       const agreement = agreements.find(a => String(a.id) === String(payment.agreementId));
       let panelCount = 0;
       let weeklyRatePerPanel = 0;
       let weeklyTotalAmount = 0;
-      
+
       if (agreement && agreement.sitePanelCounts) {
-        panelCount = parseInt(agreement.sitePanelCounts[site.id]) || 0;
+        const matchingKey = Object.keys(agreement.sitePanelCounts).find(key => isIdMatch(key, site.id));
+        panelCount = matchingKey ? (parseInt(agreement.sitePanelCounts[matchingKey]) || 0) : 0;
         weeklyRatePerPanel = parseFloat(agreement.weeklyRatePerPanel) || 0;
         // Use the weekly rate per panel (haftalık tutar - 1 haftalık 1 panel için anlaşma rakamı)
         weeklyTotalAmount = weeklyRatePerPanel;
       }
-      
+
       return {
         ...payment,
         agreement,
@@ -406,15 +421,17 @@ const SiteHelpers = ({
   // Calculate panels sold for a specific site
   const calculatePanelsSold = (siteId, agreements) => {
     // Find all agreements that include this site
-    const siteAgreements = agreements.filter(agreement => 
+    const siteAgreements = agreements.filter(agreement =>
       agreement.siteIds && agreement.siteIds.includes(siteId)
     );
-    
+
     // Sum up the panel counts for this site across all agreements
     return siteAgreements.reduce((total, agreement) => {
-      const panelCount = agreement.sitePanelCounts && agreement.sitePanelCounts[siteId] 
-        ? parseInt(agreement.sitePanelCounts[siteId]) 
-        : 0;
+      let panelCount = 0;
+      if (agreement.sitePanelCounts) {
+        const matchingKey = Object.keys(agreement.sitePanelCounts).find(key => isIdMatch(key, siteId));
+        panelCount = matchingKey ? (parseInt(agreement.sitePanelCounts[matchingKey]) || 0) : 0;
+      }
       return total + panelCount;
     }, 0);
   };
@@ -422,15 +439,15 @@ const SiteHelpers = ({
   // Function to generate PDF of site details
   const generateSitePDF = async (currentSite, modalContentRef) => {
     if (!modalContentRef.current || !currentSite) return;
-    
+
     try {
       // Clone the modal content to avoid modifying the original
       const clone = modalContentRef.current.cloneNode(true);
-      
+
       // Hide buttons and interactive elements in the clone
       const buttons = clone.querySelectorAll('button, .btn');
       buttons.forEach(button => button.style.display = 'none');
-      
+
       // Create a new window for PDF generation
       const pdfWindow = window.open('', '_blank');
       pdfWindow.document.write(`
@@ -462,7 +479,7 @@ const SiteHelpers = ({
         </html>
       `);
       pdfWindow.document.close();
-      
+
       // Wait for content to load
       pdfWindow.onload = async () => {
         // Generate canvas from the content
@@ -470,7 +487,7 @@ const SiteHelpers = ({
           scale: 2,
           useCORS: true
         });
-        
+
         // Create PDF
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
@@ -479,10 +496,10 @@ const SiteHelpers = ({
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         let heightLeft = imgHeight;
         let position = 0;
-        
+
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
-        
+
         // Add new pages if content is longer than one page
         while (heightLeft >= 0) {
           position = heightLeft - imgHeight;
@@ -490,13 +507,13 @@ const SiteHelpers = ({
           pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
           heightLeft -= pageHeight;
         }
-        
+
         // Save the PDF
         pdf.save(`${currentSite.name}_detay.pdf`);
-        
+
         // Close the temporary window
         pdfWindow.close();
-        
+
         await window.showAlert(
           'Başarılı',
           'PDF dosyası başarıyla oluşturuldu ve indirildi.',
@@ -516,27 +533,27 @@ const SiteHelpers = ({
   // Get information about which agreement is using a specific panel
   const getPanelUsageInfo = (siteId, blockId, panelId, startDate, endDate) => {
     if (!startDate || !endDate) return null;
-    
-    const siteAgreements = agreements.filter(agreement => 
+
+    const siteAgreements = agreements.filter(agreement =>
       agreement.siteIds && agreement.siteIds.includes(siteId) &&
       agreement.status === 'active'
     );
-    
+
     const newStart = new Date(startDate);
     const newEnd = new Date(endDate);
-    
+
     for (const agreement of siteAgreements) {
       const existingStart = new Date(agreement.startDate);
       const existingEnd = new Date(agreement.endDate);
-      
+
       if (newStart <= existingEnd && newEnd >= existingStart) { // Date range overlap check
         if (agreement.siteBlockSelections && agreement.siteBlockSelections[siteId]) {
           const usedBlocks = agreement.siteBlockSelections[siteId];
           if (usedBlocks.includes(blockId)) {
-            if (agreement.sitePanelSelections && 
-                agreement.sitePanelSelections[siteId] && 
-                agreement.sitePanelSelections[siteId][blockId] &&
-                agreement.sitePanelSelections[siteId][blockId].includes(panelId)) {
+            if (agreement.sitePanelSelections &&
+              agreement.sitePanelSelections[siteId] &&
+              agreement.sitePanelSelections[siteId][blockId] &&
+              agreement.sitePanelSelections[siteId][blockId].includes(panelId)) {
               return {
                 agreementId: agreement.id,
                 companyName: getCompanyName(agreement.companyId),
@@ -548,7 +565,7 @@ const SiteHelpers = ({
         }
       }
     }
-    
+
     return null;
   };
 
