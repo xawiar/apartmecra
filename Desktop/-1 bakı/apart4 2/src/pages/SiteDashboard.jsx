@@ -270,6 +270,16 @@ const SiteDashboard = () => {
           console.error('Error fetching announcements:', error);
         }
 
+        // Initialize stats with defaults
+        let calculatedStats = {
+          totalPanels: 0,
+          usedPanels: 0,
+          activeAgreements: 0,
+          totalRevenue: 0,
+          futurePayments: 0,
+          totalFutureAmount: 0
+        };
+
         // Set initial site form data
         if (data.site) {
           setSiteFormData({
@@ -283,161 +293,106 @@ const SiteDashboard = () => {
             iban: data.site.iban || '',
             notes: data.site.notes || ''
           });
-        }
 
-        // Debug: Log panel images with full details
-        console.log('SiteDashboard - Loaded panel images:', allPanelImages);
-        console.log('SiteDashboard - Site ID:', siteId);
-        if (allPanelImages && allPanelImages.length > 0) {
-          allPanelImages.forEach((img, index) => {
-            console.log(`SiteDashboard - Panel image ${index + 1} FULL DETAILS:`, {
-              id: img.id,
-              agreementId: img.agreementId,
-              agreementIdType: typeof img.agreementId,
-              agreementIdString: String(img.agreementId),
-              siteId: img.siteId,
-              siteIdType: typeof img.siteId,
-              blockId: img.blockId,
-              blockIdType: typeof img.blockId,
-              panelId: img.panelId,
-              panelIdType: typeof img.panelId,
-              panelIdString: String(img.panelId),
-              url: img.url,
-              fullObject: img
-            });
-          });
-        }
-
-        // Also log agreements to see what we're searching for
-        console.log('SiteDashboard - ALL agreements:', data.agreements.length);
-        console.log('SiteDashboard - ALL agreements details:', data.agreements.map(a => ({
-          id: a.id,
-          idType: typeof a.id,
-          idString: String(a.id),
-          status: a.status,
-          paymentReceived: a.paymentReceived,
-          creditPaymentReceived: a.creditPaymentReceived,
-          siteIds: a.siteIds,
-          siteIdsType: Array.isArray(a.siteIds) ? 'array' : typeof a.siteIds,
-          siteIdsIncludesADA52: Array.isArray(a.siteIds) ? a.siteIds.includes(siteId) : false
-        })));
-
-        const siteActiveAgreements = data.agreements.filter(a =>
-          a.status === 'active' &&
-          (a.paymentReceived || a.creditPaymentReceived) &&
-          Array.isArray(a.siteIds) && a.siteIds.some(sid => isIdMatch(sid, siteId))
-        );
-
-        console.log('SiteDashboard - Active agreements for site:', siteActiveAgreements.length);
-
-        // Calculate statistics
-        if (data.site) {
-          // Total panels from site record, or fallback calculation
-          let totalPanels = parseInt(data.site.panels) || 0;
-          if (totalPanels === 0 && data.site.blocks && data.site.elevatorsPerBlock) {
-            // Default: 2 panels per elevator
-            totalPanels = parseInt(data.site.blocks) * parseInt(data.site.elevatorsPerBlock) * 2;
-            console.log('SiteDashboard - Calculated totalPanels from blocks:', totalPanels);
+          // 1. Calculate Total Panels
+          try {
+            calculatedStats.totalPanels = parseInt(data.site.panels) || 0;
+            if (calculatedStats.totalPanels === 0 && data.site.blocks && data.site.elevatorsPerBlock) {
+              calculatedStats.totalPanels = parseInt(data.site.blocks) * parseInt(data.site.elevatorsPerBlock) * 2;
+              console.log('SiteDashboard - Calculated totalPanels from blocks:', calculatedStats.totalPanels);
+            }
+          } catch (e) {
+            console.error('Error calculating totalPanels:', e);
           }
 
-          // Count only panels from active and paid agreements
-          const isAgreementPaid = (agreement) => agreement.paymentReceived || agreement.creditPaymentReceived;
+          // 2. Calculate Active Agreements and Used Panels
+          try {
+            const isAgreementPaid = (agreement) => agreement && (agreement.paymentReceived || agreement.creditPaymentReceived);
 
-          // Count used panels by checking all active and paid agreements
-          let usedPanelsCount = 0;
-          data.agreements
-            .filter(a => a.status === 'active' && isAgreementPaid(a) && Array.isArray(a.siteIds) && a.siteIds.some(sid => isIdMatch(sid, siteId)))
-            .forEach(agreement => {
-              // Add the panel count for this site in this agreement - handle many possible ID keys
-              let count = 0;
-              if (agreement.sitePanelCounts) {
-                // Try to find the matching key in sitePanelCounts
-                const matchingKey = Object.keys(agreement.sitePanelCounts).find(key => isIdMatch(key, siteId));
-                if (matchingKey) {
-                  count = agreement.sitePanelCounts[matchingKey] || 0;
+            const siteAgreements = data.agreements.filter(a =>
+              Array.isArray(a.siteIds) && a.siteIds.some(sid => isIdMatch(sid, siteId))
+            );
+
+            calculatedStats.activeAgreements = siteAgreements.filter(a => a.status === 'active').length;
+
+            let panelsCount = 0;
+            siteAgreements
+              .filter(a => a.status === 'active' && isAgreementPaid(a))
+              .forEach(agreement => {
+                if (agreement.sitePanelCounts) {
+                  const matchingKey = Object.keys(agreement.sitePanelCounts).find(key => isIdMatch(key, siteId));
+                  if (matchingKey) {
+                    panelsCount += (parseInt(agreement.sitePanelCounts[matchingKey]) || 0);
+                  }
                 }
-              }
-              usedPanelsCount += count;
+              });
+            calculatedStats.usedPanels = panelsCount;
+          } catch (e) {
+            console.error('Error calculating agreement stats:', e);
+          }
+
+          // 3. Calculate Revenue
+          try {
+            const incomeTransactions = data.transactions.filter(t =>
+              t.type === 'income' &&
+              t.source?.includes('Anlaşma Ödemesi') &&
+              data.agreements.some(a =>
+                Array.isArray(a.siteIds) && a.siteIds.some(sid => isIdMatch(sid, siteId)) &&
+                t.source?.includes(String(a.id))
+              )
+            );
+
+            const siteNameStr = String(data.site.name || '');
+            const siteIdStr = String(data.site.id || '');
+            const siteSiteIdStr = String(data.site.siteId || '');
+
+            const expenseTransactions = data.transactions.filter(t =>
+              t.type === 'expense' &&
+              t.source?.includes('Site Ödemesi') &&
+              (
+                (siteNameStr && t.source?.includes(siteNameStr)) ||
+                (siteIdStr && t.source?.includes(siteIdStr)) ||
+                (siteSiteIdStr && t.source?.includes(siteSiteIdStr))
+              )
+            );
+
+            calculatedStats.totalRevenue = [
+              ...incomeTransactions,
+              ...expenseTransactions
+            ].reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
+          } catch (e) {
+            console.error('Error calculating revenue:', e);
+          }
+
+          // 4. Calculate Future Payments
+          try {
+            const helpers = SiteHelpers({
+              companies: companiesData,
+              sites: [data.site],
+              agreements: allAgreements,
+              transactions: allTransactions
             });
+            const calculatedFuturePayments = helpers.calculatePendingPayments(data.site, allAgreements, companiesData, allTransactions);
+            const totalFutureAmount = calculatedFuturePayments.reduce((sum, payment) => {
+              const amount = parseFloat(payment.amount);
+              return (isNaN(amount) || !isFinite(amount)) ? sum : sum + amount;
+            }, 0);
 
-          const activeAgreementsCount = data.agreements.filter(a =>
-            a.status === 'active' &&
-            Array.isArray(a.siteIds) &&
-            a.siteIds.some(sid => isIdMatch(sid, siteId))
-          ).length;
+            setFuturePayments(calculatedFuturePayments);
+            calculatedStats.futurePayments = calculatedFuturePayments.length;
+            calculatedStats.totalFutureAmount = totalFutureAmount;
+          } catch (e) {
+            console.error('Error calculating future payments:', e);
+          }
 
-          // Calculate total revenue from both income and expense transactions
-          // Income: payments received from companies for agreements
-          // Expense: payments made to sites (these count as revenue for the site)
-          const incomeTransactions = data.transactions.filter(t =>
-            t.type === 'income' &&
-            t.source?.includes('Anlaşma Ödemesi') &&
-            // Make sure this transaction is related to an agreement for this site
-            data.agreements.some(a =>
-              Array.isArray(a.siteIds) && a.siteIds.some(sid => isIdMatch(sid, siteId)) &&
-              t.source?.includes(a.id)
-            )
-          );
-
-          const expenseTransactions = data.transactions.filter(t =>
-            t.type === 'expense' &&
-            t.source?.includes('Site Ödemesi') &&
-            (t.source?.includes(data.site.name) || (data.site.id && t.source?.includes(data.site.id)) || (data.site.siteId && t.source?.includes(data.site.siteId)))
-          );
-
-          const totalRevenue = [
-            ...incomeTransactions,
-            ...expenseTransactions
-          ].reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
-
-
-          // Calculate future payments using the same logic as SitesMain
-          const helpers = SiteHelpers({
-            companies: companiesData,
-            sites: [data.site],
-            agreements: allAgreements,
-            transactions: allTransactions
-          });
-          const calculatedFuturePayments = helpers.calculatePendingPayments(data.site, allAgreements, companiesData, allTransactions);
-          const totalFutureAmount = calculatedFuturePayments.reduce((sum, payment) => {
-            const amount = parseFloat(payment.amount);
-            if (isNaN(amount) || !isFinite(amount)) {
-              return sum;
-            }
-            return sum + amount;
-          }, 0);
-
-          setFuturePayments(calculatedFuturePayments);
-          setStats({
-            totalPanels: totalPanels || 0,
-            usedPanels: usedPanelsCount || 0,
-            activeAgreements: activeAgreementsCount || 0,
-            totalRevenue: totalRevenue || 0,
-            futurePayments: calculatedFuturePayments.length,
-            totalFutureAmount: isNaN(totalFutureAmount) ? 0 : totalFutureAmount
-          });
+          console.log('SiteDashboard - Final calculated stats:', calculatedStats);
+          setStats(calculatedStats);
         } else {
-          // Site not found - show error message
           logger.error('Site not found for siteId:', siteId);
-          setStats({
-            totalPanels: 0,
-            usedPanels: 0,
-            activeAgreements: 0,
-            totalRevenue: 0,
-            futurePayments: 0,
-            totalFutureAmount: 0
-          });
+          setStats(calculatedStats); // All zeros
         }
       } catch (error) {
-        logger.error('Error fetching site data:', error);
-        setStats({
-          totalPanels: 0,
-          usedPanels: 0,
-          activeAgreements: 0,
-          totalRevenue: 0,
-          futurePayments: 0,
-          totalFutureAmount: 0
-        });
+        logger.error('Error in fetching/computing site data:', error);
       } finally {
         setLoading(false);
       }
