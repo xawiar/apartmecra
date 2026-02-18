@@ -251,10 +251,7 @@ const SiteDashboard = () => {
             console.error('Error in announcements listener:', error);
           });
 
-          // Store unsubscribe function for cleanup
-          return () => {
-            if (unsubscribe) unsubscribe();
-          };
+          window.announcementsUnsubscribe = unsubscribe;
         } catch (error) {
           console.error('Error fetching announcements:', error);
         }
@@ -294,6 +291,13 @@ const SiteDashboard = () => {
     };
 
     fetchData();
+
+    return () => {
+      if (window.announcementsUnsubscribe) {
+        window.announcementsUnsubscribe();
+        window.announcementsUnsubscribe = null;
+      }
+    };
   }, [siteId]);
 
   // Derive stats from siteData whenever it or siteId changes
