@@ -9,24 +9,11 @@ const __dirname = dirname(__filename)
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  root: resolve(__dirname),
   plugins: [react()],
   publicDir: 'public',
   server: {
     port: 5173,
     host: true,
-    hmr: {
-      port: 5173,
-      host: 'localhost',
-      overlay: false // Disable error overlay to prevent page refresh issues
-    },
-    watch: {
-      usePolling: false, // Disable polling to prevent unnecessary refreshes
-      interval: 0
-    },
-    fs: {
-      allow: ['..']
-    },
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
