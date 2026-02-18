@@ -1,6 +1,6 @@
 // src/services/firebaseAuth.js
-import { 
-  signInWithEmailAndPassword, 
+import {
+  signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
@@ -25,24 +25,24 @@ export const loginWithEmail = async (email, password, silentMode = false) => {
     if (!silentMode) {
       logger.log('🔐 Attempting login with:', email);
     }
-    
+
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    
+
     logger.log('✅ Login successful:', user.uid);
-    
+
     // Get ID token
     const token = await user.getIdToken();
     if (!silentMode) {
       logger.log('🎫 Token obtained:', token ? 'Yes' : 'No');
     }
-    
+
     // Determine role and IDs based on email
     let role = USER_ROLES.ADMIN;
     let siteId = null;
     let companyId = null;
     let username = user.email?.split('@')[0] || 'user';
-    
+
     if (email.includes('@site.local')) {
       role = USER_ROLES.SITE_USER;
       siteId = email.replace('@site.local', '');
@@ -55,7 +55,7 @@ export const loginWithEmail = async (email, password, silentMode = false) => {
       role = USER_ROLES.PERSONNEL;
       username = email.replace('@personnel.local', '');
     }
-    
+
     // Simple user data
     const userData = {
       uid: user.uid,
@@ -66,23 +66,26 @@ export const loginWithEmail = async (email, password, silentMode = false) => {
       companyId: companyId,
       status: 'active'
     };
-    
+
     return {
       success: true,
       user: userData,
       token: token
     };
-    
+
   } catch (error) {
     // Log all errors for debugging (especially network/auth domain issues)
-    logger.error('❌ Login error:', {
-      code: error.code,
-      message: error.message,
-      email: email,
-      silentMode: silentMode,
-      errorObject: error
-    });
-    
+    // auth/invalid-credential is expected during multi-attempt login, don't log it in silent mode
+    if (!(error.code === 'auth/invalid-credential' && silentMode)) {
+      logger.error('❌ Login error:', {
+        code: error.code,
+        message: error.message,
+        email: email,
+        silentMode: silentMode,
+        errorObject: error
+      });
+    }
+
     // auth/invalid-credential is expected during multi-attempt login, don't log it in silent mode
     if (error.code === 'auth/invalid-credential' && silentMode) {
       // Silent - this is expected when trying different login types
@@ -91,19 +94,19 @@ export const loginWithEmail = async (email, password, silentMode = false) => {
         error: getErrorMessage(error.code)
       };
     }
-    
+
     // Check for network or domain-related errors
-    if (error.code === 'auth/network-request-failed' || 
-        error.message?.includes('400') || 
-        error.message?.includes('Bad Request') ||
-        error.code?.includes('400')) {
+    if (error.code === 'auth/network-request-failed' ||
+      error.message?.includes('400') ||
+      error.message?.includes('Bad Request') ||
+      error.code?.includes('400')) {
       logger.error('⚠️ Network or domain error detected. Check Firebase authorized domains.');
       return {
         success: false,
         error: 'Ağ bağlantısı hatası veya yetkilendirme sorunu. Lütfen Firebase Console\'da authorized domains ayarlarını kontrol edin.'
       };
     }
-    
+
     return {
       success: false,
       error: getErrorMessage(error.code) || 'Giriş yapılırken bir hata oluştu. Lütfen bilgilerinizi kontrol edin.'
@@ -157,12 +160,12 @@ export const canAccessCompany = (user, companyId) => {
 export const createUserWithEmail = async (email, password, userData = {}) => {
   try {
     logger.log('Creating user with email:', email);
-    
+
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    
+
     logger.log('User created successfully:', user.uid);
-    
+
     return {
       success: true,
       user: {
@@ -171,7 +174,7 @@ export const createUserWithEmail = async (email, password, userData = {}) => {
         ...userData
       }
     };
-    
+
   } catch (error) {
     logger.error('User creation error:', error);
     return {
@@ -210,12 +213,12 @@ const getErrorMessage = (errorCode) => {
     'auth/unauthorized-domain': 'Bu domain için yetkilendirme yok. Firebase Console\'da authorized domains ayarlarını kontrol edin.',
     'auth/domain-not-allowed': 'Bu domain için yetkilendirme yok. Firebase Console\'da authorized domains ayarlarını kontrol edin.'
   };
-  
+
   // Handle 400 Bad Request errors - often related to domain/IP restrictions
   if (!errorCode || errorCode.includes('400') || errorCode.includes('Bad Request')) {
     return 'Geçersiz istek. Bu hata genellikle Firebase authorized domains ayarlarından kaynaklanır. Lütfen Firebase Console\'da authorized domains listesine mevcut domain\'i ekleyin.';
   }
-  
+
   return errorMessages[errorCode] || `Giriş hatası: ${errorCode || 'Bilinmeyen hata'}`;
 };
 
@@ -223,13 +226,13 @@ const getErrorMessage = (errorCode) => {
 export const deleteUserFromAuth = async (email) => {
   try {
     logger.log('🗑️ Deleting user from Firebase Auth:', email);
-    
+
     // Note: This function requires Firebase Admin SDK for server-side deletion
     // For client-side, we can only delete the currently signed-in user
     logger.warn('⚠️ User deletion requires Firebase Admin SDK');
     logger.log('Please delete user manually from Firebase Console:');
     logger.log('https://console.firebase.google.com/project/apartmecraelazig/authentication/users');
-    
+
     return { success: false, error: 'Admin SDK required for user deletion' };
   } catch (error) {
     logger.error('Error deleting user from Auth:', error);

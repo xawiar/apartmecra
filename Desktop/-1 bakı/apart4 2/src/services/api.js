@@ -7,15 +7,21 @@ const isFirebaseEnabled = () => {
   return auth !== null && auth !== undefined;
 };
 
+let cachedApiService = null;
+
 // Select API service based on Firebase availability
 const getApiService = async () => {
+  if (cachedApiService) return cachedApiService;
+
   if (isFirebaseEnabled()) {
     console.log('🔥 Using Firebase API service');
-    return await import('./firebaseApi.js');
+    cachedApiService = await import('./firebaseApi.js');
+    return cachedApiService;
   } else {
     // Firebase not available - this should not happen in production
     console.error('❌ Firebase is not available - application may not work correctly');
-  return await import('./localApi.js');
+    cachedApiService = await import('./localApi.js');
+    return cachedApiService;
   }
 };
 
